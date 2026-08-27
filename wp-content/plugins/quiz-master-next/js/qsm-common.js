@@ -1,0 +1,261 @@
+//polar question type
+
+// (function ($) {
+jQuery(document).ready(function(){
+	let polarQuestions = jQuery('.question-type-polar-s');
+	if(polarQuestions.length >0){
+		let page = 'question';
+		if(jQuery('body').hasClass('wp-admin')){
+			page = 'admin'
+		}
+		qsmPolarSlider(page,polarQuestions);
+	}
+});
+	jQuery(document).on('qsm_after_quiz_submit',function(event,quiz_form_id){
+		event.preventDefault();
+		let parentDivClass    = 'qsm-quiz-container-'+quiz_form_id.replace(new RegExp(/[a-zA-Z]/g),'');
+		polarQuestions        = jQuery('.'+parentDivClass).find('.qmn_question_answer').find('.mlw_qmn_question').find('.question-type-polar-s');
+		if(polarQuestions.length >0){
+			qsmPolarSlider('answer', polarQuestions);
+		}
+
+	});
+
+	jQuery(document).on('qsm_after_lazy_load', function (e, quizId, pageNumber, $page, data) {
+		if ( $page.find('.question-type-polar-s').length > 0 ) {
+			$page.find('.question-type-polar-s').each(function(){
+				let polarQuestion = jQuery(this).find('.slider-main-wrapper div');
+				let questionID    = polarQuestion.parents('.quiz_section').data('qid');
+				let page = 'question';
+				qsmPolarSliderEach(polarQuestion, questionID, page);
+			});
+		}
+	});
+
+	jQuery(document).on('submit', 'form[name="qsm-login-form"]', function (e) {
+		e.preventDefault();
+
+		let form = jQuery(this);
+		let username = form.find('input[name="log"]').val();
+		let password = form.find('input[name="pwd"]').val();
+		form.find('input[type="submit"]').attr('disabled', true);
+		jQuery(".qsm-login-form-warning").remove();
+
+		function qsmShowLoginError(message) {
+			form.append('<div class="qsm-result-page-warning qsm-login-form-warning">' + message + '</div>');
+			form.find('input[type="submit"]').attr('disabled', false);
+		}
+
+		function qsmDoLogin(nonce) {
+			jQuery.ajax({
+				url: qmn_common_ajax_object.ajaxurl,
+				method: 'POST',
+				data: {
+					action: 'qsm_ajax_login',
+					username: username,
+					password: password,
+					nonce: nonce,
+				},
+				success: function (response) {
+					if ( response.success ) {
+						form.get(0).submit();
+					} else {
+						qsmShowLoginError(response.data.message);
+					}
+				}
+			});
+		}
+
+		jQuery.ajax({
+			url: qmn_common_ajax_object.ajaxurl,
+			method: 'POST',
+			data: { action: 'qsm_get_login_nonce' },
+			success: function (response) {
+				if ( response && response.success && response.data && response.data.nonce ) {
+					qsmDoLogin(response.data.nonce);
+				} else {
+					// Fall back to the nonce printed on the page.
+					qsmDoLogin(qmn_common_ajax_object.nonce);
+				}
+			},
+			error: function () {
+				qsmDoLogin(qmn_common_ajax_object.nonce);
+			}
+		});
+	});
+
+	function qsmPolarSlider(page , polarQuestions){
+		polarQuestions.each( function(){
+			let polarQuestion = jQuery(this).find('.slider-main-wrapper div');
+			let questionID    = polarQuestion.attr('id').replace('slider-','');
+			qsmPolarSliderEach(polarQuestion,questionID,page);
+		});
+	}
+
+	function qsmPolarSliderEach(polarQuestion,questionID,page){
+		let isReverse = Boolean(parseInt(polarQuestion.attr("data-is_reverse")));
+		let answer1 = parseInt( polarQuestion.attr("data-answer1") );
+		let answer2 = parseInt( polarQuestion.attr("data-answer2") );
+		let max;
+		let min;
+		if (isReverse){
+			max = answer1;
+			min = answer2;
+		} else {
+			max = answer2;
+			min = answer1;
+		}
+		let step = 1 ;
+		let value;
+		if ('answer'=== page || 'admin' === page){
+			value = parseInt( polarQuestion.attr("data-answer_value") );
+		} else {
+			value = parseInt((max-min)/2) + min ;
+		}
+
+		polarQuestion.slider({
+			max: max,
+			min: min,
+			isRTL:isReverse,
+			step: step,
+			range: false,
+			value: value,
+			slide: function slider_slide(event, ui) {
+				if('answer'=== page || 'admin' === page){
+					return false;
+				}
+				else{
+					jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+						'.ui-slider-handle').text( ui.value );
+				}
+			},
+			change: function ( event, ui ){
+				if('answer'!== page || 'admin' !== page){
+					qsmPolarSliderQuestionChange(ui,questionID, answer1, answer2, value , isReverse );
+
+				}
+			},
+			create: function (event, ui){
+				if('answer'=== page){
+					jQuery(document).trigger('qsm_after_display_result',[ this, ui ]);
+					jQuery(this).find('span').css({'display':'flex','align-items':'center','justify-content':'center','text-decoration':'none','color':'white'});
+					jQuery(this).find('span').html('<p style="margin:0;">'+value+'</p>');
+				} else if ( 'admin' === page ) {
+					jQuery(this).find('span').css({'display':'flex','align-items':'center','justify-content':'center','text-decoration':'none','color':'white'});
+					jQuery(this).find('span').html('<p style="margin:0;">'+value+'</p>');
+				} else {
+					qsmPolarSliderQuestionCreate(questionID );
+				}
+				if ( isNaN(value) ){
+					jQuery(this).find('span').hide();
+				}
+			}
+
+		});
+	}
+
+	function qsmPolarSliderQuestionChange(ui,questionID, answer1, answer2, value , isReverse){
+		jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+			'.qmn_polar').val(ui.value);
+		jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.ui-slider-handle').text(ui.value);
+		let lowerMidClass = '.left-polar-title';
+		let upperMidClass = '.right-polar-title';
+		if (isReverse){
+			lowerMidClass = '.right-polar-title';
+			upperMidClass = '.left-polar-title';
+		}
+		if ( ui.value == answer1 ) {
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.left-polar-title').css('font-weight', '900');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.left-polar-title img').css('opacity', " 1 ");
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.right-polar-title').css('font-weight', '100');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.right-polar-title img').css('opacity', "0.4");
+		} else if (ui.value == answer2 ) {
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.left-polar-title').css('font-weight', '100');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.left-polar-title img').css('opacity', "0.4");
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.right-polar-title').css('font-weight', '900');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.right-polar-title img').css('opacity', "1");
+		} else if (ui.value == value) {
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.left-polar-title').css('font-weight', '400');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.left-polar-title img').css('opacity', "0.5");
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.right-polar-title').css('font-weight', '400');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.right-polar-title img').css('opacity', "0.5");
+		} else if (ui.value < value ) {
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				lowerMidClass).css('font-weight', '600');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.left-polar-title img').css('opacity', "0.8");
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				upperMidClass).css('font-weight', '400');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.right-polar-title img').css('opacity', "0.5");
+		} else if (ui.value > value ) {
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				lowerMidClass).css('font-weight', '400');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.left-polar-title img').css('opacity', "0.5");
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				upperMidClass).css('font-weight', '600');
+			jQuery('.question-section-id-'+questionID+'  .question-type-polar-s').find(
+				'.right-polar-title img').css('opacity', "0.8");
+		}
+		jQuery(document).trigger('qsm_polar_slider_change_after', [ui,questionID, answer1, answer2, value , isReverse]);
+	}
+
+	function qsmPolarSliderQuestionCreate(questionID){
+
+		jQuery('.question-section-id-'+questionID+' .question-type-polar-s').find(
+			'.left-polar-title').css('font-weight', '400');
+		jQuery('.question-section-id-'+questionID+'  .question-type-polar-s img').find(
+			'.left-polar-title img').css('opacity', "0.5");
+		jQuery('.question-section-id-'+questionID+' .question-type-polar-s').find(
+			'.right-polar-title').css('font-weight', '400');
+		jQuery('.question-section-id-'+questionID+'  .question-type-polar-s img').find(
+			'.right-polar-title img').css('opacity', "0.5");
+		jQuery(document).trigger('qsm_polar_slider_create_after', [questionID]);
+	}
+// }(jQuery));
+
+function qmnClearField(field) {
+	if (field.defaultValue == field.value) field.value = '';
+}
+
+function checkMaxLength(obj) {
+	let value = obj.value;
+	let maxlength = obj.maxLength;
+	if (value.length > Number.parseInt(maxlength)) {
+		obj.value = value.slice(0, Number.parseInt(maxlength));
+	}
+}
+
+function qmnSocialShare(network, mlw_qmn_social_text, mlw_qmn_title, facebook_id, share_url) {
+	let sTop = window.screen.height / 2 - (218);
+	let sLeft = window.screen.width / 2 - (313);
+	let sqShareOptions = "height=400,width=580,toolbar=0,status=0,location=0,menubar=0,directories=0,scrollbars=0,top=" + sTop + ",left=" + sLeft;
+	let pageUrlEncoded = encodeURIComponent(share_url);
+	let url = '';
+	if (network == 'facebook') {
+		url = "https://www.facebook.com/dialog/share?" + "app_id=" + facebook_id + "&display=popup" +
+			"&hashtag=" + encodeURIComponent(mlw_qmn_social_text) + "&href=" + pageUrlEncoded;
+	}
+	if (network === 'linkedin') {
+		url = "https://www.linkedin.com/sharing/share-offsite/?text=" + encodeURIComponent(mlw_qmn_social_text) + "&url=" + pageUrlEncoded;
+	}
+	if (network == 'twitter') {
+		url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(mlw_qmn_social_text);
+	}
+	window.open(url, "Share", sqShareOptions);
+	return false;
+}

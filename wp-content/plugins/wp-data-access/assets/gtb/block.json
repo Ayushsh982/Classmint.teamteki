@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "wpda/wp-data-access-app",
+  "version": "1.0.0",
+  "title": "WP Data Access App",
+  "category": "widgets",
+  "icon": "database",
+  "description": "Add an app to this page.",
+  "textdomain": "wp-data-access-app",
+  "attributes": {
+    "appid": {
+      "type": "string",
+      "default": ""
+    },
+    "feedback": {
+      "type": "boolean",
+      "default": false
+    },
+    "builders": {
+      "type": "boolean",
+      "default": false
+    },
+    "hidetitlebar": {
+      "type": "boolean",
+      "default": false
+    },
+    "fullscreen": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css"
+}

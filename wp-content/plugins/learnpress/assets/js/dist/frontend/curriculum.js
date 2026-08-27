@@ -1,0 +1,638 @@
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./assets/src/js/utils.js"
+/*!********************************!*\
+  !*** ./assets/src/js/utils.js ***!
+  \********************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   debounce: () => (/* binding */ debounce),
+/* harmony export */   eventHandlers: () => (/* binding */ eventHandlers),
+/* harmony export */   getDataOfForm: () => (/* binding */ getDataOfForm),
+/* harmony export */   getFieldKeysOfForm: () => (/* binding */ getFieldKeysOfForm),
+/* harmony export */   listenElementCreated: () => (/* binding */ listenElementCreated),
+/* harmony export */   listenElementViewed: () => (/* binding */ listenElementViewed),
+/* harmony export */   lpAddQueryArgs: () => (/* binding */ lpAddQueryArgs),
+/* harmony export */   lpAjaxParseJsonOld: () => (/* binding */ lpAjaxParseJsonOld),
+/* harmony export */   lpClassName: () => (/* binding */ lpClassName),
+/* harmony export */   lpFetchAPI: () => (/* binding */ lpFetchAPI),
+/* harmony export */   lpGetCurrentURLNoParam: () => (/* binding */ lpGetCurrentURLNoParam),
+/* harmony export */   lpOnElementReady: () => (/* binding */ lpOnElementReady),
+/* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
+/* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
+/* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse)
+/* harmony export */ });
+/**
+ * Utils functions
+ *
+ * @param url
+ * @param data
+ * @param functions
+ * @since 4.2.5.1
+ * @version 1.0.6
+ */
+const lpClassName = {
+  hidden: 'lp-hidden',
+  loading: 'loading',
+  elCollapse: 'lp-collapse',
+  elSectionToggle: '.lp-section-toggle',
+  elTriggerToggle: '.lp-trigger-toggle'
+};
+const lpFetchAPI = (url, data = {}, functions = {}) => {
+  if ('function' === typeof functions.before) {
+    functions.before();
+  }
+  fetch(url, {
+    method: 'GET',
+    ...data
+  }).then(response => response.json()).then(response => {
+    if ('function' === typeof functions.success) {
+      functions.success(response);
+    }
+  }).catch(err => {
+    if ('function' === typeof functions.error) {
+      functions.error(err);
+    }
+  }).finally(() => {
+    if ('function' === typeof functions.completed) {
+      functions.completed();
+    }
+  });
+};
+
+/**
+ * Get current URL without params.
+ *
+ * @since 4.2.5.1
+ */
+const lpGetCurrentURLNoParam = () => {
+  let currentUrl = window.location.href;
+  const hasParams = currentUrl.includes('?');
+  if (hasParams) {
+    currentUrl = currentUrl.split('?')[0];
+  }
+  return currentUrl;
+};
+const lpAddQueryArgs = (endpoint, args) => {
+  const url = new URL(endpoint);
+  Object.keys(args).forEach(arg => {
+    url.searchParams.set(arg, args[arg]);
+  });
+  return url;
+};
+
+/**
+ * Listen element viewed.
+ *
+ * @param el
+ * @param callback
+ * @since 4.2.5.8
+ */
+const listenElementViewed = (el, callback) => {
+  const observerSeeItem = new IntersectionObserver(function (entries) {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        callback(entry);
+      }
+    }
+  });
+  observerSeeItem.observe(el);
+};
+
+/**
+ * Listen element created.
+ *
+ * @param callback
+ * @since 4.2.5.8
+ */
+const listenElementCreated = callback => {
+  const observerCreateItem = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      if (mutation.addedNodes) {
+        mutation.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1) {
+            callback(node);
+          }
+        });
+      }
+    });
+  });
+  observerCreateItem.observe(document, {
+    childList: true,
+    subtree: true
+  });
+  // End.
+};
+
+/**
+ * Listen element created.
+ *
+ * @param selector
+ * @param callback
+ * @since 4.2.7.1
+ */
+const lpOnElementReady = (selector, callback) => {
+  const element = document.querySelector(selector);
+  if (element) {
+    callback(element);
+    return;
+  }
+  const observer = new MutationObserver((mutations, obs) => {
+    const element = document.querySelector(selector);
+    if (element) {
+      obs.disconnect();
+      callback(element);
+    }
+  });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+};
+
+// Parse JSON from string with content include LP_AJAX_START.
+const lpAjaxParseJsonOld = data => {
+  if (typeof data !== 'string') {
+    return data;
+  }
+  const m = String.raw({
+    raw: data
+  }).match(/<-- LP_AJAX_START -->(.*)<-- LP_AJAX_END -->/s);
+  try {
+    if (m) {
+      data = JSON.parse(m[1].replace(/(?:\r\n|\r|\n)/g, ''));
+    } else {
+      data = JSON.parse(data);
+    }
+  } catch (e) {
+    data = {};
+  }
+  return data;
+};
+
+// status 0: hide, 1: show
+const lpShowHideEl = (el, status = 0) => {
+  if (!el) {
+    return;
+  }
+  if (!status) {
+    el.classList.add(lpClassName.hidden);
+  } else {
+    el.classList.remove(lpClassName.hidden);
+  }
+};
+
+// status 0: hide, 1: show
+const lpSetLoadingEl = (el, status) => {
+  if (!el) {
+    return;
+  }
+  if (!status) {
+    el.classList.remove(lpClassName.loading);
+  } else {
+    el.classList.add(lpClassName.loading);
+  }
+};
+
+// Toggle collapse section
+const toggleCollapse = (e, target, elTriggerClassName = '', elsExclude = [], callback) => {
+  if (!elTriggerClassName) {
+    elTriggerClassName = lpClassName.elTriggerToggle;
+  }
+
+  // Exclude elements, which should not trigger the collapse toggle
+  if (elsExclude && elsExclude.length > 0) {
+    for (const elExclude of elsExclude) {
+      if (target.closest(elExclude)) {
+        return;
+      }
+    }
+  }
+  const elTrigger = target.closest(elTriggerClassName);
+  if (!elTrigger) {
+    return;
+  }
+
+  //console.log( 'elTrigger', elTrigger );
+
+  const elSectionToggle = elTrigger.closest(`${lpClassName.elSectionToggle}`);
+  if (!elSectionToggle) {
+    return;
+  }
+  elSectionToggle.classList.toggle(`${lpClassName.elCollapse}`);
+  if ('function' === typeof callback) {
+    callback(elSectionToggle);
+  }
+};
+
+// Get data of form
+const getDataOfForm = form => {
+  const dataSend = {};
+  const formData = new FormData(form);
+  for (const pair of formData.entries()) {
+    const key = pair[0];
+    const value = formData.getAll(key);
+    if (!dataSend.hasOwnProperty(key)) {
+      // Convert value array to string.
+      dataSend[key] = value.join(',');
+    }
+  }
+  return dataSend;
+};
+
+// Get field keys of form
+const getFieldKeysOfForm = form => {
+  const keys = [];
+  const elements = form.elements;
+  for (let i = 0; i < elements.length; i++) {
+    const name = elements[i].name;
+    if (name && !keys.includes(name)) {
+      keys.push(name);
+    }
+  }
+  return keys;
+};
+
+// Merge data handle with data form.
+const mergeDataWithDatForm = (elForm, dataHandle) => {
+  const dataForm = getDataOfForm(elForm);
+  const keys = getFieldKeysOfForm(elForm);
+  keys.forEach(key => {
+    if (!dataForm.hasOwnProperty(key)) {
+      delete dataHandle[key];
+    } else if (dataForm[key][0] === '') {
+      delete dataForm[key];
+      delete dataHandle[key];
+    }
+  });
+  dataHandle = {
+    ...dataHandle,
+    ...dataForm
+  };
+  return dataHandle;
+};
+
+/**
+ * Event trigger
+ * For each list of event handlers, listen event on document.
+ *
+ * eventName: 'click', 'change', ...
+ * eventHandlers = [ { selector: '.lp-button', callBack: function(){}, class: object } ]
+ *
+ * @param eventName
+ * @param eventHandlers
+ */
+const eventHandlers = (eventName, eventHandlers) => {
+  document.addEventListener(eventName, e => {
+    const target = e.target;
+    let args = {
+      e,
+      target
+    };
+    eventHandlers.forEach(eventHandler => {
+      args = {
+        ...args,
+        ...eventHandler
+      };
+
+      //console.log( args );
+
+      // Check condition before call back
+      if (eventHandler.conditionBeforeCallBack) {
+        if (eventHandler.conditionBeforeCallBack(args) !== true) {
+          return;
+        }
+      }
+
+      // Special check for keydown event with checkIsEventEnter = true
+      if (eventName === 'keydown' && eventHandler.checkIsEventEnter) {
+        if (e.key !== 'Enter') {
+          return;
+        }
+      }
+      if (target.closest(eventHandler.selector)) {
+        if (eventHandler.class) {
+          // Call method of class, function callBack will understand exactly {this} is class object.
+          eventHandler.class[eventHandler.callBack](args);
+        } else {
+          // For send args is objected, {this} is eventHandler object, not class object.
+          eventHandler.callBack(args);
+        }
+      }
+    });
+  });
+};
+
+/**
+ * Debounce - delays function execution until after `wait` ms of inactivity.
+ *
+ * Each call resets the timer. Only the last call in a burst executes.
+ *
+ * USE CASES:
+ * - Search inputs, form validation, window resize
+ * - Multiple elements need independent timers
+ * - When you need to call with different arguments
+ *
+ * EXAMPLES:
+ * const debouncedSearch = debounce( (query) => fetchResults(query), 300 );
+ * searchInput.addEventListener('input', (e) => debouncedSearch(e.target.value));
+ *
+ * const debouncedResize = debounce( recalculateLayout, 250 );
+ * window.addEventListener('resize', debouncedResize);
+ *
+ * ⚠️ Create ONCE outside event handlers, not inside.
+ *
+ * @param {Function} func - Function to debounce (can be anonymous)
+ * @param {number}   wait - Milliseconds to wait (default: 500)
+ * @return {Function} Debounced wrapper function
+ * @since 4.3.7
+ * @version 1.0.0
+ */
+const debounce = (func, wait = 500) => {
+  let timer;
+  return args => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func(args), wait);
+  };
+};
+
+/***/ }
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	const __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		const cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		const module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		if (!(moduleId in __webpack_modules__)) {
+/******/ 			delete __webpack_module_cache__[moduleId];
+/******/ 			const e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			e.code = 'MODULE_NOT_FOUND';
+/******/ 			throw e;
+/******/ 		}
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter/value functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			if(Array.isArray(definition)) {
+/******/ 				var i = 0;
+/******/ 				while(i < definition.length) {
+/******/ 					var key = definition[i++];
+/******/ 					var binding = definition[i++];
+/******/ 					if(!__webpack_require__.o(exports, key)) {
+/******/ 						if(binding === 0) {
+/******/ 							Object.defineProperty(exports, key, { enumerable: true, value: definition[i++] });
+/******/ 						} else {
+/******/ 							Object.defineProperty(exports, key, { enumerable: true, get: binding });
+/******/ 						}
+/******/ 					} else if(binding === 0) { i++; }
+/******/ 				}
+/******/ 			} else {
+/******/ 				for(var key in definition) {
+/******/ 					if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 						Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 					}
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.hasOwn(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+let __webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
+(() => {
+/*!**********************************************!*\
+  !*** ./assets/src/js/frontend/curriculum.js ***!
+  \**********************************************/
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lpAssetsJsPath/utils.js */ "./assets/src/js/utils.js");
+/**
+ * Handle curriculum
+ *
+ * @version 1.0.2
+ * @since 4.2.7.6
+ */
+
+
+
+// Events
+/**
+ * 1. Handle click section header
+ */
+document.addEventListener('click', e => {
+  const target = e.target;
+  const elSectionHeader = target.closest('.course-section-header');
+  if (elSectionHeader) {
+    const elSection = elSectionHeader.closest('.course-section');
+    if (!elSection) {
+      return;
+    }
+    e.preventDefault();
+    toggleSection(elSection);
+  }
+  if (target.classList.contains('course-toggle-all-sections')) {
+    e.preventDefault();
+    toggleSectionAll(target);
+  }
+});
+
+/**
+ * 1. Handle search title course
+ */
+document.addEventListener('keyup', e => {
+  const target = e.target;
+
+  // code compare html with name = search
+  if (target.name === 's' && target.closest('form.search-course')) {
+    const value = target.value;
+    searchItemCourse(value);
+  }
+});
+
+/**
+ * 1. Handle submit form search
+ */
+document.addEventListener('submit', e => {
+  const target = e.target;
+
+  // Stop enter form search
+  if (target.closest('form.search-course')) {
+    e.preventDefault();
+  }
+});
+// End events
+
+const toggleSectionAll = elToggleAllSections => {
+  const elCurriculum = elToggleAllSections.closest('.lp-course-curriculum');
+  const elSections = elCurriculum.querySelectorAll('.course-section');
+  const elExpand = elCurriculum.querySelector('.course-toggle-all-sections');
+  const elCollapse = elCurriculum.querySelector('.course-toggle-all-sections.lp-collapse');
+  if (elToggleAllSections.classList.contains('lp-collapse')) {
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elExpand, 1);
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elCollapse, 0);
+    elSections.forEach(el => {
+      if (!el.classList.contains('lp-collapse')) {
+        el.classList.add('lp-collapse');
+      }
+    });
+  } else {
+    elSections.forEach(el => {
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elExpand, 0);
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elCollapse, 1);
+      if (el.classList.contains('lp-collapse')) {
+        el.classList.remove('lp-collapse');
+      }
+    });
+  }
+};
+const toggleSection = elSection => {
+  const elCurriculum = elSection.closest('.lp-course-curriculum');
+
+  // Toggle section
+  elSection.classList.toggle('lp-collapse');
+
+  // Check all sections collapsed
+  checkAllSectionsCollapsed(elCurriculum);
+};
+const checkAllSectionsCollapsed = elCurriculum => {
+  const elSections = elCurriculum.querySelectorAll('.course-section');
+  const elExpand = elCurriculum.querySelector('.course-toggle-all-sections');
+  const elCollapse = elCurriculum.querySelector('.course-toggle-all-sections.lp-collapse');
+  let isAllCollapsed = false;
+  elSections.forEach(el => {
+    if (el.classList.contains('lp-collapse')) {
+      isAllCollapsed = true;
+    }
+  });
+  if (isAllCollapsed) {
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elExpand, 1);
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elCollapse, 0);
+  } else {
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elExpand, 0);
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elCollapse, 1);
+  }
+};
+
+// Search title item of course by text
+const searchItemCourse = text => {
+  const elCurriculum = document.querySelector('.lp-course-curriculum');
+  const elSections = elCurriculum.querySelectorAll('.course-section');
+  elSections.forEach(elSection => {
+    let found = false;
+    elSection.querySelectorAll('.course-item').forEach(elItem => {
+      const elSection = elItem.closest('.course-section');
+      const titleItem = elItem.querySelector('.course-item-title').textContent;
+      if (!searchText(titleItem, text)) {
+        lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elItem, 0);
+        elItem.classList.add('lp-hide');
+      } else {
+        found = true;
+        lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elItem, 1);
+        elSection.classList.remove('lp-collapse');
+      }
+    });
+    if (!found) {
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elSection, 0);
+    } else {
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elSection, 1);
+    }
+  });
+};
+const normalizeVietnamese = str => {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+};
+
+/**
+ * Search string on text
+ * Logic:
+ * User enter text: "11 lesson"
+ * JS will search string has word "lesson" and "11"
+ * Result: "Lesson 11: Introduction"
+ * Result: "11 lesson: Introduction"
+ *
+ * @param text
+ * @param searchTerm
+ */
+const searchText = (text, searchTerm) => {
+  const normalizedText = normalizeVietnamese(text.toLowerCase());
+  const searchTermArr = searchTerm.trim().split(' ');
+  const length = searchTermArr.length;
+  let found = 0;
+  searchTermArr.forEach(term => {
+    const normalizedSearchTerm = normalizeVietnamese(term.toLowerCase());
+    const regex = new RegExp(normalizedSearchTerm, 'gi');
+    if (regex.test(normalizedText)) {
+      found++;
+    }
+  });
+  return found === length;
+};
+
+// Scroll to item viewing
+const scrollToItemViewing = elCurriculum => {
+  const elItemCurrent = elCurriculum.querySelector('li.current');
+  if (!elItemCurrent) {
+    return;
+  }
+  elItemCurrent.scrollIntoView({
+    behavior: 'smooth'
+  });
+};
+lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpOnElementReady('.lp-course-curriculum', elCurriculum => {
+  checkAllSectionsCollapsed(elCurriculum);
+
+  // Set interval to check if item viewing is changed
+  const interval = setInterval(() => {
+    if (document.readyState === 'complete') {
+      clearInterval(interval);
+      scrollToItemViewing(elCurriculum);
+    }
+  }, 300);
+});
+})();
+
+/******/ })()
+;
+//# sourceMappingURL=curriculum.js.map

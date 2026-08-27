@@ -1,0 +1,560 @@
+#accordion-section-sirat_upgrade_pro_link .accordion-section-title:after,#accordion-section-sirat_get_started_link .accordion-section-title:after{
+  display: none;
+}
+.customize-pane-parent{
+  overflow-x: hidden !important;
+}
+.accordion-section-title button.accordion-trigger{
+  height: auto !important;
+}
+#customize-controls .control-section-sirat .accordion-section-title:hover,
+#customize-controls .control-section-sirat .accordion-section-title:focus {
+	background-color: #fff;
+}
+.control-section-sirat .accordion-section-title .button {
+	margin-top:  -4px;
+	font-weight: 400;
+	margin-left: 8px;
+}
+.rtl .control-section-sirat .accordion-section-title .button {
+	margin-left:  0;
+	margin-right: 8px;
+}
+.customize-control input[type=number], 
+.customize-control input[type=search], 
+.customize-control input[type=tel], 
+.customize-control input[type=url], 
+.customize-control input[type=text], 
+.customize-control input[type=password],
+.customize-control input[type=email],
+.customize-control select{
+	border: none;
+    font-size: 15px;
+}
+.customize-control-title, .customize-reset-title, .premium-opt{
+    display: -webkit-inline-box;
+    font-size: 12px;
+    line-height: 25px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    background: #0085ba;
+    padding: 0px 15px;
+    color: #fff;
+}
+a.go-pro-btn{
+  background-color: #00a32a;
+  border-color: #00a32a;
+  color: #fff;
+  text-decoration: none;
+  text-shadow: none;
+  padding: 5px 10px 5px 10px;
+  margin: 8px 0px 0px 0px;
+  border-radius: 3px;
+  font-weight: 600;
+  display: inline-block;
+}
+/*------- Typogarphy ----------*/
+
+.customize-control-typography li.typography-font-weight,
+.customize-control-typography li.typography-font-style,
+.customize-control-typography li.typography-font-size,
+.customize-control-typography li.typography-line-height {
+    float: left;
+    width: 50%;
+}
+.customize-control-typography li.typography-font-weight select,
+.customize-control-typography li.typography-font-style select {
+    width: 90%;
+}
+.customize-control-typography li.typography-font-weight,
+.customize-control-typography li.typography-font-size {
+    clear: both;
+}
+.customize-control-typography li.typography-font-size input,
+.customize-control-typography li.typography-line-height input {
+    width: 118px;
+}
+input.typography-font-color {
+   padding: 0;
+   margin: 0;
+}
+.customize-control-typography ul{
+    border-bottom: solid 1px #999;
+    padding-bottom: 12px;
+}
+#customize-control-h1_typography,
+#customize-control-h2_typography,
+#customize-control-h3_typography,
+#customize-control-h4_typography,
+#customize-control-h5_typography{
+   border-bottom: solid 2px #1e1e1e1e;
+   padding-bottom: 12px;
+}
+
+/* ---------Customizer--------- */
+.control-section-sirat h3.accordion-section-title {
+  font-size: 14px !important;
+  color: #121212 !important;
+  background: #febe00 !important;
+}
+a.button.button-secondary.alignright {
+  color: #fff;
+  box-shadow: none;
+  font-weight: bold;
+  padding: 4px 10px;
+  background: #121212;
+  height: 32px;   
+  font-size: 12px !important;
+  border-radius: 0;
+}
+a.button.button-secondary.alignright:hover {
+	background: #fff;
+	color: #121212;
+}
+/* ---------Image Toggle --------- */
+img.sirat-radio-img-img {
+   width: 80px;
+   margin-right: 3px;
+}
+img.sirat-radio-img-selected {
+   border: solid 2px #0085ba;
+}
+ul#sirat-img-container {
+    padding-left: 0;
+}
+/* ---------Excerpt & Logo --------- */
+input#_customize-input-sirat_excerpt_number,
+input#_customize-input-logo_size, 
+input#_customize-input-sirat_slider_excerpt_number,
+input#_customize-input-sirat_services_excerpt_number,
+input#_customize-input-sirat_slider_opacity_color {
+    width: 100%;
+}
+/* ---------FontAwesome Icon Styles--------- */
+.type-icon{
+  overflow: hidden;
+}
+.selected-icon{
+  background: #F6F6F6;
+  height: 45px;
+  line-height: 45px;
+  text-align: center;
+  border: 1px solid #EEE;
+  position: relative;
+  margin-right: 45px;
+  cursor: pointer;
+  font-size: 28px;
+}
+.selected-icon .fa{
+  display: block;
+  line-height: 45px;
+}
+.selected-icon span{
+  position: absolute;
+  background: #F6F6F6;
+  right: -45px;
+  top: -1px;
+  height: 45px;
+  width: 45px;
+  border: 1px solid #EEE;
+  font-size: 20px;
+}
+.icon-list{
+  height: 215px;
+  overflow-y: scroll;
+  font-size: 18px;
+  border: 1px solid #EEE;
+  border-right: 0;
+  border-top: 0;
+  padding-bottom: 4%;
+  display: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+}
+.icon-list li{
+  float: left;
+  margin: 4% 3% 0;
+  height: 40px;
+  width: 16%;
+  text-align: center;
+  line-height: 40px;
+  border: 1px solid #EEE;
+}
+.icon-list li:hover{
+  background: #333;
+  border: 1px solid #333;
+  color: #FFF;
+}
+.icon-list li.icon-active{
+  background: #0073aa;
+  border: 1px solid #0073aa;
+  color: #FFF;
+}
+.sirat-social-class{
+  display: none;
+}
+.socialInput{
+  padding: 10px;
+  font-size: 16px;
+}
+input[type="range"] {
+  width: 100%;
+}
+
+/*----------Reset-----------*/
+.reset-button {
+  cursor: pointer;
+  padding: 6px 10px;
+  display: inline-block;
+  color: #ffffff;
+  background: #0073aa;
+  font-size: 12px;
+  font-weight: 600;
+  float: right;
+}
+.modal {
+  display: none;
+  position: fixed; 
+  z-index: 99; 
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgb(0,0,0);
+  background-color: rgba(0,0,0,0.4);
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: #fefefe;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: auto;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+#customize-controls .modal-content h3{
+  font-size: 18px;
+  line-height: 1.5;
+}
+.modal-content p {
+  font-size: 15px;
+}
+.modal-content .refresh-btn {
+  padding: 3px 27px;
+  font-weight: bold;
+  font-size: 15px;
+  background: linear-gradient(#6ccef5,#016194);
+  border: none;
+  color: #fff;
+  text-decoration: none;
+  text-shadow: none;
+  display: inline-block;
+  line-height: 2.15384615;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.modal-content a.refresh-btn:hover{
+  background: #0771ab !important;
+}
+.close {
+  color: #aaaaaa;
+  text-align: right;
+  font-size: 28px;
+  font-weight: bold;
+  display: block;
+}
+.close:hover, .close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+/*customizer pro section Css*/
+li#accordion-section-sirat_partners .accordion-section-title:after,
+li#accordion-section-sirat_about .accordion-section-title:after,
+li#accordion-section-sirat_classes .accordion-section-title:after,
+li#accordion-section-sirat_quote .accordion-section-title:after,
+li#accordion-section-sirat_team .accordion-section-title:after,
+li#accordion-section-sirat_skills_and_video .accordion-section-title:after,
+li#accordion-section-sirat_pricing_plans .accordion-section-title:after,
+li#accordion-section-sirat_testimonials .accordion-section-title:after,
+li#accordion-section-sirat_our_blogs .accordion-section-title:after,
+li#accordion-section-sirat_newsletter .accordion-section-title:after{
+  content: "PRO";
+  padding: 4px 10px;
+  background: #0085ba;
+  color: #fff;
+  font: unset;
+  line-height: 18px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+#customize-controls .control-section:hover>li#accordion-section-sirat_partners .accordion-section-title:after,
+#customize-controls .control-section:hover>li#accordion-section-sirat_about .accordion-section-title:after,
+#customize-controls .control-section:hover>li#accordion-section-sirat_classes .accordion-section-title:after,
+#customize-controls .control-section:hover>li#accordion-section-sirat_quote .accordion-section-title:after,
+#customize-controls .control-section:hover>li#accordion-section-sirat_team .accordion-section-title:after,
+#customize-controls .control-section:hover>li#accordion-section-sirat_skills_and_video .accordion-section-title:after,
+#customize-controls .control-section:hover>li#accordion-section-sirat_pricing_plans .accordion-section-title:after,
+#customize-controls .control-section:hover>li#accordion-section-sirat_testimonials .accordion-section-title:after,
+#customize-controls .control-section:hover>li#accordion-section-sirat_our_blogs .accordion-section-title:after,
+#customize-controls .control-section:hover>li#accordion-section-sirat_newsletter .accordion-section-title:after{
+  color: #fff;
+}
+.customize-pane-parent .vw-bundle-banner a:focus{
+  outline: unset !important;
+  box-shadow: unset !important;
+}
+
+/* Theme Change Popup Styles */
+.theme-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-popup-content {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+  padding: 30px;
+  animation: popupSlideIn 0.3s ease-out;
+}
+
+@keyframes popupSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.theme-popup-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  color: #999;
+  cursor: pointer;
+  line-height: 20px;
+  transition: color 0.3s;
+}
+
+.theme-popup-close:hover {
+  color: #333;
+}
+
+.theme-popup-content h2 {
+  margin: 0 0 20px 0;
+  font-size: 24px;
+  color: #333;
+  border-bottom: 2px solid #0085ba;
+  padding-bottom: 10px;
+}
+
+.theme-popup-body {
+  margin-bottom: 0;
+}
+
+.theme-popup-body p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.theme-popup-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 25px;
+  justify-content: flex-end;
+}
+
+.theme-popup-buttons button {
+  padding: 8px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.theme-popup-buttons .button-primary {
+  background: #0085ba;
+  color: #fff;
+}
+
+.theme-popup-buttons .button-primary:hover {
+  background: #006a95;
+}
+
+.theme-popup-buttons .button {
+  background: #f3f3f3;
+  color: #555;
+}
+
+.theme-popup-buttons .button:hover {
+  background: #e0e0e0;
+}
+
+@media (max-width: 600px) {
+  .theme-popup-content {
+    width: 95%;
+    padding: 20px;
+  }
+  
+  .theme-popup-buttons {
+    flex-direction: column;
+  }
+  
+  .theme-popup-buttons button {
+    width: 100%;
+  }
+}
+
+/* Buy Pro Popup Styles */
+.buy-pro-content {
+  max-width: 700px;
+  padding: 40px;
+}
+
+.welcome-notice-popup {
+  text-align: center;
+}
+
+.welcome-notice-popup .notice-text {
+  padding: 0;
+}
+
+.welcome-notice-popup .welcome-text1 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.welcome-notice-popup .welcome-text2 {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+.welcome-notice-popup .welcome-text3 {
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.pro-popup-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pro-popup-buttons .button {
+  padding: 12px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pro-popup-buttons .button:nth-child(1) {
+  background: #0073aa;
+  color: #fff;
+}
+
+.pro-popup-buttons .button:nth-child(1):hover {
+  background: #005a87;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,115,170,0.3);
+}
+
+.pro-popup-buttons .button:nth-child(2) {
+  background: #00a32a;
+  color: #fff;
+}
+
+.pro-popup-buttons .button:nth-child(2):hover {
+  background: #008522;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,163,42,0.3);
+}
+
+.pro-popup-buttons .upgrade-pro-btn {
+  background: #02ceb4;
+  color: #fff;
+}
+
+.pro-popup-buttons .upgrade-pro-btn:hover {
+  background: #01b39d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(2,206,180,0.3);
+}
+
+.pro-popup-buttons .bundle-btn {
+  background: #ff6b35;
+  color: #fff;
+}
+
+.pro-popup-buttons .bundle-btn:hover {
+  background: #e85a25;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255,107,53,0.3);
+}
+
+@media (max-width: 768px) {
+  .buy-pro-content {
+    max-width: 90%;
+    padding: 30px 20px;
+  }
+  
+  .welcome-notice-popup .welcome-text1 {
+    font-size: 22px;
+  }
+  
+  .welcome-notice-popup .welcome-text2 {
+    font-size: 14px;
+  }
+  
+  .pro-popup-buttons {
+    flex-direction: column;
+  }
+  
+  .pro-popup-buttons .button {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+}

@@ -1,0 +1,41 @@
+<?php return array(
+    'root' => array(
+        'name' => 'learnpress/learnpress',
+        'pretty_version' => 'dev-develop',
+        'version' => 'dev-develop',
+        'reference' => '6afaa9b574a62307e227053793565c2c439aa63b',
+        'type' => 'library',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => false,
+    ),
+    'versions' => array(
+        'learnpress/learnpress' => array(
+            'pretty_version' => 'dev-develop',
+            'version' => 'dev-develop',
+            'reference' => '6afaa9b574a62307e227053793565c2c439aa63b',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'symfony/css-selector' => array(
+            'pretty_version' => 'v8.1.0',
+            'version' => '8.1.0.0',
+            'reference' => 'dc0e2be45c9b5588c82414f02ac574b4b986abcd',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/css-selector',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'tijsverkoyen/css-to-inline-styles' => array(
+            'pretty_version' => 'v2.4.0',
+            'version' => '2.4.0.0',
+            'reference' => 'f0292ccf0ec75843d65027214426b6b163b48b41',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../tijsverkoyen/css-to-inline-styles',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+    ),
+);
