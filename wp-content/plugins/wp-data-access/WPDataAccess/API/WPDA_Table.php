@@ -137,7 +137,7 @@ class WPDA_Table extends WPDA_API_Core {
     /**
      * Get table meta info.
      *
-     * @param WP_REST_Request $request Rest API request.
+     * @param \WP_REST_Request $request Rest API request.
      * @return \WP_Error|\WP_REST_Response
      */
     public function table_meta( $request ) {
@@ -166,7 +166,7 @@ class WPDA_Table extends WPDA_API_Core {
     /**
      * Database table query using the full primary key. Must return exactly one row.
      *
-     * @param WP_REST_Request $request Rest API request.
+     * @param \WP_REST_Request $request Rest API request.
      * @return \WP_Error|\WP_REST_Response
      */
     public function table_get( $request ) {
@@ -201,7 +201,7 @@ class WPDA_Table extends WPDA_API_Core {
     /**
      * Insert one row.
      *
-     * @param WP_REST_Request $request Rest API request.
+     * @param \WP_REST_Request $request Rest API request.
      * @return \WP_Error|\WP_REST_Response
      */
     public function table_insert( $request ) {
@@ -230,7 +230,7 @@ class WPDA_Table extends WPDA_API_Core {
     /**
      * Update uses primary key. Must return exactly one row.
      *
-     * @param WP_REST_Request $request Rest API request.
+     * @param \WP_REST_Request $request Rest API request.
      * @return \WP_Error|\WP_REST_Response
      */
     public function table_update( $request ) {
@@ -265,7 +265,7 @@ class WPDA_Table extends WPDA_API_Core {
     /**
      * Delete uses primary key. Must return exactly one row.
      *
-     * @param WP_REST_Request $request Rest API request.
+     * @param \WP_REST_Request $request Rest API request.
      * @return \WP_Error|\WP_REST_Response
      */
     public function table_delete( $request ) {
@@ -294,10 +294,11 @@ class WPDA_Table extends WPDA_API_Core {
     /**
      * Database table query to populate a list of values for a specific table/column.
      *
-     * @param WP_REST_Request $request Rest API request.
+     * @param \WP_REST_Request $request Rest API request.
      * @return \WP_Error|\WP_REST_Response
      */
     public function table_lov( $request ) {
+        return null;
     }
 
     /**
@@ -305,7 +306,7 @@ class WPDA_Table extends WPDA_API_Core {
      *
      * Supports: searching, ordering and pagination.
      *
-     * @param WP_REST_Request $request Rest API request.
+     * @param \WP_REST_Request $request Rest API request.
      * @return \WP_Error|\WP_REST_Response
      */
     public function table_select( $request ) {
@@ -392,6 +393,7 @@ class WPDA_Table extends WPDA_API_Core {
         $m2m_relationship = array(),
         $search_data_types = array()
     ) {
+        return null;
     }
 
     public function lookup(
@@ -539,8 +541,10 @@ class WPDA_Table extends WPDA_API_Core {
             $columns_selected = array();
             $search_data_types = array();
             foreach ( $table_columns as $table_column ) {
-                $columns_selected[$table_column['column_name']] = true;
-                $search_data_types[$table_column['column_name']] = $table_column['data_type'];
+                if ( isset( $table_column['column_name'], $table_column['data_type'] ) ) {
+                    $columns_selected[$table_column['column_name']] = true;
+                    $search_data_types[$table_column['column_name']] = $table_column['data_type'];
+                }
             }
             $selected_columns = $this->get_selected_columns( $columns_selected, $search_data_types );
             $sql = $wpdadb->prepare( "\n                        select {$selected_columns}\n                        from `%1s`\n                        {$where}\n                    ", array($tbl) );
@@ -797,6 +801,7 @@ class WPDA_Table extends WPDA_API_Core {
     }
 
     private function get_md( $md, $wpdadb, $m2m_relationship ) {
+        return null;
     }
 
     private function get_global_filter(
@@ -840,6 +845,7 @@ class WPDA_Table extends WPDA_API_Core {
         $m2m_relationship,
         $search_data_types
     ) {
+        return null;
     }
 
     private function get_where(
@@ -897,6 +903,10 @@ class WPDA_Table extends WPDA_API_Core {
 
     private function get_selected_columns( $column_names, $search_data_types ) {
         if ( !is_array( $column_names ) ) {
+            return '*';
+            // select all columns
+        }
+        if ( 0 === count( $column_names ) ) {
             return '*';
             // select all columns
         }
@@ -1178,6 +1188,7 @@ class WPDA_Table extends WPDA_API_Core {
         $m2m_relationship = array(),
         $search_data_types = array()
     ) {
+        return null;
     }
 
     public static function add_condition( $where_lines, $operand = 'and' ) {
@@ -1195,7 +1206,7 @@ class WPDA_Table extends WPDA_API_Core {
      * @param string $dbs Database schema name.
      * @param string $tbl Database table name.
      * @param string $waa With admin actions.
-     * @return array\object
+     * @return array | object
      */
     public function get_table_meta_data( $dbs, $tbl, $waa ) {
         $sql_create_table = '';
@@ -1346,7 +1357,7 @@ class WPDA_Table extends WPDA_API_Core {
      *
      * @param string $dbs Remote or local database connection string.
      * @param string $tbl Database table name.
-     * @param onject $request Request object.
+     * @param object $request Request object.
      * @param string $action Possible values: select, insert, update, delete.
      * @return bool
      */

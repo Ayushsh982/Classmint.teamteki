@@ -4,7 +4,7 @@ Contributors: wpdataaccess, peterschulznl, maxxschulz, kimmyx, freemius
 Tags: table builder, data table, datatable, app builder, dashboard
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 5.5.81
+Stable tag: 5.5.82
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,26 @@ WP Data Access is designed as a **true no-code builder**: everything works out o
 And you're all set! 🚀
 
 == Changelog ==
+
+= 5.5.82 =
+* Released 2026-08-26
+* Added: App context to computed form fields
+* Added: Localize WordPress standard date format
+* Added: Skip relation table pre-search step
+* Changed: Query Builder tab styling
+* Fixed: Class name not added to computed field
+* Fixed: Disable media action buttons for anonymous users
+* Fixed: Media library not launched in fullscreen mode
+* Fixed: Removed unused columns from response
+* Fixed: Reevaluation of already substituted placeholders
+* Fixed: Table settings crash when changing media to secure document
+* Fixed: Theme font size does not size table cells
+* Fixed: Media columns missing class names
+* Fixed: Dynamic lookup over multiple columns not populated in insert mode
+* Fixed: Query not scheduled
+* Fixed: Numeric columns labels not processed correctly in Query Builder
+* Fixed: Numeric columns labels not processed correctly in charts
+* Fixed: Inline editing global save not working
 
 = 5.5.81 =
 * Released 2026-08-18

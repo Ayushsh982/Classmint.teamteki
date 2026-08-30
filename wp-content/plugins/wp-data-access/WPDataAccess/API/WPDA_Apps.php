@@ -1014,6 +1014,25 @@ class WPDA_Apps extends WPDA_API_Core {
                     }
                 }
             }
+            if ( isset( $settings['columns'] ) && is_array( $settings['columns'] ) && '1' !== $rel_tab ) {
+                $queryable_columns = array();
+                if ( isset( $settings['table']['columns'] ) && is_array( $settings['table']['columns'] ) ) {
+                    foreach ( $settings['table']['columns'] as $column ) {
+                        if ( isset( $column['queryable'] ) && $column['queryable'] ) {
+                            $queryable_columns[] = $column['columnName'];
+                        }
+                    }
+                }
+                $app_columns = array();
+                foreach ( $settings['columns'] as $column ) {
+                    if ( isset( $column['columnName'], $column['isSelected'] ) && $column['isSelected'] ) {
+                        $app_columns[$column['columnName']] = in_array( $column['columnName'], $queryable_columns );
+                    }
+                }
+                if ( 0 < count( $app_columns ) ) {
+                    $col = $app_columns;
+                }
+            }
             $table_api = new WPDA_Table();
             return $table_api->select(
                 $dbs,
@@ -1067,6 +1086,7 @@ class WPDA_Apps extends WPDA_API_Core {
             if ( true === $value['isSelected'] ) {
                 return $value['columnName'];
             }
+            return null;
         }, $columns );
     }
 
@@ -1551,12 +1571,21 @@ class WPDA_Apps extends WPDA_API_Core {
             }
             $suppress = $wpdadb->suppress_errors( true );
             $chart_data = $wpdadb->get_results( $query, 'ARRAY_A' );
+            // Add an * before each label to support numeric labels
+            $chart_data_converted = array();
+            foreach ( $chart_data as $data ) {
+                $row = array();
+                foreach ( $data as $key => $value ) {
+                    $row['*' . $key] = $value;
+                }
+                $chart_data_converted[] = $row;
+            }
             $wpdadb->get_results( "create temporary table `wpda_chart_data_types` as {$query}", 'ARRAY_A' );
             $explain = $wpdadb->get_results( "desc `wpda_chart_data_types`", 'ARRAY_A' );
             $wpdadb->get_results( "drop temporary table `wpda_chart_data_types`", 'ARRAY_A' );
             $wpdadb->suppress_errors( $suppress );
             return array(
-                'data'    => $chart_data,
+                'data'    => $chart_data_converted,
                 'explain' => $explain,
             );
         } else {
@@ -2039,6 +2068,7 @@ class WPDA_Apps extends WPDA_API_Core {
             if ( isset( $e['app_id_detail'] ) ) {
                 return $e['app_id_detail'];
             }
+            return null;
         }, $apps );
         $app_titles = array();
         foreach ( $app_id_details as $app_id_detail ) {
@@ -2085,6 +2115,7 @@ class WPDA_Apps extends WPDA_API_Core {
             'scroll_offset' => WPDA::get_option( WPDA::OPTION_APPS_SCROLL_OFFSET ),
             'upload'        => @ini_get( 'upload_max_filesize' ),
             'uploadBytes'   => $this->uploadToBytes( @ini_get( 'upload_max_filesize' ) ),
+            'locale'        => get_locale(),
         ];
         return $settings;
     }
@@ -2569,6 +2600,7 @@ SQL;
         // Process $search_custom > URL parameters
         global $wpdb;
         $replacements = array();
+        $nonce = bin2hex( random_bytes( 8 ) );
         foreach ( self::METHODS as $method ) {
             $offset = 0;
             $search = $method . '[';
@@ -2600,7 +2632,7 @@ SQL;
                         }
                     }
                     // Handle POST args
-                    $placeholder = '###URL_PLACEHOLDER_' . md5( $filter ) . '###';
+                    $placeholder = '###URL_PLACEHOLDER_' . $nonce . '_' . md5( $filter ) . '###';
                     $where = str_replace( $filter, $placeholder, $where );
                     // Handle REQUEST args
                     if ( $arg_value !== null ) {
@@ -2625,7 +2657,7 @@ SQL;
                 // Add filter to where clause.
                 for ($i = 0; $i < count( $filter_field_name_array ); $i++) {
                     $where .= ( '' === $where ? '' : ' and ' );
-                    $placeholder = '###SHORTCODE_PARAM_' . md5( $filter_field_name_array[$i] ) . '###';
+                    $placeholder = '###SHORTCODE_PARAM_' . $nonce . '_' . md5( $filter_field_name_array[$i] ) . '###';
                     $where .= ' `' . $filter_field_name_array[$i] . '` like ' . $placeholder;
                     $replacements[$placeholder] = $wpdb->prepare( '%s', $filter_field_value_array[$i] );
                 }
@@ -2636,7 +2668,7 @@ SQL;
             foreach ( $shortcode_params as $column_name => $column_value ) {
                 $occurences = substr_count( strtolower( $where ), strtolower( "shortcodeParam['{$column_name}']" ) );
                 if ( 0 < $occurences ) {
-                    $placeholder = '###SHORTCODE_PARAM_' . md5( $column_name ) . '###';
+                    $placeholder = '###SHORTCODE_PARAM_' . $nonce . '_' . md5( $column_name ) . '###';
                     $where = str_ireplace( "shortcodeParam['{$column_name}']", $placeholder, $where );
                     $replacements[$placeholder] = $wpdb->prepare( '%s', sanitize_text_field( $column_value ) );
                 }
@@ -2658,15 +2690,14 @@ SQL;
         // Substitute all dynamic parameters
         if ( is_array( $dynamic_params ) && 0 < count( $dynamic_params ) ) {
             foreach ( $dynamic_params as $column_name => $column_value ) {
-                $placeholder = '###DYNAMIC_PARAM_' . md5( $column_name ) . '###';
-                $where = str_ireplace( "{:{$column_name}}", $placeholder, $where );
-                $replacements[$placeholder] = $wpdb->prepare( '%s', $column_value );
+                if ( stripos( $where, "{:{$column_name}}" ) !== false ) {
+                    $placeholder = '###DYNAMIC_PARAM_' . $nonce . '_' . md5( $column_name ) . '###';
+                    $where = str_ireplace( "{:{$column_name}}", $placeholder, $where );
+                    $replacements[$placeholder] = $wpdb->prepare( '%s', $column_value );
+                }
             }
         }
-        foreach ( $replacements as $placeholder => $value ) {
-            $where = str_replace( $placeholder, $value, $where );
-        }
-        return $where;
+        return strtr( $where, $replacements );
     }
 
 }

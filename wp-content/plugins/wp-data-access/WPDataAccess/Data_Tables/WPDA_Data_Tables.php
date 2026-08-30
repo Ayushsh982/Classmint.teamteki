@@ -9,6 +9,7 @@
 namespace WPDataAccess\Data_Tables;
 
 use stdClass;
+use WPDataAccess\API\WPDA_Apps;
 use WPDataAccess\Connection\WPDADB;
 use WPDataAccess\Data_Dictionary\WPDA_Dictionary_Exist;
 use WPDataAccess\Data_Dictionary\WPDA_List_Columns_Cache;
@@ -20,9 +21,6 @@ use WPDataAccess\List_Table\WPDA_List_Table;
 use WPDataAccess\Premium\WPDAPRO_Data_Publisher\WPDAPRO_Data_Publisher_Manage_Styles;
 use WPDataAccess\Premium\WPDAPRO_Geo_Location\WPDAPRO_Geo_Location_WS;
 use WPDataAccess\Settings\WPDA_Settings_Legacy_DataTables;
-use WPDataAccess\Templates\WPDAPRO_Template_Data_Publisher_Color;
-use WPDataAccess\Templates\WPDAPRO_Template_Data_Publisher_Space;
-use WPDataAccess\Templates\WPDA_Template_Data_Publisher_Corner;
 use WPDataAccess\WPDA;
 /**
  * Class WPDA_Data_Tables
@@ -31,8 +29,6 @@ use WPDataAccess\WPDA;
  * @since   1.0.0
  */
 class WPDA_Data_Tables {
-    const METHODS = array('httpGet', 'httpPost', 'httpRequest');
-
     protected static $pub_ids = array();
 
     protected $pub_id_seq = '';
@@ -391,6 +387,7 @@ class WPDA_Data_Tables {
     }
 
     protected function get_geolocation_settings() {
+        return null;
     }
 
     protected function get_columns( $column_names ) {
@@ -477,6 +474,7 @@ class WPDA_Data_Tables {
     }
 
     protected function add_export_button( $button_type, $icon, $hint ) {
+        return null;
     }
 
     protected function add_geolocation(
@@ -548,7 +546,7 @@ class WPDA_Data_Tables {
      * @param string $header2 Adds an extra header row if TRUE.
      * @param mixed  $geolocation
      *
-     * @return HTML output
+     * @return string output
      */
     protected function show_header(
         $responsive,
@@ -1234,6 +1232,7 @@ class WPDA_Data_Tables {
         $offset,
         $limit
     ) {
+        return null;
     }
 
     private function get_orderby_from_request() {
@@ -1265,12 +1264,15 @@ class WPDA_Data_Tables {
     }
 
     public function qb_group( $data ) {
+        return null;
     }
 
     public function qb_criteria( $crit ) {
+        return null;
     }
 
     private function qb( $labels ) {
+        return null;
     }
 
     private function create_empty_response( $error = '', $debug = '' ) {
