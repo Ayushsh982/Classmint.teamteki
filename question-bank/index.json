@@ -1,0 +1,45 @@
+{
+    "generated_at": "2026-08-27T09:54:30+00:00",
+    "tables": {
+        "CAT_questions": {
+            "rows": 8726,
+            "bytes": 4879677,
+            "path": "question-bank/CAT_questions.json"
+        },
+        "passages": {
+            "rows": 35,
+            "bytes": 127622,
+            "path": "question-bank/passages.json"
+        },
+        "verbal_ability_contexts": {
+            "rows": 321,
+            "bytes": 356532,
+            "path": "question-bank/verbal_ability_contexts.json"
+        },
+        "wp_custom_question_bank": {
+            "rows": 1153,
+            "bytes": 411070,
+            "path": "question-bank/wp_custom_question_bank.json"
+        },
+        "wp_jee_question_bank": {
+            "rows": 2500,
+            "bytes": 876631,
+            "path": "question-bank/wp_jee_question_bank.json"
+        },
+        "wp_jipmat_question_bank": {
+            "rows": 285,
+            "bytes": 66947,
+            "path": "question-bank/wp_jipmat_question_bank.json"
+        },
+        "NEET_question_bank": {
+            "rows": 0,
+            "bytes": 2,
+            "path": "question-bank/NEET_question_bank.json"
+        },
+        "wp_jeemains_pyq_questions": {
+            "rows": 0,
+            "bytes": 2,
+            "path": "question-bank/wp_jeemains_pyq_questions.json"
+        }
+    }
+}
