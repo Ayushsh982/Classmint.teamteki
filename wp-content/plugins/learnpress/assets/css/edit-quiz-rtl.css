@@ -112,6 +112,9 @@
   background-color: unset !important;
   outline: none !important;
   color: rgb(204, 204, 204) !important;
+  font-size: 30px;
+  box-shadow: none !important;
+  position: absolute;
 }
 .swal2-popup .swal2-close:hover {
   color: #f27474 !important;
@@ -440,15 +443,20 @@
 .lp-popup-items-to-select .list-items, .lp-popup-items-to-select .list-items-selected {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   overflow-y: auto;
   min-height: 260px;
-  max-height: 460px;
+  max-height: 50vh;
   margin: 0;
 }
 .lp-popup-items-to-select .list-items li, .lp-popup-items-to-select .list-items-selected li {
   margin: 0;
   cursor: pointer;
+  padding: 10px;
+  border: 1px solid white;
+}
+.lp-popup-items-to-select .list-items li:hover, .lp-popup-items-to-select .list-items-selected li:hover {
+  background-color: #eff6ff;
+  border-color: #e2eefe;
 }
 .lp-popup-items-to-select .list-items-selected li {
   display: flex;
@@ -478,8 +486,18 @@
 .lp-popup-items-to-select .pagination {
   display: flex;
   flex-wrap: wrap;
-  margin: 10px -10px -10px 0;
+  margin: 10px 0 -10px 0;
   align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+.lp-popup-items-to-select .pagination::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: #ececec;
+  position: relative;
 }
 .lp-popup-items-to-select .pagination li {
   margin: 0;

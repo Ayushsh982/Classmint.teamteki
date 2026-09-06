@@ -943,6 +943,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   debounce: () => (/* binding */ debounce),
 /* harmony export */   eventHandlers: () => (/* binding */ eventHandlers),
+/* harmony export */   fullScreenView: () => (/* binding */ fullScreenView),
 /* harmony export */   getDataOfForm: () => (/* binding */ getDataOfForm),
 /* harmony export */   getFieldKeysOfForm: () => (/* binding */ getFieldKeysOfForm),
 /* harmony export */   listenElementCreated: () => (/* binding */ listenElementCreated),
@@ -956,7 +957,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
-/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse)
+/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
+/* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
 /**
  * Utils functions
@@ -965,14 +967,17 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.6
+ * @version 1.0.7
  */
 const lpClassName = {
   hidden: 'lp-hidden',
   loading: 'loading',
   elCollapse: 'lp-collapse',
   elSectionToggle: '.lp-section-toggle',
-  elTriggerToggle: '.lp-trigger-toggle'
+  elTriggerToggle: '.lp-trigger-toggle',
+  elBtnFullScreen: '.lp-btn-full-screen-view',
+  elFullScreen: 'lp-full-screen-view',
+  elBtnFullScreenClose: 'lp-full-screen-view__close'
 };
 const lpFetchAPI = (url, data = {}, functions = {}) => {
   if ('function' === typeof functions.before) {
@@ -1290,6 +1295,139 @@ const debounce = (func, wait = 500) => {
     clearTimeout(timer);
     timer = setTimeout(() => func(args), wait);
   };
+};
+
+/**
+ * Initialize lp-toggle-enable components.
+ *
+ * Finds all `.lp-toggle-enable` elements and wires up toggle behavior.
+ * Reads initial state from `data-enabled` attribute ("true"/"false").
+ * Calls `data-on-toggle` callback (if provided via options) on state change.
+ *
+ * HTML structure:
+ * <label class="lp-toggle-enable" data-enabled="true">
+ *   <input type="checkbox" class="lp-toggle-enable__input" />
+ *   <span class="lp-toggle-enable__track"></span>
+ * </label>
+ *
+ * @param {string}   selector CSS selector for toggle elements (default: '.lp-toggle-enable')
+ * @param {Function} onToggle Optional callback( el, isEnabled ) called on state change
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpToggleEnableInit = 0;
+const toggleEnable = (onToggle = null) => {
+  if (window.lpToggleEnableInit) {
+    return;
+  }
+  window.lpToggleEnableInit = 1;
+  const selector = '.lp-toggle-enable';
+  const updateUI = (toggle, isEnabled) => {
+    toggle.classList.toggle('is-enabled', isEnabled);
+    const input = toggle.querySelector('.lp-toggle-enable__input');
+    if (input) {
+      input.checked = isEnabled;
+      input.value = isEnabled ? '1' : '0';
+    }
+  };
+
+  // Delegate click handling via eventHandlers.
+  eventHandlers('click', [{
+    selector,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const toggle = target.closest(selector);
+      if (!toggle || toggle.classList.contains('is-disabled')) {
+        return;
+      }
+      e.preventDefault();
+      const isEnabled = !toggle.classList.contains('is-enabled');
+      updateUI(toggle, isEnabled);
+      if ('function' === typeof onToggle) {
+        onToggle(toggle, isEnabled);
+      }
+    }
+  }]);
+};
+
+/**
+ * Initialize custom fullscreen view buttons.
+ *
+ * Delegates clicks on `.lp-btn-full-screen-view` buttons to
+ * `lpToggleFullscreenView`. Reads the `data-target` attribute to find the
+ * target element. Falls back to the button's parent element when
+ * `data-target` is not provided.
+ *
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpFullScreenViewInit = 0;
+const fullScreenView = () => {
+  if (window.lpFullScreenViewInit) {
+    return;
+  }
+  window.lpFullScreenViewInit = 1;
+  let lastScrollY = 0;
+  const lpToggleFullscreenView = (elTarget, elBtnFullScreen = null) => {
+    const isFullscreen = elTarget.classList.contains(lpClassName.elFullScreen);
+    if (isFullscreen) {
+      elTarget.classList.remove(lpClassName.elFullScreen);
+      document.documentElement.classList.remove('lp-full-screen-active');
+      window.scrollTo(0, lastScrollY);
+    } else {
+      lastScrollY = window.scrollY;
+      elTarget.classList.add(lpClassName.elFullScreen);
+      document.documentElement.classList.add('lp-full-screen-active');
+    }
+    if (!isFullscreen) {
+      if (!elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`)) {
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = lpClassName.elBtnFullScreenClose;
+        closeButton.setAttribute('aria-label', 'Close');
+        closeButton.innerHTML = lpData.i18n.closeButtonFullScreen || 'Close &times;';
+        closeButton.addEventListener('click', e => {
+          e.preventDefault();
+          lpToggleFullscreenView(elTarget);
+        });
+        elTarget.appendChild(closeButton);
+      }
+    } else {
+      const closeButton = elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`);
+      if (closeButton) {
+        closeButton.remove();
+      }
+    }
+  };
+  eventHandlers('click', [{
+    selector: lpClassName.elBtnFullScreen,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const elBtnFullScreen = target.closest(lpClassName.elBtnFullScreen);
+      if (!elBtnFullScreen) {
+        console.log('No full screen button found');
+        return;
+      }
+      e.preventDefault();
+      let elTarget = null;
+      const targetSelector = elBtnFullScreen.dataset.targetFullscreen;
+      console.log(targetSelector);
+      if (targetSelector) {
+        elTarget = document.querySelector(targetSelector);
+      }
+      if (!elTarget) {
+        console.log('No target element found');
+        return;
+      }
+      lpToggleFullscreenView(elTarget, elBtnFullScreen);
+    }
+  }]);
 };
 
 /***/ },
@@ -2357,17 +2495,17 @@ module.exports = window["wp"]["url"];
 /******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
-/******/ 	const __webpack_module_cache__ = {};
+/******/ 	var __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
-/******/ 		const cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
 /******/ 			return cachedModule.exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
-/******/ 		const module = __webpack_module_cache__[moduleId] = {
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
 /******/ 			id: moduleId,
 /******/ 			// no module.loaded needed
 /******/ 			exports: {}
@@ -2376,7 +2514,7 @@ module.exports = window["wp"]["url"];
 /******/ 		// Execute the module function
 /******/ 		if (!(moduleId in __webpack_modules__)) {
 /******/ 			delete __webpack_module_cache__[moduleId];
-/******/ 			const e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			var e = new Error("Cannot find module '" + moduleId + "'");
 /******/ 			e.code = 'MODULE_NOT_FOUND';
 /******/ 			throw e;
 /******/ 		}
@@ -2391,7 +2529,7 @@ module.exports = window["wp"]["url"];
 /******/ 	(() => {
 /******/ 		// getDefaultExport function for compatibility with non-harmony modules
 /******/ 		__webpack_require__.n = (module) => {
-/******/ 			const getter = module && module.__esModule ?
+/******/ 			var getter = module && module.__esModule ?
 /******/ 				() => (module['default']) :
 /******/ 				() => (module);
 /******/ 			__webpack_require__.d(getter, { a: getter });
@@ -2401,26 +2539,11 @@ module.exports = window["wp"]["url"];
 /******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
-/******/ 		// define getter/value functions for harmony exports
+/******/ 		// define getter functions for harmony exports
 /******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			if(Array.isArray(definition)) {
-/******/ 				var i = 0;
-/******/ 				while(i < definition.length) {
-/******/ 					var key = definition[i++];
-/******/ 					var binding = definition[i++];
-/******/ 					if(!__webpack_require__.o(exports, key)) {
-/******/ 						if(binding === 0) {
-/******/ 							Object.defineProperty(exports, key, { enumerable: true, value: definition[i++] });
-/******/ 						} else {
-/******/ 							Object.defineProperty(exports, key, { enumerable: true, get: binding });
-/******/ 						}
-/******/ 					} else if(binding === 0) { i++; }
-/******/ 				}
-/******/ 			} else {
-/******/ 				for(var key in definition) {
-/******/ 					if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 						Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 					}
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
 /******/ 		};
@@ -2428,14 +2551,14 @@ module.exports = window["wp"]["url"];
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.hasOwn(obj, prop))
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
 /******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(Symbol.toStringTag) {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
 /******/ 			Object.defineProperty(exports, '__esModule', { value: true });
@@ -2448,7 +2571,7 @@ module.exports = window["wp"]["url"];
 /******/ 	})();
 /******/ 	
 /************************************************************************/
-let __webpack_exports__ = {};
+var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
 (() => {
 "use strict";

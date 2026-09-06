@@ -429,6 +429,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   debounce: () => (/* binding */ debounce),
 /* harmony export */   eventHandlers: () => (/* binding */ eventHandlers),
+/* harmony export */   fullScreenView: () => (/* binding */ fullScreenView),
 /* harmony export */   getDataOfForm: () => (/* binding */ getDataOfForm),
 /* harmony export */   getFieldKeysOfForm: () => (/* binding */ getFieldKeysOfForm),
 /* harmony export */   listenElementCreated: () => (/* binding */ listenElementCreated),
@@ -442,7 +443,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
-/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse)
+/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
+/* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
 /**
  * Utils functions
@@ -451,14 +453,17 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.6
+ * @version 1.0.7
  */
 const lpClassName = {
   hidden: 'lp-hidden',
   loading: 'loading',
   elCollapse: 'lp-collapse',
   elSectionToggle: '.lp-section-toggle',
-  elTriggerToggle: '.lp-trigger-toggle'
+  elTriggerToggle: '.lp-trigger-toggle',
+  elBtnFullScreen: '.lp-btn-full-screen-view',
+  elFullScreen: 'lp-full-screen-view',
+  elBtnFullScreenClose: 'lp-full-screen-view__close'
 };
 const lpFetchAPI = (url, data = {}, functions = {}) => {
   if ('function' === typeof functions.before) {
@@ -776,6 +781,139 @@ const debounce = (func, wait = 500) => {
     clearTimeout(timer);
     timer = setTimeout(() => func(args), wait);
   };
+};
+
+/**
+ * Initialize lp-toggle-enable components.
+ *
+ * Finds all `.lp-toggle-enable` elements and wires up toggle behavior.
+ * Reads initial state from `data-enabled` attribute ("true"/"false").
+ * Calls `data-on-toggle` callback (if provided via options) on state change.
+ *
+ * HTML structure:
+ * <label class="lp-toggle-enable" data-enabled="true">
+ *   <input type="checkbox" class="lp-toggle-enable__input" />
+ *   <span class="lp-toggle-enable__track"></span>
+ * </label>
+ *
+ * @param {string}   selector CSS selector for toggle elements (default: '.lp-toggle-enable')
+ * @param {Function} onToggle Optional callback( el, isEnabled ) called on state change
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpToggleEnableInit = 0;
+const toggleEnable = (onToggle = null) => {
+  if (window.lpToggleEnableInit) {
+    return;
+  }
+  window.lpToggleEnableInit = 1;
+  const selector = '.lp-toggle-enable';
+  const updateUI = (toggle, isEnabled) => {
+    toggle.classList.toggle('is-enabled', isEnabled);
+    const input = toggle.querySelector('.lp-toggle-enable__input');
+    if (input) {
+      input.checked = isEnabled;
+      input.value = isEnabled ? '1' : '0';
+    }
+  };
+
+  // Delegate click handling via eventHandlers.
+  eventHandlers('click', [{
+    selector,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const toggle = target.closest(selector);
+      if (!toggle || toggle.classList.contains('is-disabled')) {
+        return;
+      }
+      e.preventDefault();
+      const isEnabled = !toggle.classList.contains('is-enabled');
+      updateUI(toggle, isEnabled);
+      if ('function' === typeof onToggle) {
+        onToggle(toggle, isEnabled);
+      }
+    }
+  }]);
+};
+
+/**
+ * Initialize custom fullscreen view buttons.
+ *
+ * Delegates clicks on `.lp-btn-full-screen-view` buttons to
+ * `lpToggleFullscreenView`. Reads the `data-target` attribute to find the
+ * target element. Falls back to the button's parent element when
+ * `data-target` is not provided.
+ *
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpFullScreenViewInit = 0;
+const fullScreenView = () => {
+  if (window.lpFullScreenViewInit) {
+    return;
+  }
+  window.lpFullScreenViewInit = 1;
+  let lastScrollY = 0;
+  const lpToggleFullscreenView = (elTarget, elBtnFullScreen = null) => {
+    const isFullscreen = elTarget.classList.contains(lpClassName.elFullScreen);
+    if (isFullscreen) {
+      elTarget.classList.remove(lpClassName.elFullScreen);
+      document.documentElement.classList.remove('lp-full-screen-active');
+      window.scrollTo(0, lastScrollY);
+    } else {
+      lastScrollY = window.scrollY;
+      elTarget.classList.add(lpClassName.elFullScreen);
+      document.documentElement.classList.add('lp-full-screen-active');
+    }
+    if (!isFullscreen) {
+      if (!elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`)) {
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = lpClassName.elBtnFullScreenClose;
+        closeButton.setAttribute('aria-label', 'Close');
+        closeButton.innerHTML = lpData.i18n.closeButtonFullScreen || 'Close &times;';
+        closeButton.addEventListener('click', e => {
+          e.preventDefault();
+          lpToggleFullscreenView(elTarget);
+        });
+        elTarget.appendChild(closeButton);
+      }
+    } else {
+      const closeButton = elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`);
+      if (closeButton) {
+        closeButton.remove();
+      }
+    }
+  };
+  eventHandlers('click', [{
+    selector: lpClassName.elBtnFullScreen,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const elBtnFullScreen = target.closest(lpClassName.elBtnFullScreen);
+      if (!elBtnFullScreen) {
+        console.log('No full screen button found');
+        return;
+      }
+      e.preventDefault();
+      let elTarget = null;
+      const targetSelector = elBtnFullScreen.dataset.targetFullscreen;
+      console.log(targetSelector);
+      if (targetSelector) {
+        elTarget = document.querySelector(targetSelector);
+      }
+      if (!elTarget) {
+        console.log('No target element found');
+        return;
+      }
+      lpToggleFullscreenView(elTarget, elBtnFullScreen);
+    }
+  }]);
 };
 
 /***/ },
@@ -2086,7 +2224,6 @@ __webpack_require__.r(__webpack_exports__);
     create: null,
     createOnBlur: false,
     createFilter: null,
-    clearAfterSelect: false,
     highlight: true,
     openOnFocus: true,
     shouldOpen: null,
@@ -2285,10 +2422,9 @@ function getSettings(input, settings_user) {
      *
      */
     var init_textbox = () => {
-        var _a, _b;
         const data_raw = input.getAttribute(attr_data);
         if (!data_raw) {
-            var value = (_b = (_a = input === null || input === void 0 ? void 0 : input.value) === null || _a === void 0 ? void 0 : _a.trim()) !== null && _b !== void 0 ? _b : '';
+            var value = input.value.trim() || '';
             if (!settings.allowEmptyOption && !value.length)
                 return;
             const values = value.split(settings.delimiter);
@@ -2331,7 +2467,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -2508,7 +2644,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -2573,7 +2709,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -2766,7 +2902,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -2817,10 +2953,8 @@ function plugin (userOptions) {
   const options = Object.assign({
     className: 'clear-button',
     title: 'Clear All',
-    role: 'button',
-    tabindex: 0,
     html: data => {
-      return `<div class="${data.className}" title="${data.title}" role="${data.role}" tabindex="${data.tabindex}">&times;</div>`;
+      return `<div class="${data.className}" title="${data.title}">&#10799;</div>`;
     }
   }, userOptions);
   self.on('initialize', () => {
@@ -2831,7 +2965,6 @@ function plugin (userOptions) {
       if (self.settings.mode === 'single' && self.settings.allowEmptyOption) {
         self.addItem('');
       }
-      self.refreshOptions(false);
       evt.preventDefault();
       evt.stopPropagation();
     });
@@ -2856,7 +2989,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3090,7 +3223,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3206,7 +3339,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3361,7 +3494,6 @@ function plugin () {
   self.settings.shouldOpen = true; // make sure the input is shown even if there are no options to display in the dropdown
 
   self.hook('before', 'setup', () => {
-    var _self$input;
     self.focus_node = self.control;
     addClasses(self.control_input, 'dropdown-input');
     const div = getDom('<div class="dropdown-input-wrap">');
@@ -3372,15 +3504,6 @@ function plugin () {
     const placeholder = getDom('<input class="items-placeholder" tabindex="-1" />');
     placeholder.placeholder = self.settings.placeholder || '';
     self.control.append(placeholder);
-    /**
-     * TomSelect renders a custom control with a focusable <input class="items-placeholder">.
-     * The source <select>'s aria-label is not automatically propagated to that input,
-     * which triggers "Missing form label" accessibility warnings.
-     * This helper copies the label from the <select> onto the generated input.
-     */
-    const label = (_self$input = self.input) == null ? void 0 : _self$input.getAttribute('aria-label');
-    if (!label) return;
-    placeholder.setAttribute('aria-label', label);
   });
   self.on('initialize', () => {
     // set tabIndex on control to -1, otherwise [shift+tab] will put focus right back on control_input
@@ -3444,7 +3567,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3532,7 +3655,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3572,7 +3695,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3618,7 +3741,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3718,7 +3841,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3736,6 +3859,14 @@ __webpack_require__.r(__webpack_exports__);
  *   1         -> '1'
  *
  */
+
+/**
+ * Escapes a string for use within HTML.
+ *
+ */
+const escape_html = str => {
+  return (str + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+};
 
 /**
  * Prevent default
@@ -3801,29 +3932,26 @@ const isHtmlString = arg => {
  */
 
 function plugin (userOptions) {
-  const self = this;
   const options = Object.assign({
-    label: '×',
+    label: '&times;',
     title: 'Remove',
     className: 'remove',
-    tabindex: -1,
-    role: 'button',
-    html: data => {
-      var _data$tabindex;
-      const el = document.createElement('div');
-      el.className = data.className || '';
-      el.title = data.title || '';
-      el.setAttribute('role', data.role || 'button');
-      el.tabIndex = (_data$tabindex = data.tabindex) != null ? _data$tabindex : -1;
-      el.textContent = data.label || '';
-      return el;
-    }
+    append: true
   }, userOptions);
+
+  //options.className = 'remove-single';
+  var self = this;
+
+  // override the render method to add remove button to each item
+  if (!options.append) {
+    return;
+  }
+  var html = '<a href="javascript:void(0)" class="' + options.className + '" tabindex="-1" title="' + escape_html(options.title) + '">' + options.label + '</a>';
   self.hook('after', 'setupTemplates', () => {
     var orig_render_item = self.settings.render.item;
     self.settings.render.item = (data, escape) => {
       var item = getDom(orig_render_item.call(self, data, escape));
-      var close_button = getDom(options.html(options));
+      var close_button = getDom(html);
       item.appendChild(close_button);
       addEvent(close_button, 'mousedown', evt => {
         preventDefault(evt, true);
@@ -3861,7 +3989,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3917,7 +4045,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -4001,7 +4129,7 @@ const castAsArray = arg => {
 };
 
 /**
- * Plugin: "virtual_scroll" (Tom Select)
+ * Plugin: "restore_on_backspace" (Tom Select)
  * Copyright (c) contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -4025,10 +4153,6 @@ function plugin () {
   var loading_more = false;
   var load_more_opt;
   var default_values = [];
-  var default_values_loaded = false;
-  var default_pagination;
-  var default_options = [];
-  var html_values = [];
   if (!self.settings.shouldLoadMore) {
     // return true if additional results should be loaded
     self.settings.shouldLoadMore = () => {
@@ -4060,7 +4184,7 @@ function plugin () {
 
   // can we load more results for given query?
   const canLoadMore = query => {
-    if (self.settings.maxOptions !== null && typeof self.settings.maxOptions === 'number' && dropdown_content.children.length >= self.settings.maxOptions) {
+    if (typeof self.settings.maxOptions === 'number' && dropdown_content.children.length >= self.settings.maxOptions) {
       return false;
     }
     if (query in pagination && pagination[query]) {
@@ -4120,11 +4244,7 @@ function plugin () {
   // wrap the load
   self.hook('instead', 'loadCallback', (options, optgroups) => {
     if (!loading_more) {
-      // When searching (non-empty query), keep selected items and HTML default options,
-      // but remove preloaded remote options so they don't bleed into search results.
-      // For empty query, use clearFilter (keeps default_values + items).
-      const activeFilter = self.lastValue !== '' ? (_option, value) => self.items.indexOf(value) >= 0 || html_values.indexOf(value) >= 0 : clearFilter;
-      self.clearOptions(activeFilter);
+      self.clearOptions(clearFilter);
     } else if (load_more_opt) {
       const first_option = options[0];
       if (first_option !== undefined) {
@@ -4132,27 +4252,7 @@ function plugin () {
       }
     }
     orig_loadCallback.call(self, options, optgroups);
-
-    // After the initial preload (empty query), snapshot default_values and option objects
-    // so they can be restored when the user clears their search.
-    if (!loading_more && !default_values_loaded) {
-      default_values_loaded = true;
-      if (self.lastValue === '') {
-        default_values = Object.keys(self.options);
-        default_pagination = pagination[''];
-        default_options = Object.values(self.options);
-      }
-    }
     loading_more = false;
-  });
-
-  // as the “loading_more” element will be removed from the dropdown,
-  // we activate the previous option if needed
-  // to avoid the dropdown being scrolled back to the first one
-  self.hook('before', 'refreshOptions', () => {
-    if (self.activeOption && "option" !== self.activeOption.getAttribute("role")) {
-      self.setActiveOption(self.activeOption.previousElementSibling);
-    }
   });
 
   // add templates to dropdown
@@ -4180,30 +4280,8 @@ function plugin () {
     }
   });
 
-  // Restore preloaded options and pagination when clearing search
-  const restoreDefaults = () => {
-    if (!default_values_loaded) {
-      return;
-    }
-    // Re-add preloaded option objects (clearOptions can only remove, not restore)
-    self.addOptions(default_options);
-    // Remove any search results that are not part of the preloaded defaults
-    self.clearOptions(clearFilter);
-    if (default_pagination) {
-      pagination[''] = default_pagination;
-    }
-  };
-  self.on('type', query => {
-    if (query === '') {
-      restoreDefaults();
-      self.refreshOptions(false);
-    }
-  });
-  self.on('dropdown_close', restoreDefaults);
-
   // add scroll listener and default templates
   self.on('initialize', () => {
-    html_values = Object.keys(self.options);
     default_values = Object.keys(self.options);
     dropdown_content = self.dropdown_content;
 
@@ -4343,7 +4421,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         this.isFocused = false;
         this.isInputHidden = false;
         this.isSetup = false;
-        this.isDropdownContentStale = true;
         this.ignoreFocus = false;
         this.ignoreHover = false;
         this.hasOptions = false;
@@ -4420,14 +4497,14 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (settings.copyClassesToDropdown) {
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(dropdown, classes);
         }
-        ;(0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(dropdown_content, settings.dropdownContentClass);
+        (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(dropdown_content, settings.dropdownContentClass);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.append)(dropdown, dropdown_content);
         (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.getDom)(settings.dropdownParent || wrapper).appendChild(dropdown);
         // default controlInput
         if ((0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.isHtmlString)(settings.controlInput)) {
             control_input = (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.getDom)(settings.controlInput);
             // set attributes
-            var attrs = ['autocorrect', 'autocapitalize', 'autocomplete', 'spellcheck', 'aria-label'];
+            var attrs = ['autocorrect', 'autocapitalize', 'autocomplete', 'spellcheck'];
             (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(attrs, (attr) => {
                 if (input.getAttribute(attr)) {
                     (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.setAttr)(control_input, { [attr]: input.getAttribute(attr) });
@@ -4490,8 +4567,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.setAttr)(dropdown_content, { 'aria-labelledby': label_id });
         }
         wrapper.style.width = input.style.width;
-        wrapper.style.minWidth = input.style.minWidth;
-        wrapper.style.maxWidth = input.style.maxWidth;
         if (self.plugins.names.length) {
             const classes_plugins = 'plugin-' + self.plugins.names.join(' plugin-');
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)([wrapper, dropdown], classes_plugins);
@@ -4511,7 +4586,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (settings.load && settings.loadThrottle) {
             settings.load = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.loadDebounce)(settings.load, settings.loadThrottle);
         }
-        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(dropdown, 'mousemove', () => {
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(dropdown, 'mousemove', () => {
             self.ignoreHover = false;
         });
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(dropdown, 'mouseenter', (e) => {
@@ -4576,19 +4651,10 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 self.positionDropdown();
             }
         };
-        const input_invalid = () => {
-            if (self.isValid) {
-                self.isValid = false;
-                self.isInvalid = true;
-                self.refreshState();
-            }
-        };
-        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(input, 'invalid', input_invalid);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(document, 'mousedown', doc_mousedown);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(window, 'scroll', win_scroll, passive_event);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(window, 'resize', win_scroll, passive_event);
         this._destroy = () => {
-            input.removeEventListener('invalid', input_invalid);
             document.removeEventListener('mousedown', doc_mousedown);
             window.removeEventListener('scroll', win_scroll);
             window.removeEventListener('resize', win_scroll);
@@ -4607,10 +4673,27 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         settings.items = [];
         delete settings.optgroups;
         delete settings.options;
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(input, 'invalid', () => {
+            if (self.isValid) {
+                self.isValid = false;
+                self.isInvalid = true;
+                self.refreshState();
+            }
+        });
+        self.updateOriginalInput();
         self.refreshItems();
         self.close(false);
         self.inputState();
         self.isSetup = true;
+        if (input.disabled) {
+            self.disable();
+        }
+        else if (input.readOnly) {
+            self.setReadOnly(true);
+        }
+        else {
+            self.enable(); //sets tabIndex
+        }
         self.on('change', this.onChange);
         (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(input, 'tomselected', 'ts-hidden-accessible');
         self.trigger('initialize');
@@ -4708,18 +4791,9 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      */
     sync(get_settings = true) {
         const self = this;
-        const settings = get_settings ? (0,_getSettings_js__WEBPACK_IMPORTED_MODULE_6__["default"])(self.input, { delimiter: self.settings.delimiter, allowEmptyOption: self.settings.allowEmptyOption }) : self.settings;
+        const settings = get_settings ? (0,_getSettings_js__WEBPACK_IMPORTED_MODULE_6__["default"])(self.input, { delimiter: self.settings.delimiter }) : self.settings;
         self.setupOptions(settings.options, settings.optgroups);
         self.setValue(settings.items || [], true); // silent prevents recursion
-        if (self.input.disabled) {
-            self.disable();
-        }
-        else if (self.input.readOnly) {
-            self.setReadOnly(true);
-        }
-        else {
-            self.enable(); //sets tabIndex
-        }
         self.lastQuery = null; // so updated options will be displayed in dropdown
     }
     /**
@@ -4752,7 +4826,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      * input / select element.
      */
     onChange() {
-        ;(0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.triggerEvent)(this.input, 'input');
+        (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.triggerEvent)(this.input, 'input');
         (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.triggerEvent)(this.input, 'change');
     }
     /**
@@ -4849,7 +4923,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                     if (next)
                         self.setActiveOption(next);
                 }
-                ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
+                (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                 return;
             // up: move selection up
             case _constants_js__WEBPACK_IMPORTED_MODULE_5__.KEY_UP:
@@ -4858,7 +4932,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                     if (prev)
                         self.setActiveOption(prev);
                 }
-                ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
+                (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                 return;
             // return: select active option
             case _constants_js__WEBPACK_IMPORTED_MODULE_5__.KEY_RETURN:
@@ -4892,7 +4966,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                         // if select isFull, then the dropdown won't be open and [tab] will work normally
                         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                     }
-                    else if (self.settings.create && self.createItem()) {
+                    if (self.settings.create && self.createItem()) {
                         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                     }
                 }
@@ -5016,21 +5090,15 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 if (self.settings.closeAfterSelect) {
                     self.close();
                 }
-                else if (self.settings.clearAfterSelect) {
-                    self.setTextboxValue();
-                }
             });
         }
         else {
             value = option.dataset.value;
             if (typeof value !== 'undefined') {
-                self.isDropdownContentStale = self.settings.hideSelected;
+                self.lastQuery = null;
                 self.addItem(value);
                 if (self.settings.closeAfterSelect) {
                     self.close();
-                }
-                else if (self.settings.clearAfterSelect) {
-                    self.setTextboxValue();
                 }
                 if (!self.settings.hideSelected && evt.type && /click/.test(evt.type)) {
                     self.setActiveOption(option);
@@ -5105,7 +5173,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
     loadCallback(options, optgroups) {
         const self = this;
         self.loading = Math.max(self.loading - 1, 0);
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         self.clearActiveOption(); // when new results load, focus should be on first option
         self.setupOptions(options, optgroups);
         self.refreshOptions(self.isFocused && !self.isInputHidden);
@@ -5204,7 +5272,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                     self.setActiveItemClass(item);
                 }
             }
-            ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
+            (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
         }
         else if ((eventName === 'click' && (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.isKeyDown)(_constants_js__WEBPACK_IMPORTED_MODULE_5__.KEY_SHORTCUT, e)) || (eventName === 'keydown' && (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.isKeyDown)('shiftKey', e))) {
             if (item.classList.contains('active')) {
@@ -5253,7 +5321,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      *
      */
     clearActiveItems() {
-        ;(0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.removeClasses)(this.activeItems, 'active');
+        (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.removeClasses)(this.activeItems, 'active');
         this.activeItems = [];
     }
     /**
@@ -5370,19 +5438,15 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (self.isDisabled || self.isReadOnly)
             return;
         self.ignoreFocus = true;
-        const focusTarget = this.control_input.offsetWidth ? this.control_input : this.focus_node;
-        focusTarget.focus();
+        if (self.control_input.offsetWidth) {
+            self.control_input.focus();
+        }
+        else {
+            self.focus_node.focus();
+        }
         setTimeout(() => {
             self.ignoreFocus = false;
-            // Fix https://github.com/orchidjs/tom-select/issues/806
-            // Only proceed if this instance's element is still the active element. If Edge autofill
-            // (or anything else) has moved focus to a different element in the interim, calling
-            // onFocus() here would steal focus back and restart the cascade loop.
-            const root = focusTarget.getRootNode();
-            if (root.activeElement !== focusTarget) {
-                return;
-            }
-            this.onFocus();
+            self.onFocus();
         }, 0);
     }
     /**
@@ -5440,13 +5504,8 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             }
         }
         // perform search
-        if (self.isDropdownContentStale || query !== self.lastQuery) {
+        if (query !== self.lastQuery) {
             self.lastQuery = query;
-            // temp fix for https://github.com/orchidjs/tom-select/issues/987
-            // UI crashed when more than 30 same chars in a row, prevent search and return empt result
-            if (/(.)\1{15,}/.test(query)) {
-                query = '';
-            }
             result = self.sifter.search(query, Object.assign(options, { score: calculateScore }));
             self.currentResults = result;
         }
@@ -5457,7 +5516,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (self.settings.hideSelected) {
             result.items = result.items.filter((item) => {
                 let hashed = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.hash_key)(item.id);
-                return !(hashed !== null && self.items.indexOf(hashed) !== -1);
+                return !(hashed && self.items.indexOf(hashed) !== -1);
             });
         }
         return result;
@@ -5529,13 +5588,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 optgroup = optgroups[j];
                 let order = option.$order;
                 let self_optgroup = self.optgroups[optgroup];
-                if (self_optgroup === undefined && typeof self.settings.optionGroupRegister === 'function') {
-                    var regGroup;
-                    if (regGroup = self.settings.optionGroupRegister.apply(self, [optgroup])) {
-                        self.registerOptionGroup(regGroup);
-                    }
-                }
-                self_optgroup = self.optgroups[optgroup];
                 if (self_optgroup === undefined) {
                     optgroup = '';
                 }
@@ -5590,7 +5642,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         });
         dropdown_content.innerHTML = '';
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.append)(dropdown_content, html);
-        self.isDropdownContentStale = false;
         // highlight matching terms inline
         if (self.settings.highlight) {
             (0,_contrib_highlight_js__WEBPACK_IMPORTED_MODULE_4__.removeHighlight)(dropdown_content);
@@ -5685,13 +5736,12 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         }
         const key = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.hash_key)(data[self.settings.valueField]);
         if (key === null || self.options.hasOwnProperty(key)) {
-            self.updateOption(data[self.settings.valueField], data);
             return false;
         }
         data.$order = data.$order || ++self.order;
         data.$id = self.inputId + '-opt-' + data.$order;
         self.options[key] = data;
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         if (user_created) {
             self.userOptions[key] = user_created;
             self.trigger('option_add', key, data);
@@ -5703,7 +5753,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      *
      */
     addOptions(data, user_created = false) {
-        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(data, (dat) => {
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(data, (dat) => {
             this.addOption(dat, user_created);
         });
     }
@@ -5807,8 +5857,8 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(item_new, 'active');
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.replaceNode)(item, item_new);
         }
-        // we might have updated the sortField
-        self.isDropdownContentStale = true;
+        // invalidate last query because we might have updated the sortField
+        self.lastQuery = null;
     }
     /**
      * Removes a single option.
@@ -5820,7 +5870,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         self.uncacheValue(value);
         delete self.userOptions[value];
         delete self.options[value];
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         self.trigger('option_remove', value);
         self.removeItem(value, silent);
     }
@@ -5839,7 +5889,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             }
         });
         this.options = this.sifter.items = selected;
-        this.isDropdownContentStale = true;
+        this.lastQuery = null;
         this.trigger('option_clear');
     }
     /**
@@ -5971,10 +6021,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                         self.setActiveOption(next);
                     }
                 }
-                //remove input value when enabled
-                if (self.settings.clearAfterSelect) {
-                    self.setTextboxValue();
-                }
                 // refreshOptions after setActiveOption(),
                 // otherwise setActiveOption() will be called by refreshOptions() with the wrong value
                 if (!self.isPending && !self.settings.closeAfterSelect) {
@@ -6018,7 +6064,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.removeClasses)(item, 'active');
         }
         self.items.splice(i, 1);
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         if (!self.settings.persist && self.userOptions.hasOwnProperty(value)) {
             self.removeOption(value, silent);
         }
@@ -6052,12 +6098,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         var output;
         input = input || self.inputValue();
         if (!self.canCreate(input)) {
-            const hash = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.hash_key)(input);
-            if (hash) {
-                if (this.options[input]) {
-                    self.addItem(input);
-                }
-            }
             callback();
             return false;
         }
@@ -6097,7 +6137,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      */
     refreshItems() {
         var self = this;
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         if (self.isSetup) {
             self.addItems(self.items);
         }
@@ -6176,7 +6216,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 selected.push(option_el);
                 // marking empty option as selected can break validation
                 // fixes https://github.com/orchidjs/tom-select/issues/303
-                if (option_el != empty_option || has_selected > 0 || self.settings.mode == 'multi') {
+                if (option_el != empty_option || has_selected > 0) {
                     option_el.selected = true;
                 }
                 return option_el;
@@ -6319,7 +6359,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             if (direction > 0) {
                 caret++;
             }
-            ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(self.activeItems, (item) => rm_items.push(item));
+            (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(self.activeItems, (item) => rm_items.push(item));
         }
         else if ((self.isFocused || self.settings.mode === 'single') && self.items.length) {
             const items = self.controlChildren();
@@ -6337,7 +6377,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (!self.shouldDelete(rm_items, e)) {
             return false;
         }
-        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e, true);
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e, true);
         // perform removal
         if (typeof caret !== 'undefined') {
             self.setCaret(caret);
@@ -6356,7 +6396,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
     shouldDelete(items, evt) {
         const values = items.map(item => item.dataset.value);
         // allow the callback to abort
-        if (!values.length || (typeof this.settings.onDelete === 'function' && this.settings.onDelete.call(this, values, evt) === false)) {
+        if (!values.length || (typeof this.settings.onDelete === 'function' && this.settings.onDelete(values, evt) === false)) {
             return false;
         }
         return true;
@@ -6575,7 +6615,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      *
      */
     clearCache() {
-        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(this.options, (option) => {
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(this.options, (option) => {
             if (option.$div) {
                 option.$div.remove();
                 delete option.$div;
@@ -7054,17 +7094,17 @@ const replaceNode = (existing, replacement) => {
 /******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
-/******/ 	const __webpack_module_cache__ = {};
+/******/ 	var __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
-/******/ 		const cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
 /******/ 			return cachedModule.exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
-/******/ 		const module = __webpack_module_cache__[moduleId] = {
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
 /******/ 			// no module.id needed
 /******/ 			// no module.loaded needed
 /******/ 			exports: {}
@@ -7073,7 +7113,7 @@ const replaceNode = (existing, replacement) => {
 /******/ 		// Execute the module function
 /******/ 		if (!(moduleId in __webpack_modules__)) {
 /******/ 			delete __webpack_module_cache__[moduleId];
-/******/ 			const e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			var e = new Error("Cannot find module '" + moduleId + "'");
 /******/ 			e.code = 'MODULE_NOT_FOUND';
 /******/ 			throw e;
 /******/ 		}
@@ -7086,26 +7126,11 @@ const replaceNode = (existing, replacement) => {
 /************************************************************************/
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
-/******/ 		// define getter/value functions for harmony exports
+/******/ 		// define getter functions for harmony exports
 /******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			if(Array.isArray(definition)) {
-/******/ 				var i = 0;
-/******/ 				while(i < definition.length) {
-/******/ 					var key = definition[i++];
-/******/ 					var binding = definition[i++];
-/******/ 					if(!__webpack_require__.o(exports, key)) {
-/******/ 						if(binding === 0) {
-/******/ 							Object.defineProperty(exports, key, { enumerable: true, value: definition[i++] });
-/******/ 						} else {
-/******/ 							Object.defineProperty(exports, key, { enumerable: true, get: binding });
-/******/ 						}
-/******/ 					} else if(binding === 0) { i++; }
-/******/ 				}
-/******/ 			} else {
-/******/ 				for(var key in definition) {
-/******/ 					if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 						Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 					}
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
 /******/ 		};
@@ -7113,14 +7138,14 @@ const replaceNode = (existing, replacement) => {
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.hasOwn(obj, prop))
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
 /******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(Symbol.toStringTag) {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
 /******/ 			Object.defineProperty(exports, '__esModule', { value: true });
@@ -7128,7 +7153,7 @@ const replaceNode = (existing, replacement) => {
 /******/ 	})();
 /******/ 	
 /************************************************************************/
-let __webpack_exports__ = {};
+var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 /*!********************************************!*\
