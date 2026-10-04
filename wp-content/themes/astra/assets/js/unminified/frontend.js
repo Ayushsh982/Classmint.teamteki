@@ -474,12 +474,25 @@ astScrollToTopHandler = function ( masthead, astScrollTop ) {
 				}
 			}
 
-			// Close Popup on # link click inside Popup.
+			// Close Popup on # link click inside desktop dropdown.
 			if ( desktopDropdownContent ) {
 				var desktopLinks = desktopDropdownContent.getElementsByTagName( 'a' );
 				for ( link = 0, len = desktopLinks.length; link < len; link++ ) {
-					desktopLinks[ link ].addEventListener( 'click', triggerToggleClose, true );
-					desktopLinks[ link ].headerType = 'dropdown';
+					// Check if the link is not inside the tabs container.
+					const isNotInsideTabsContainer = desktopLinks[ link ].closest( '.wp-block-uagb-tabs' ) === null;
+
+					if (
+						null !== desktopLinks[ link ].getAttribute( 'href' ) &&
+						( desktopLinks[ link ].getAttribute( 'href' ).startsWith( '#' ) ||
+							-1 !== desktopLinks[ link ].getAttribute( 'href' ).search( '#' ) ) &&
+						( ! desktopLinks[ link ].parentElement.classList.contains( 'menu-item-has-children' ) ||
+							( desktopLinks[ link ].parentElement.classList.contains( 'menu-item-has-children' ) &&
+								document.querySelector( 'header.site-header' ).classList.contains( 'ast-builder-menu-toggle-icon' ) ) ) &&
+						isNotInsideTabsContainer
+					) {
+						desktopLinks[ link ].addEventListener( 'click', triggerToggleClose, true );
+						desktopLinks[ link ].headerType = 'dropdown';
+					}
 				}
 			}
 
@@ -604,28 +617,31 @@ astScrollToTopHandler = function ( masthead, astScrollTop ) {
 
 	var get_window_width = function () {
 
-		return document.documentElement.clientWidth;
+		return window.innerWidth;
 	}
 
 	/* Add break point Class and related trigger */
 	var updateHeaderBreakPoint = function () {
 
-		// Use clientWidth directly. The overflow:hidden trick previously used here
-		// caused a visible content jump (scrollbar flash) after the breakpoint class
-		// was pre-applied by the early inline script in wp_body_open. Since
-		// document.documentElement.clientWidth is not affected by content overflow
-		// (unlike window.innerWidth), the overflow manipulation is not needed.
 		var ww = get_window_width();
 
 		var break_point = astra.break_point;
 
 		/**
-		 * This case is when one hits a URL one after the other via `Open in New Tab` option
-		 * Chrome returns the value of outer width as 0 in this case.
-		 * This mis-calculates the width of the window and header seems invisible.
-		 * This could be fixed by using `0 === ww` condition below.
+		 * Use matchMedia to evaluate the breakpoint using the same CSS engine that
+		 * evaluates media queries. This guarantees JS and CSS always agree on which
+		 * header should be visible, eliminating any sub-pixel or scrollbar-width
+		 * mismatch between window.innerWidth and the actual CSS viewport width.
+		 *
+		 * The 0.99 offset mirrors the max-width: (break_point + 0.99)px rule used
+		 * in the PHP dynamic CSS, so the transition point is identical in both.
+		 *
+		 * The 0 === ww guard handles a Chrome edge case where innerWidth returns 0
+		 * when opening a URL via "Open in New Tab" — force desktop mode in that case.
 		 */
-		if (ww > break_point || 0 === ww) {
+		var isMobile = window.matchMedia( '(max-width: ' + ( parseFloat( break_point ) + 0.99 ) + 'px)' ).matches;
+
+		if ( ! isMobile || 0 === ww ) {
 			//remove menu toggled class.
 			if ( menu_toggle_all.length > 0 ) {
 
@@ -655,14 +671,21 @@ astScrollToTopHandler = function ( masthead, astScrollTop ) {
 
 		event.preventDefault();
 
+		var parent_li = this.parentNode;
+
+		// In Link mode, stop the click from bubbling when toggling a parent menu
+		// item's submenu. Without this, the click propagates to document-level
+		// handlers that close the entire dropdown (desktop and mobile).
+		if ( parent_li.classList.contains( 'menu-item-has-children' ) &&
+			document.querySelector( 'header.site-header' ).classList.contains( 'ast-builder-menu-toggle-link' ) ) {
+			event.stopPropagation();
+		}
 
 		if ('false' === event.target.getAttribute('aria-expanded') || ! event.target.getAttribute('aria-expanded')) {
 			event.target.setAttribute('aria-expanded', 'true');
 		} else {
 			event.target.setAttribute('aria-expanded', 'false');
 		}
-
-		var parent_li = this.parentNode;
 
 		if ( parent_li.classList.contains('ast-submenu-expanded') && document.querySelector('header.site-header').classList.contains('ast-builder-menu-toggle-link') ) {
 
@@ -1009,6 +1032,57 @@ astScrollToTopHandler = function ( masthead, astScrollTop ) {
 						}, 10);
 					}
 				});
+
+				/**
+				 * Click cannot reliably report the input type - Firefox omits
+				 * pointerType - so record it per arrow here.
+				 */
+				element.addEventListener('pointerdown', function (e) {
+					e.currentTarget.dataset.astPointerType = e.pointerType || 'mouse';
+				}, false);
+
+				/**
+				 * The arrow sits inside the parent <a>, so on touch the tap followed
+				 * the link and the submenu never opened. Touch reports no hover.
+				 */
+				element.addEventListener('click', function (e) {
+					const arrow = e.currentTarget;
+
+					// Mouse and pen report hover, which already opens the submenu.
+					if ('touch' !== arrow.dataset.astPointerType) {
+						return;
+					}
+
+					// Below the breakpoint the mobile menu has its own toggle.
+					if (!body.classList.contains('ast-desktop')) {
+						return;
+					}
+
+					const closestLi = arrow.closest('li');
+					const subMenu = closestLi && closestLi.querySelector('.sub-menu');
+
+					if (!subMenu) {
+						return;
+					}
+
+					e.preventDefault();
+
+					// Or the document listener below closes it in the same tick.
+					e.stopPropagation();
+
+					// Read before closing, which resets aria-expanded on every arrow.
+					const wasOpen = 'true' === arrow.getAttribute('aria-expanded');
+
+					// Mouse and keyboard only ever leave one submenu open, so collapse
+					// the others here too.
+					closeNavigationMenu(siteNavigationSubMenu, dropdownToggleLinks, menuLi, megaMenuFullWidth);
+
+					if (!wasOpen) {
+						subMenu.classList.add('toggled-on');
+						closestLi.classList.add('ast-menu-hover');
+						arrow.setAttribute('aria-expanded', 'true');
+					}
+				}, false);
 			});
 
 			if (siteNavigationSubMenu || menuLi) {
@@ -1298,6 +1372,11 @@ astScrollToTopHandler = function ( masthead, astScrollTop ) {
 						const scrollOffsetTop = elementOffsetTop - offset;
 						if( scrollOffsetTop ) {
 							astraSmoothScroll( e, scrollOffsetTop );
+
+							// Reflect the anchor in the URL so the section link stays shareable, matching native browser behavior.
+							if ( ! hash && href !== window.location.hash ) {
+								window.history.pushState( null, '', href );
+							}
 						}
 					}
 				}
