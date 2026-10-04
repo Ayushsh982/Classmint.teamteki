@@ -20,7 +20,7 @@ namespace WPDataAccess {
 	 *
 	 * Plugin default values and settings are managed through this class. Every plugin option has a default value
 	 * which is maintained in an array together with the option name. Options are only saved in $wpdb->options when
-	 * they are changed. Otherwise the default values are used. After reading option values from $wpdb->options the
+	 * they are changed. Otherwise, the default values are used. After reading option values from $wpdb->options the
 	 * values are cached as many of them are used in multiple
 	 * values are cached as many of them are used in multiple
 	 * places during the processing of a request.
@@ -28,7 +28,9 @@ namespace WPDataAccess {
 	 * @author  Peter Schulz
 	 * @since   1.0.0
 	 */
-	class WPDA {
+
+    // phpcs:disable PluginCheck.CodeAnalysis.Offloading.OffloadedContent
+    class WPDA {
 
 		// SAVING SPACE - According to the plugin guidelines it is allowed to include external fonts:
 		// https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/#8-plugins-may-not-send-executable-code-via-third-party-systems
@@ -51,8 +53,8 @@ namespace WPDataAccess {
 		/**
 		 * Option wpda_version and it's default value
 		 */
-		const OPTION_WPDA_VERSION         = array( 'wpda_version', '5.5.82' );
-		const OPTION_WPDA_CLIENT_VERSION  = array( 'wpda_client_version', '1.0.80' );
+		const OPTION_WPDA_VERSION         = array( 'wpda_version', '5.5.85' );
+		const OPTION_WPDA_CLIENT_VERSION  = array( 'wpda_client_version', '1.0.83' );
 		const OPTION_WPDA_UPGRADED        = array( 'wpda_upgraded', false );
 		/**
 		 * Option wpda_setup_error and it's default value

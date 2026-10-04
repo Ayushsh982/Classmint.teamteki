@@ -389,7 +389,7 @@ namespace WPDataAccess\CSV_Files {
 					}
 				}
 
-				// phpcs:disable Squiz.PHP.DiscouragedFunctions.Discouraged
+				// phpcs:disable Squiz.PHP.DiscouragedFunctions.Discouraged, PluginCheck.CodeAnalysis.PHPErrorReporting.IniDirectiveDisplay_errors
 				echo '<p>Enabling buffering...</p>';
 				set_time_limit( 0 );
 				@ini_set( 'zlib.output_compression', false );
@@ -399,7 +399,7 @@ namespace WPDataAccess\CSV_Files {
 				ob_implicit_flush( true );
 				echo '<p>Reading CSV file...</p>';
 				@ini_set( 'auto_detect_line_endings', true );
-				// phpcs:enable Squiz.PHP.DiscouragedFunctions.Discouraged
+				// phpcs:enable Squiz.PHP.DiscouragedFunctions.Discouraged, PluginCheck.CodeAnalysis.PHPErrorReporting.IniDirectiveDisplay_errors
 
 				if ( false !== ( $fp = fopen( $file_name, 'rb' ) ) ) { // phpcs:ignore
 					$wpdadb = WPDADB::get_db_connection( $schema_name );

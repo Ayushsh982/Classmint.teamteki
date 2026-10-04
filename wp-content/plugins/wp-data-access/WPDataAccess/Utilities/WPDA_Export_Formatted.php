@@ -139,6 +139,10 @@ namespace WPDataAccess\Utilities {
 		 * @since   2.0.13
 		 */
 		public function export() {
+			if (!WPDA::current_user_is_admin()) {
+				return;
+			}
+
 			$this->table_names = isset( $_REQUEST['table_names'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['table_names'] ) ) : ''; // input var okay.
 			$this->pid         = isset( $_REQUEST['pid'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['pid'] ) ) : ''; // input var okay.
 			if ( '' !== $this->table_names ) {

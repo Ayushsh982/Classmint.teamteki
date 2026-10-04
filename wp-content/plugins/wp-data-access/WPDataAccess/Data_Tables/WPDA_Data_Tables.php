@@ -728,24 +728,54 @@ class WPDA_Data_Tables {
             // Remote database not available
         }
         // Add field filters from shortcode
-        // phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-        $filter_field_name = str_replace( '`', '', sanitize_text_field( wp_unslash( $_REQUEST['filter_field_name'] ) ) );
-        $filter_field_value = sanitize_text_field( wp_unslash( $_REQUEST['filter_field_value'] ) );
-        // phpcs:enable WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+        $filter_field_name = '';
+        $filter_field_value = '';
+        if ( isset( $_REQUEST['filter_field_name'], $_REQUEST['filter_field_value'] ) ) {
+            // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $filter_field_name_raw = wp_unslash( $_REQUEST['filter_field_name'] );
+            $filter_field_value_raw = wp_unslash( $_REQUEST['filter_field_value'] );
+            // phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if ( is_string( $filter_field_name_raw ) && is_string( $filter_field_value_raw ) ) {
+                $filter_field_name = sanitize_text_field( $filter_field_name_raw );
+                $filter_field_value = sanitize_text_field( $filter_field_value_raw );
+            }
+        }
         if ( '' !== $filter_field_name && '' !== $filter_field_value ) {
+            if ( '*' === $columns ) {
+                $allowed_columns = array();
+                $tbl = WPDA_List_Columns_Cache::get_list_columns( $database, $table_name );
+                $cols = $tbl->get_table_columns();
+                foreach ( $cols as $col ) {
+                    if ( isset( $col['column_name'] ) ) {
+                        $allowed_columns[] = $col['column_name'];
+                    }
+                }
+            } else {
+                $allowed_columns = explode( ',', $columns );
+            }
             $filter_field_name_array = array_map( 'trim', explode( ',', $filter_field_name ) );
             $filter_field_value_array = array_map( 'trim', explode( ',', $filter_field_value ) );
             if ( count( $filter_field_name_array ) === count( $filter_field_value_array ) ) {
-                // Add filter to where clause
+                $prepare_fields = array();
+                $prepare_values = array();
                 for ($i = 0; $i < count( $filter_field_name_array ); $i++) {
-                    if ( '' === $where ) {
-                        $where = $wpdadb->prepare( " where `{$filter_field_name_array[$i]}` like %s ", array($filter_field_value_array[$i]) );
-                    } else {
-                        $where .= $wpdadb->prepare( " and `{$filter_field_name_array[$i]}` like %s ", array($filter_field_value_array[$i]) );
+                    $field_name = $filter_field_name_array[$i];
+                    $field_value = $filter_field_value_array[$i];
+                    if ( !in_array( $field_name, $allowed_columns, true ) ) {
+                        continue;
                     }
-                    $_filter['filter_field_name'] = $filter_field_name;
-                    $_filter['filter_field_value'] = $filter_field_value;
+                    $prepare_fields[] = $field_name;
+                    $prepare_values[] = $field_value;
                 }
+                for ($i = 0; $i < count( $prepare_fields ); $i++) {
+                    if ( '' === $where ) {
+                        $where = $wpdadb->prepare( ' WHERE %i LIKE %s ', array($prepare_fields[$i], $prepare_values[$i]) );
+                    } else {
+                        $where .= $wpdadb->prepare( ' AND %i LIKE %s ', array($prepare_fields[$i], $prepare_values[$i]) );
+                    }
+                }
+                $_filter['filter_field_name'] = $filter_field_name;
+                $_filter['filter_field_value'] = $filter_field_value;
             }
         }
         // Get all column names from table (must be comma separated string)
@@ -986,7 +1016,8 @@ class WPDA_Data_Tables {
         $wpdadb->suppress_errors( true );
         $rows = $wpdadb->get_results( $query, 'ARRAY_N' );
         if ( '' !== $wpdadb->last_error ) {
-            $this->create_empty_response( $wpdadb->last_error, $query );
+            $this->create_empty_response( __( 'ERROR: Invalid query', 'wp-data-access' ) );
+            WPDA::wpda_log_wp_error( $wpdadb->last_error );
             wp_die();
         }
         $rows_final = array();
@@ -1195,7 +1226,9 @@ class WPDA_Data_Tables {
         $obj->recordsTotal = intval( $count_table );
         $obj->recordsFiltered = intval( $count_table_filtered );
         $obj->data = $rows_final;
-        $obj->error = $wpdadb->last_error;
+        if ( 'on' === WPDA::get_option( WPDA::OPTION_PLUGIN_DEBUG ) ) {
+            $obj->error = $wpdadb->last_error;
+        }
         if ( 'on' === WPDA::get_option( WPDA::OPTION_PLUGIN_DEBUG ) ) {
             $obj->debug = array(
                 'columns'           => $columns,

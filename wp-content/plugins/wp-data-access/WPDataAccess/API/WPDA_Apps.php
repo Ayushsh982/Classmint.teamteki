@@ -281,7 +281,11 @@ class WPDA_Apps extends WPDA_API_Core {
                     'required'          => false,
                     'type'              => 'string',
                     'description'       => __( 'Map settings - JSON string', 'wp-data-access' ),
-                    'sanitize_callback' => 'wp_kses_post',
+                    'sanitize_callback' => function ( $param ) {
+                        $sanitized_settings = $this->sanitize_settings( json_decode( (string) $param, true ) );
+                        // Save sanitized JSON as string
+                        return json_encode( $sanitized_settings );
+                    },
                     'validate_callback' => 'rest_validate_request_arg',
                 ),
                 'chart'    => array(
@@ -515,6 +519,13 @@ class WPDA_Apps extends WPDA_API_Core {
             'args'                => array(
                 'dbs_source'      => $this->get_param( 'dbs' ),
                 'dbs_destination' => $this->get_param( 'dbs' ),
+                'appDbId'         => array(
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'description'       => __( 'App Id', 'wp-data-access' ),
+                    'sanitize_callback' => 'absint',
+                    'validate_callback' => 'rest_validate_request_arg',
+                ),
             ),
         ) );
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'app/lang/get', array(
@@ -1473,6 +1484,66 @@ class WPDA_Apps extends WPDA_API_Core {
         $debug_mode = 'on' === WPDA::get_option( WPDA::OPTION_PLUGIN_DEBUG );
         $debug = array();
         $errors = array();
+        if ( $request->get_param( 'appDbId' ) ) {
+            // Update app only
+            $appDbId = $request->get_param( 'appDbId' );
+            // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- plugin table
+            $sql = $wpdb->prepare( "update `{$wpdb->prefix}wpda_app_container` set `cnt_dbs` = %s where `cnt_dbs` = %s and app_id = %d", array($dbs_destination, $dbs_source, $appDbId) );
+            $result = $wpdb->query( $sql );
+            // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+            $renamed += $result;
+            if ( $debug_mode ) {
+                $debug[] = array(
+                    'sql'    => $sql,
+                    'result' => $result,
+                );
+            }
+            if ( '' !== $wpdb->last_error ) {
+                $errors[] = array(
+                    'sql'   => $sql,
+                    'error' => $wpdb->last_error,
+                );
+            }
+            $sql_content = array("update `{$wpdb->prefix}wpda_app_container` set `cnt_table` = replace(`cnt_table`, '\"dbs\":\"%1s\"', '\"dbs\":\"%1s\"') where `cnt_table` like '%\"dbs\":\"%1s\"%' and app_id = %d", "update `{$wpdb->prefix}wpda_app_container` set `cnt_form` = replace(`cnt_form`, '\"dbs\":\"%1s\"', '\"dbs\":\"%1s\"') where `cnt_form` like '%\"dbs\":\"%1s\"%' and app_id = %d");
+            foreach ( $sql_content as $sql ) {
+                // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- plugin table
+                $result = $wpdb->query( $wpdb->prepare( $sql, array(
+                    $dbs_source,
+                    $dbs_destination,
+                    $dbs_source,
+                    $appDbId
+                ) ) );
+                $renamed += $result;
+                if ( $debug_mode ) {
+                    $debug[] = array(
+                        'sql'    => $sql,
+                        'result' => $result,
+                    );
+                }
+                if ( '' !== $wpdb->last_error ) {
+                    $errors[] = array(
+                        'sql'   => $sql,
+                        'error' => $wpdb->last_error,
+                    );
+                }
+            }
+            $context = array();
+            if ( $debug_mode ) {
+                $context['debug'] = $debug;
+            }
+            if ( 0 < count( $errors ) ) {
+                $context['errors'] = $errors;
+                return new \WP_Error('error', 'Failed renaming database', array(
+                    'status'  => 401,
+                    'context' => $context,
+                ));
+            }
+            return $this->WPDA_Rest_Response( sprintf( 
+                /* translators: %s = number of database substitutions */
+                __( 'Successfully renamed %s database occurrences', 'wp-data-access' ),
+                $renamed
+             ), null, $context );
+        }
         // Rename all occurrences in repository tables and apps
         $sqls = array(
             "update `{$wpdb->prefix}wpda_publisher` set `pub_schema_name` = %s where `pub_schema_name` = %s",
@@ -2221,6 +2292,15 @@ class WPDA_Apps extends WPDA_API_Core {
         }
     }
 
+    private function escapeUnicodeForExport( $str ) {
+        if ( empty( $str ) ) {
+            return $str;
+        }
+        return preg_replace_callback( '/\\\\(u[0-9a-fA-F]{4})/', function ( $matches ) {
+            return '\\\\' . $matches[1];
+        }, $str );
+    }
+
     private function do_app_export_app( $app_id, $main_app_id ) {
         global $wpdb;
         $quotes = function ( $value ) {
@@ -2232,7 +2312,8 @@ class WPDA_Apps extends WPDA_API_Core {
                 "\\\\n",
                 "\\n",
                 "\\r\\n",
-                "\\r"
+                "\\r",
+                "\\d"
             ), array(
                 "''",
                 '\\\\"',
@@ -2241,7 +2322,8 @@ class WPDA_Apps extends WPDA_API_Core {
                 "\\\\\\n",
                 "\\\\n",
                 "\\\\r\\\\n",
-                "\\\\r"
+                "\\\\r",
+                "\\\\\\\\\\d"
             ), $value );
         };
         $app = WPDA_App_Model::get_by_id( $app_id );
@@ -2290,6 +2372,9 @@ SQL;
             $cnt_dbs = ( $wpdb->dbname === $container['cnt_dbs'] ? '{wp_schema}' : "{$quotes( $container['cnt_dbs'] )}" );
             $cnt_table = str_replace( "\"dbs\":\"{$wpdb->dbname}\"", "\"dbs\":\"{wp_schema}\"", $cnt_table );
             $cnt_form = str_replace( "\"dbs\":\"{$wpdb->dbname}\"", "\"dbs\":\"{wp_schema}\"", $cnt_form );
+            // Replace Unicode characters
+            $cnt_table = $this->escapeUnicodeForExport( $cnt_table );
+            $cnt_form = $this->escapeUnicodeForExport( $cnt_form );
             // phpcs:ignore PluginCheck.CodeAnalysis.Heredoc.NotAllowed
             $containers_sql .= <<<SQL
 # Import app container

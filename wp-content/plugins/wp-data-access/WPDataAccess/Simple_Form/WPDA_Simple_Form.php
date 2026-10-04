@@ -542,6 +542,10 @@ class WPDA_Simple_Form {
                 wp_die( esc_attr__( 'ERROR: Not authorized', 'wp-data-access' ) );
             }
             if ( 'new' === $this->action ) {
+                global $wpda_project_mode;
+                if ( 'on' !== WPDA::get_option( WPDA::OPTION_BE_ALLOW_INSERT ) || isset( $wpda_project_mode['allow_insert'] ) && ('off' === $wpda_project_mode['allow_insert'] || 'only' === $wpda_project_mode['allow_insert']) ) {
+                    wp_die( esc_attr__( 'ERROR: Not authorized', 'wp-data-access' ) );
+                }
                 // Prepare row and items for validation
                 $this->row = $this->row_data->new_row();
                 $this->prepare_items( true );
@@ -569,6 +573,10 @@ class WPDA_Simple_Form {
                     }
                 }
             } else {
+                global $wpda_project_mode;
+                if ( 'on' !== WPDA::get_option( WPDA::OPTION_BE_ALLOW_UPDATE ) && (isset( $wpda_project_mode['mode'] ) && 'edit' === $wpda_project_mode['mode']) ) {
+                    wp_die( esc_attr__( 'ERROR: Not authorized', 'wp-data-access' ) );
+                }
                 // Prepare row and items for validation
                 $this->row = $this->row_data->get_row( $this->auto_increment_value, $this->wpda_err );
                 $this->prepare_items( true );

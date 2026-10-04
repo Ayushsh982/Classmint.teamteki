@@ -5,6 +5,7 @@ namespace WPDataAccess\Drive;
 use WPDataAccess\Utilities\WPDA_Remote_Call;
 use WPDataAccess\WPDA;
 
+// phpcs:disable PluginCheck.CodeAnalysis.Offloading.OffloadedContent
 class WPDA_Google_Drive extends WPDA_Drive {
 
     const GOOGLE_CLIENT_ID     = '400971594152-30c2ro61ohe4jbb2jt09n9q86itnkjvm.apps.googleusercontent.com';

@@ -4,7 +4,7 @@
  * Plugin Name:       WP Data Access
  * Plugin URI:        https://wpdataaccess.com/
  * Description:       A powerful data-driven App Builder with an intuitive Table Builder, a highly customizable Form Builder and interactive Chart support in 35 languages
- * Version:           5.5.82
+ * Version:           5.5.85
  * Author:            Passionate Programmers B.V.
  * Author URI:        https://wpdataaccess.com/
  * Text Domain:       wp-data-access
@@ -279,6 +279,19 @@ if ( !function_exists( 'wpda_freemius' ) ) {
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery.SchemaChange
     }
 
+    function wpda_unschedule_event(  $hook  ) {
+        $crons = _get_cron_array();
+        foreach ( $crons as $timestamp => $cron ) {
+            if ( isset( $cron[$hook] ) ) {
+                foreach ( $cron[$hook] as $event ) {
+                    if ( isset( $event['args'] ) ) {
+                        wp_unschedule_event( $timestamp, $hook, $event['args'] );
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Uninstall WP Data Access tables, options and meta keys
      *
@@ -302,6 +315,10 @@ if ( !function_exists( 'wpda_freemius' ) ) {
             wpda_uninstall_blog();
         }
         WPDA::wpda_delete_content_folder();
+        // Unscheduled all WP Data Access events
+        wpda_unschedule_event( 'wpda_data_backup' );
+        wpda_unschedule_event( \WPDataAccess\Query_Builder\WPDA_Query_Builder_Scheduler::SCHEDULER_HOOK_NAME );
+        wpda_unschedule_event( \WPDataAccess\Utilities\WPDA_Export_Scheduler::SCHEDULER_HOOK_NAME );
     }
 
     wpda_freemius()->add_action( 'after_uninstall', 'wpda_uninstall' );

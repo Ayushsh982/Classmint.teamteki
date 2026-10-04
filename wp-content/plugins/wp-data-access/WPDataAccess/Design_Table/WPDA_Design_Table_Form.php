@@ -486,7 +486,9 @@ namespace WPDataAccess\Design_Table {
                         ! wp_verify_nonce( $_REQUEST['_wpnonce'], "wpda-design-table-form-" . WPDA_Design_Table_Model::get_base_table_name() )
                     ) { // insert new table
                         if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], "wpda-alter-{$this->wpda_table_name}" ) ) { // access from alter table button
-                            $dsg_tbl = 'wpda-query-' . WPDA_Design_Table_Model::get_base_table_name() . '-' . $_POST['wpda_schema_name'] . '-' . $_POST['wpda_table_name']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+                            $schema_name = isset( $_POST['wpda_schema_name'] ) ? $_POST['wpda_schema_name'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+                            $table_name  = isset( $_POST['wpda_table_name'] ) ? $_POST['wpda_table_name'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+                            $dsg_tbl = 'wpda-query-' . WPDA_Design_Table_Model::get_base_table_name() . '-' . $schema_name . '-' . $table_name;
                             if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], $dsg_tbl ) ) { // access from list table
                                 wp_die( esc_attr__( 'Not authorized', 'wp-data-access' ) );
                             }

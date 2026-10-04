@@ -337,35 +337,43 @@ namespace WPDataAccess\WPDA_Navi {
 						<div class="wpda-navi-container-content-item-facts whats-new">
 							<ul>
                                 <li>
+                                    <a href="https://docs.rad.wpdataaccess.com/table-builder/menu/columns/column-settings.html#%E2%9A%99%EF%B8%8F-pin-column-to" target="_blank" class="whatsnew">
+                                        Added column pinning to Table Builder.
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="https://docs.rad.wpdataaccess.com/table-builder/menu/columns/column-settings.html#%F0%9F%93%8C-notes" target="_blank" class="whatsnew">
+                                        Show hidden columns on tablets and mobiles.
+                                    </a>
+                                </li>
+                                <li>
                                     <a href="https://docs.rad.wpdataaccess.com/app-manager/running-apps/progressive-web-apps.html" target="_blank" class="whatsnew">
                                         Run a WP Data Access app as a Progressive Web App. ⭐⭐⭐
                                     </a>
-                                </li>
-                                <li style="font-weight: bold;">
-                                    The old Data Explorer is no longer available.
                                 </li>
 								<li>
 									<a href="https://docs.rad.wpdataaccess.com/running-apps.html#%E2%9C%8F%EF%B8%8F-using-the-gutenberg-block-editor" target="_blank" class="whatsnew">
 										Gutenberg block support for [wpda_app] shortcode.
 									</a>
 								</li>
-								<li>
-									<a href="https://docs.rad.wpdataaccess.com/table-builder/menu/table/row-actions.html#%E2%9A%99%EF%B8%8F-hide-edit-icon" target="_blank" class="whatsnew">
-										Inline editing configuration requirements have changed.
-									</a>
-								</li>
                                 <li>
                                     <a href="https://docs.rad.wpdataaccess.com/table-builder/menu/table/column-filters.html" target="_blank" class="whatsnew">
-                                        Show column filters in popup (on mobile devices).
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="https://docs.rad.wpdataaccess.com/table-builder/menu/table/column-filters.html" target="_blank" class="whatsnew">
-                                        Restyled UI for compact column filters.
+                                        Show column filters in popup.
                                     </a>
                                 </li>
 							</ul>
 						</div>
+
+                        <div class="wpda-navi-container-content-item-facts whats-new">
+                            <ul>
+                                <li style="font-weight:bold">
+                                    Old Query Builder no longer available.
+                                </li>
+                                <li style="font-weight:bold">
+                                    Old Data Explorer no longer available.
+                                </li>
+                            </ul>
+                        </div>
 
                         <div class="wpda-navi-container-content-item-facts whats-new">
                             <h4 style="margin-top:0;margin-bottom:5px;font-weight:bold;">Now available to FREE USERS</h4>

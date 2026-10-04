@@ -257,9 +257,6 @@ div[role=presentation].MuiPopover-root.MuiModal-root input[type=checkbox].Privat
 .wpda-query-builder-backend div.pp-container-query-builder > .pp-container > header {
     display: none;
 }
-div.wrap.wpda-query-builder-backend h1.wp-heading-inline {
-    margin-bottom: 0 !important;
-}
 div[role=presentation].MuiDialog-root.MuiModal-root input[type=checkbox]:disabled {
     opacity: 0 !important;
 }
@@ -284,4 +281,50 @@ div[role=presentation].MuiDialog-root.MuiModal-root input[type=checkbox]:disable
 .pp-table .MuiPagination-ul {
     list-style-type: none !important;
     padding: 0 !important;
+}
+
+#wpwrap .wpda-query-builder-backend h1.wp-heading-inline {
+    display: flex;
+    width: 100%;
+    align-items: baseline;
+    gap: 5px;
+}
+
+#wpwrap a.qb-menu-button {
+    padding: 0;
+    margin: 0;
+    height: auto;
+    width: auto;
+    border-radius: 4px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: none;
+    border: none;
+    outline: none;
+}
+
+#wpwrap a .qb-menu-icon {
+    height: 30px;
+    width: 30px;
+    font-size: 22px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    color: initial;
+}
+
+#wpwrap a .qb-menu-icon:focus,
+#wpwrap a.qb-menu-button:focus {
+    box-shadow: none;
+    border: none;
+    outline: none;
+}
+
+.wrap.wpda-explorer-backend .MuiSelect-select {
+    padding: 22px 14px;
+}
+
+.wrap.wpda-apps-backend .MuiSelect-select {
+    padding: 20px 14px;
 }

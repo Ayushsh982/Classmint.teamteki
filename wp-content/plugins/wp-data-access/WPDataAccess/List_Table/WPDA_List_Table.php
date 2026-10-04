@@ -9,16 +9,12 @@
 namespace WPDataAccess\List_Table;
 
 use WPDataAccess\Connection\WPDADB;
-use WPDataAccess\Dashboard\WPDA_Dashboard;
 use WPDataAccess\Data_Dictionary\WPDA_Dictionary_Exist;
-use WPDataAccess\Data_Dictionary\WPDA_Dictionary_Lists;
 use WPDataAccess\Data_Dictionary\WPDA_List_Columns;
 use WPDataAccess\Macro\WPDA_Macro;
 use WPDataAccess\Plugin_Table_Models\WPDA_CSV_Uploads_Model;
 use WPDataAccess\Plugin_Table_Models\WPDA_Media_Model;
-use WPDataAccess\Utilities\WPDA_Import;
 use WPDataAccess\Utilities\WPDA_Message_Box;
-use WPDataAccess\Utilities\WPDA_Repository;
 use WPDataAccess\Wordpress_Original;
 use WPDataAccess\WPDA;
 use WPDataProjects\WPDP;
@@ -211,13 +207,6 @@ class WPDA_List_Table extends Wordpress_Original\WP_List_Table {
     protected $column_headers;
 
     /**
-     * Reference to import object
-     *
-     * @var WPDA_Import
-     */
-    protected $wpda_import = null;
-
-    /**
      * Child tab clicked (used for parent child relationships only)
      *
      * @var null
@@ -367,7 +356,7 @@ class WPDA_List_Table extends Wordpress_Original\WP_List_Table {
      * A list of rows for a specific table is based on WordPress class WP_List_Table.
      *
      * WPDA_List_Table can be used to build list tables for views as well. View based list tables however, do not
-     * support insert, update, delete, import and export actions.
+     * support insert, update, delete and export actions.
      *
      * A table name is not the only thing we need to build a list table. We also need to have access to the
      * table columns. If no table columns are provided execution is stopped as well.
@@ -403,8 +392,6 @@ class WPDA_List_Table extends Wordpress_Original\WP_List_Table {
      * 'allow_update'            => (string) on|off
      *
      * 'allow_delete'            => (string) on|off
-     *
-     * 'allow_import'            => (string) on|off
      *
      * 'hide_navigation'         => (boolean)
      *
@@ -478,15 +465,6 @@ class WPDA_List_Table extends Wordpress_Original\WP_List_Table {
                 $this->subtitle = '<span class="dashicons dashicons-warning"></span> ' . WPDA::get_table_type_text( WPDA::TABLE_TYPE_WP );
             } elseif ( WPDA::is_wpda_table( $this->table_name ) ) {
                 $this->subtitle = '<span class="dashicons dashicons-warning"></span> ' . WPDA::get_table_type_text( WPDA::TABLE_TYPE_WPDA );
-            }
-        }
-        if ( !(isset( $args['allow_import'] ) && 'off' === $args['allow_import']) ) {
-            try {
-                // Instantiate WPDA_Import.
-                $this->wpda_import = new WPDA_Import(( is_admin() ? "?page={$this->page}" : '' ), $this->schema_name, $this->table_name);
-            } catch ( \Exception $e ) {
-                // If import is turned off instantiation will fail. Handle is set to null (check in future calls).
-                $this->wpda_import = null;
             }
         }
         if ( isset( $args['bulk_export_enabled'] ) ) {
@@ -1350,10 +1328,6 @@ EOT;
      * @see WPDA_List_Table::display()
      */
     public function show() {
-        // Check for import requested.
-        if ( null !== $this->wpda_import ) {
-            $this->wpda_import->check_post();
-        }
         // Prepare list table items.
         $this->prepare_items();
         // Show list table.
@@ -1429,10 +1403,6 @@ EOT;
 					</form>
 				</div>
 				<?php 
-        // Add import container.
-        if ( null !== $this->wpda_import ) {
-            $this->wpda_import->add_container();
-        }
         // Add custom code before the list table.
         do_action_ref_array( 'wpda_before_list_table', array($this) );
         // Prepare url.
@@ -1595,17 +1565,13 @@ EOT;
     /**
      * Add button to page header
      *
-     * By default "add new" and "import" buttons are added (depending on the settings). Overwrite this method to
+     * "Add new" button is added (depending on the settings). Overwrite this method to
      * add your own buttons.
      *
      * @since   1.0.1
      */
     protected function add_header_button() {
-        if ( 'off' === $this->allow_insert ) {
-            if ( null !== $this->wpda_import ) {
-                $this->wpda_import->add_button();
-            }
-        } else {
+        if ( 'off' !== $this->allow_insert ) {
             // phpcs:ignore -- 8.1 proof
             if ( WPDA::is_wpda_table( $this->table_name ) || ('on' === WPDA::get_option( WPDA::OPTION_BE_ALLOW_INSERT ) && count( $this->wpda_list_columns->get_table_primary_key() )) > 0 ) {
                 $storage_type = ( WPDA::is_wpda_table( $this->table_name ) ? __( 'respository', 'wp-data-access' ) : __( 'table', 'wp-data-access' ) );
@@ -1646,20 +1612,9 @@ EOT;
                 echo esc_attr__( 'Add New', 'wp-data-access' );
                 ?>
 							</button>
-							<?php 
-                // Add import button to title.
-                if ( null !== $this->wpda_import ) {
-                    $this->wpda_import->add_button();
-                }
-                ?>
 						</div>
 					</form>
 					<?php 
-            } else {
-                // Add import button to title.
-                if ( null !== $this->wpda_import ) {
-                    $this->wpda_import->add_button();
-                }
             }
         }
     }
@@ -2632,6 +2587,9 @@ EOT;
      * Needs to be granted in project page configuration
      */
     protected function add_full_table_downloads() {
+        if ( !WPDA::current_user_is_admin() ) {
+            return;
+        }
     }
 
     // Override to add arguments to CSV and JSON full table exports.

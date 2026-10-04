@@ -436,8 +436,19 @@ class WPDA_Table extends WPDA_API_Core {
             }
             $dynamic_where = array();
             if ( is_array( $column_dynamic_values ) && 0 < count( $column_dynamic_values ) ) {
+                $dynamic_allowed = array();
+                $dynamic_table = WPDA_List_Columns_Cache::get_list_columns( $dbs, $tbl );
+                $dynamic_columns = $dynamic_table->get_table_columns();
+                foreach ( $dynamic_columns as $column ) {
+                    if ( isset( $column['column_name'] ) ) {
+                        $dynamic_allowed[] = $column['column_name'];
+                    }
+                }
                 foreach ( $column_dynamic_values as $key => $value ) {
-                    $dynamic_where[] = $wpdadb->prepare( " `{$key}` = %s ", $value );
+                    if ( !in_array( $key, $dynamic_allowed, true ) ) {
+                        continue;
+                    }
+                    $dynamic_where[] = $wpdadb->prepare( " %i = %s ", array($key, $value) );
                 }
                 $where .= (( '' === $where ? ' where ' : ' and ' )) . ' (' . implode( ' and ', $dynamic_where ) . ') ';
             }
@@ -541,7 +552,7 @@ class WPDA_Table extends WPDA_API_Core {
             $columns_selected = array();
             $search_data_types = array();
             foreach ( $table_columns as $table_column ) {
-                if ( isset( $table_column['column_name'], $table_column['data_type'] ) ) {
+                if ( isset( $table_column['column_name'], $table_column['data_type'] ) && (in_array( $table_column['column_name'], $column_names ) || empty( $column_names )) ) {
                     $columns_selected[$table_column['column_name']] = true;
                     $search_data_types[$table_column['column_name']] = $table_column['data_type'];
                 }
@@ -1344,7 +1355,7 @@ class WPDA_Table extends WPDA_API_Core {
                     return $table[$action]['methods'];
                 }
                 // Check authorized roles
-                if ( isset( $table[$action]['authorized_roles'] ) && is_array( $table[$action]['authorized_roles'] ) && 0 < count( $table[$action]['authorized_roles'] ) && 0 < count( array_intersect( $this->get_user_roles(), $table[$action]['authorized_roles'] ) ) ) {
+                if ( isset( $table[$action]['authorized_roles'] ) && is_array( $table[$action]['authorized_roles'] ) && 0 < count( $table[$action]['authorized_roles'] ) && 0 < count( array_intersect( ( is_array( $this->get_user_roles() ) ? $this->get_user_roles() : array() ), $table[$action]['authorized_roles'] ) ) ) {
                     return $table[$action]['methods'];
                 }
             }
