@@ -145,6 +145,7 @@
   /**
   * Style for the buttons
   */
+  /* 5. Minimal Bottom Line */
 }
 .lp-question-edit-main [class*=lp-icon-] {
   font-size: 1.25rem;
@@ -192,6 +193,30 @@
   background: #135E96;
   color: #fff;
   opacity: 1;
+}
+.lp-question-edit-main .btn-line::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 4px;
+  width: 0%;
+  background-color: #38bdf8;
+  animation: lineLoad 2s ease-in-out infinite;
+}
+@keyframes lineLoad {
+  0% {
+    width: 0%;
+    right: 0;
+  }
+  50% {
+    width: 100%;
+    right: 0;
+  }
+  100% {
+    width: 0%;
+    right: 100%;
+  }
 }
 
 .question-edit-details .lp-section-collapse {
@@ -359,6 +384,7 @@
   /**
   * Style for the buttons
   */
+  /* 5. Minimal Bottom Line */
 }
 .lp-popup-items-to-select .lp-btn-edit-primary {
   border: none;
@@ -372,6 +398,30 @@
   background: #135E96;
   color: #fff;
   opacity: 1;
+}
+.lp-popup-items-to-select .btn-line::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 4px;
+  width: 0%;
+  background-color: #38bdf8;
+  animation: lineLoad 2s ease-in-out infinite;
+}
+@keyframes lineLoad {
+  0% {
+    width: 0%;
+    right: 0;
+  }
+  50% {
+    width: 100%;
+    right: 0;
+  }
+  100% {
+    width: 0%;
+    right: 100%;
+  }
 }
 .lp-popup-items-to-select .header {
   position: relative;
@@ -561,6 +611,7 @@
   /**
   * Style for the buttons
   */
+  /* 5. Minimal Bottom Line */
   /*.lp-btn-add-question {
   	border: none !important;
   	background: rgba(19, 94, 150, 0.5) !important;
@@ -612,6 +663,30 @@
   background: #135E96;
   color: #fff;
   opacity: 1;
+}
+.lp-edit-quiz-wrap .btn-line::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 4px;
+  width: 0%;
+  background-color: #38bdf8;
+  animation: lineLoad 2s ease-in-out infinite;
+}
+@keyframes lineLoad {
+  0% {
+    width: 0%;
+    right: 0;
+  }
+  50% {
+    width: 100%;
+    right: 0;
+  }
+  100% {
+    width: 0%;
+    right: 100%;
+  }
 }
 .lp-edit-quiz-wrap .heading {
   display: flex;

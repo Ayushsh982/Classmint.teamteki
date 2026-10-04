@@ -30,7 +30,7 @@
 
 @font-face {
   font-family: "lp-icon";
-  src: url("../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=76") format("woff2");
+  src: url("../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=21") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -50,16 +50,168 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.lp-icon-plus:before {
-  content: "\f067";
+.lp-icon-my-courses:before {
+  content: "\e900";
 }
 
-.lp-icon-question:before {
-  content: "\f128";
+.lp-icon-clock:before {
+  content: "\e901";
 }
 
-.lp-icon-minus:before {
-  content: "\f068";
+.lp-icon-students:before {
+  content: "\e902";
+}
+
+.lp-icon-courses:before {
+  content: "\e903";
+}
+
+.lp-icon-co-instructor:before {
+  content: "\e904";
+}
+
+.lp-icon-dropbox:before {
+  content: "\e905";
+}
+
+.lp-icon-box:before {
+  content: "\e906";
+}
+
+.lp-icon-close-circle:before {
+  content: "\e907";
+}
+
+.lp-icon-tiktok-alt:before {
+  content: "\e908";
+}
+
+.lp-icon-alarm-clock:before {
+  content: "\e909";
+}
+
+.lp-icon-art-and-design:before {
+  content: "\e90a";
+}
+
+.lp-icon-best-customer-experience:before {
+  content: "\e90b";
+}
+
+.lp-icon-certificate-o:before {
+  content: "\e90c";
+}
+
+.lp-icon-community:before {
+  content: "\e90d";
+}
+
+.lp-icon-online-education:before {
+  content: "\e90e";
+}
+
+.lp-icon-concierge-bell:before {
+  content: "\e90f";
+}
+
+.lp-icon-target:before {
+  content: "\e910";
+}
+
+.lp-icon-content-marketing:before {
+  content: "\e911";
+}
+
+.lp-icon-dollar-sign:before {
+  content: "\e912";
+}
+
+.lp-icon-website:before {
+  content: "\e913";
+}
+
+.lp-icon-worldwide-security:before {
+  content: "\e914";
+}
+
+.lp-icon-educational-programs:before {
+  content: "\e915";
+}
+
+.lp-icon-online-class:before {
+  content: "\e916";
+}
+
+.lp-icon-monitor:before {
+  content: "\e917";
+}
+
+.lp-icon-lucide:before {
+  content: "\e918";
+}
+
+.lp-icon-ebook:before {
+  content: "\e919";
+}
+
+.lp-icon-layers:before {
+  content: "\e91a";
+}
+
+.lp-icon-map-pin:before {
+  content: "\e91b";
+}
+
+.lp-icon-map-marker:before {
+  content: "\e91b";
+}
+
+.lp-icon-filter:before {
+  content: "\e91c";
+}
+
+.lp-icon-in_progress_course:before {
+  content: "\e91d";
+}
+
+.lp-icon-finished_courses:before {
+  content: "\e91e";
+}
+
+.lp-icon-failed_courses:before {
+  content: "\e91f";
+}
+
+.lp-icon-passed_courses:before {
+  content: "\e920";
+}
+
+.lp-icon-comment-written:before {
+  content: "\e921";
+}
+
+.lp-icon-student_in_progress:before {
+  content: "\e924";
+}
+
+.lp-icon-student_completed:before {
+  content: "\e925";
+}
+
+.lp-icon-published_course:before {
+  content: "\e926";
+}
+
+.lp-icon-pending_course:before {
+  content: "\e927";
+}
+
+.lp-icon-list-check:before {
+  content: "\e929";
+}
+
+.lp-icon-icon-h5p:before {
+  content: "\e92a";
 }
 
 .lp-icon-search:before {
@@ -170,6 +322,10 @@
   content: "\f02e";
 }
 
+.lp-icon-list:before {
+  content: "\f03a";
+}
+
 .lp-icon-video-camera:before {
   content: "\f03d";
 }
@@ -220,6 +376,14 @@
 
 .lp-icon-compress:before {
   content: "\f066";
+}
+
+.lp-icon-plus:before {
+  content: "\f067";
+}
+
+.lp-icon-minus:before {
+  content: "\f068";
 }
 
 .lp-icon-exclamation-circle:before {
@@ -466,6 +630,10 @@
   content: "\f121";
 }
 
+.lp-icon-question:before {
+  content: "\f128";
+}
+
 .lp-icon-puzzle-piece:before {
   content: "\f12e";
 }
@@ -598,6 +766,10 @@
   content: "\f21b";
 }
 
+.lp-icon-pinterest-p:before {
+  content: "\f231";
+}
+
 .lp-icon-television:before {
   content: "\f26c";
 }
@@ -622,184 +794,24 @@
   content: "\f2bd";
 }
 
-.lp-icon-user-graduate:before {
-  content: "\f501";
+.lp-icon-stopwatch:before {
+  content: "\f2f2";
 }
 
 .lp-icon-user-edit:before {
   content: "\f4ff";
 }
 
-.lp-icon-my-courses:before {
-  content: "\e900";
-}
-
-.lp-icon-clock:before {
-  content: "\e901";
-}
-
-.lp-icon-stopwatch:before {
-  content: "\f2f2";
-}
-
-.lp-icon-file-download:before {
-  content: "\f56d";
-}
-
-.lp-icon-list:before {
-  content: "\f03a";
-}
-
-.lp-icon-students:before {
-  content: "\e902";
-}
-
-.lp-icon-courses:before {
-  content: "\e903";
-}
-
-.lp-icon-tiktok-alt:before {
-  content: "\e908";
-}
-
-.lp-icon-alarm-clock:before {
-  content: "\e909";
-}
-
-.lp-icon-art-and-design:before {
-  content: "\e90a";
-}
-
-.lp-icon-best-customer-experience:before {
-  content: "\e90b";
-}
-
-.lp-icon-certificate-o:before {
-  content: "\e90c";
-}
-
-.lp-icon-community:before {
-  content: "\e90d";
-}
-
-.lp-icon-online-education:before {
-  content: "\e90e";
-}
-
-.lp-icon-concierge-bell:before {
-  content: "\e90f";
-}
-
-.lp-icon-target:before {
-  content: "\e910";
-}
-
-.lp-icon-content-marketing:before {
-  content: "\e911";
-}
-
-.lp-icon-dollar-sign:before {
-  content: "\e912";
-}
-
-.lp-icon-website:before {
-  content: "\e913";
-}
-
-.lp-icon-worldwide-security:before {
-  content: "\e914";
-}
-
-.lp-icon-educational-programs:before {
-  content: "\e915";
-}
-
-.lp-icon-online-class:before {
-  content: "\e916";
-}
-
-.lp-icon-monitor:before {
-  content: "\e917";
-}
-
-.lp-icon-lucide:before {
-  content: "\e918";
-}
-
-.lp-icon-ebook:before {
-  content: "\e919";
-}
-
-.lp-icon-co-instructor:before {
-  content: "\e904";
-}
-
-.lp-icon-close-circle:before {
-  content: "\e907";
-}
-
-.lp-icon-layers:before {
-  content: "\e91a";
-}
-
-.lp-icon-filter:before {
-  content: "\e91c";
-}
-
-.lp-icon-in_progress_course:before {
-  content: "\e91d";
-}
-
-.lp-icon-finished_courses:before {
-  content: "\e91e";
-}
-
-.lp-icon-failed_courses:before {
-  content: "\e91f";
-}
-
-.lp-icon-passed_courses:before {
-  content: "\e920";
-}
-
-.lp-icon-student_in_progress:before {
-  content: "\e924";
-}
-
-.lp-icon-student_completed:before {
-  content: "\e925";
-}
-
-.lp-icon-published_course:before {
-  content: "\e926";
-}
-
-.lp-icon-pending_course:before {
-  content: "\e927";
-}
-
-.lp-icon-list-check:before {
-  content: "\e929";
-}
-
-.lp-icon-icon-h5p:before {
-  content: "\e92a";
-}
-
-.lp-icon-comment-written:before {
-  content: "\e921";
+.lp-icon-user-graduate:before {
+  content: "\f501";
 }
 
 .lp-icon-book-open:before {
   content: "\f518";
 }
 
-.lp-icon-pinterest-p:before {
-  content: "\f231";
-}
-
-.lp-icon-dropbox:before {
-  content: "\e905";
+.lp-icon-file-download:before {
+  content: "\f56d";
 }
 
 .lp-icon-edit-square:before {
@@ -810,16 +822,40 @@
   content: "\e922";
 }
 
-.lp-icon-map-pin:before {
-  content: "\e91b";
+.lp-icon-sidebar-left:before {
+  content: "\e928";
 }
 
-.lp-icon-map-marker:before {
-  content: "\e91b";
+.lp-icon-sidebar-right:before {
+  content: "\e92b";
 }
 
-.lp-icon-box:before {
-  content: "\e906";
+.lp-icon-link:before {
+  content: "\e92c";
+}
+
+.lp-icon-folder:before {
+  content: "\e92d";
+}
+
+.lp-icon-send:before {
+  content: "\e92e";
+}
+
+.lp-icon-warning-octagon:before {
+  content: "\e92f";
+}
+
+.lp-icon-warning-octagon-o:before {
+  content: "\e930";
+}
+
+.lp-icon-info-circle:before {
+  content: "\e931";
+}
+
+.lp-icon-info-triangle:before {
+  content: "\e932";
 }
 
 .lp-ico-ai {

@@ -3,9 +3,7 @@
 namespace LearnPress\TemplateHooks\Admin;
 
 use Exception;
-use LearnPress\Databases\PostDB;
 use LearnPress\Databases\UserItemsDB;
-use LearnPress\Filters\PostFilter;
 use LearnPress\Filters\UserItemsFilter;
 use LearnPress\Helpers\Singleton;
 use LearnPress\Helpers\Template;
@@ -318,7 +316,7 @@ class AdminListStudentsEnrolled {
 
 		$html_toolbar = AdminTemplate::html_form_filter(
 			array(
-				'classes'     => 'lp-enrolled-students-form',
+				'form_classes'     => 'lp-enrolled-students-form',
 				'fields'      => $html_fields,
 				'btn_actions' => $html_btn_actions,
 			)
@@ -373,7 +371,7 @@ class AdminListStudentsEnrolled {
 		return AdminTemplate::html_form_filter(
 			array(
 				'id'          => 'lp-modal-enrolled-form',
-				'classes'     => 'lp-enrolled-students-form lp-enrolled-students-form--modal lp-enrolled-students-table-toolbar--modal',
+				'form_classes'     => 'lp-enrolled-students-form lp-enrolled-students-form--modal lp-enrolled-students-table-toolbar--modal',
 				'fields'      => $html_fields,
 				'btn_actions' => $html_btn_actions,
 			)
@@ -595,7 +593,9 @@ class AdminListStudentsEnrolled {
 		$status_raw   = $graduation !== UserItemModel::GRADUATION_IN_PROGRESS
 			? $userCourseModel->get_graduation()
 			: $userCourseModel->get_status();
-		$status_label = ucfirst( str_replace( array( '-', '_' ), ' ', $status_raw ) );
+		$status_label = $graduation !== UserItemModel::GRADUATION_IN_PROGRESS
+			? $userCourseModel->get_graduation_label()
+			: $userCourseModel->get_status_label();
 		$badge_class  = 'lp-badge--' . sanitize_html_class( $status_raw );
 
 		// Date.
@@ -608,7 +608,7 @@ class AdminListStudentsEnrolled {
 
 		$section = array(
 			'row'                 => '<tr>',
-			'student-cell-open'   => '<td class="lp-cell-student">',
+			'student-cell-open'   => '<td><div class="lp-cell-student">',
 			'avatar'              => SingleInstructorTemplate::instance()->html_avatar( $userModel ),
 			'meta-open'           => '<div class="lp-meta">',
 			'name'                => sprintf(
@@ -620,7 +620,7 @@ class AdminListStudentsEnrolled {
 				esc_html( $userModel->get_email() )
 			),
 			'meta-close'          => '</div>',
-			'student-cell-close'  => '</td>',
+			'student-cell-close'  => '</div></td>',
 			'course-cell'         => sprintf(
 				'<td class="lp-cell-course"><a href="%s">%s</a></td>',
 				esc_url_raw( $courseModel->get_permalink() ),

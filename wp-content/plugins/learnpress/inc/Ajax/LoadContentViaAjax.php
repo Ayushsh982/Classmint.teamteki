@@ -3,7 +3,9 @@ namespace LearnPress\Ajax;
 
 use Exception;
 use LearnPress\Helpers\Response;
+use LearnPress\TemplateHooks\Admin\AdminAddonsPage;
 use LearnPress\TemplateHooks\Admin\AdminHelpCenterDataTemplate;
+use LearnPress\TemplateHooks\Admin\AdminThemesDataTemplate;
 use LP_Helper;
 use stdClass;
 use Throwable;
@@ -52,6 +54,8 @@ class LoadContentViaAjax extends AbstractAjax {
 					'LP_Admin_Dashboard:order_statistic',
 					'LP_Admin_Dashboard:plugin_status_content',
 					AdminHelpCenterDataTemplate::class . ':html_data_online',
+					AdminThemesDataTemplate::class . ':html_data_online',
+					AdminAddonsPage::class . ':render_addons',
 				]
 			);
 			$callBackStr     = $class . ':' . $method;

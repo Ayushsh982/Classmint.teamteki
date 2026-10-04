@@ -28,29 +28,139 @@
   --lp-container-max-width: var(--wp--style--global--wide-size);
 }
 
+/**
+* Style for the buttons
+*/
+.lp-btn-edit-primary {
+  border: none;
+  background: #135e96;
+  color: #fff;
+}
+.lp-btn-edit-primary:not(.active) {
+  opacity: 0.5;
+}
+.lp-btn-edit-primary:hover, .lp-btn-edit-primary.active, .lp-btn-edit-primary.active:hover {
+  background: #135E96;
+  color: #fff;
+  opacity: 1;
+}
+
+/* 5. Minimal Bottom Line */
+.btn-line::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  width: 0%;
+  background-color: #38bdf8;
+  animation: lineLoad 2s ease-in-out infinite;
+}
+
+@keyframes lineLoad {
+  0% {
+    width: 0%;
+    left: 0;
+  }
+  50% {
+    width: 100%;
+    left: 0;
+  }
+  100% {
+    width: 0%;
+    left: 100%;
+  }
+}
+.lp-button {
+  padding: 8px 16px;
+  border: 1px solid var(--lp-border-color, #E2E0DB);
+  border-radius: var(--lp-border-radius, 5px);
+  color: #374151;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+.lp-button.loading {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: rgba(0, 0, 0, 0.2) !important;
+}
+.lp-button.loading:before {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "lp-icon";
+  content: "\f110";
+  animation: lp-rotating 1s linear infinite;
+  line-height: 1;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: black;
+}
+
 .learn-press-message {
   position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 !important;
   padding: 10px 20px;
   border-radius: var(--lp-border-radius, 5px);
   background-color: #E5F7FF;
   color: #007AFF;
   max-width: 100%;
 }
+.learn-press-message::before {
+  display: inline-block;
+  margin-right: 8px;
+  font-family: "lp-icon";
+  font-size: 20px;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+}
 .learn-press-message.error {
   background-color: #FEE5E5;
   color: #FF3B30;
+  border: 1px solid #E31A1A;
+  padding: 10px 20px;
+}
+.learn-press-message.error::before {
+  content: "\f071";
+  color: #E31A1A;
 }
 .learn-press-message.warning {
   background-color: #FEF7E6;
   color: #FF9500;
+  border: 1px solid #F8A100;
+}
+.learn-press-message.warning::before {
+  content: "\f06a";
+  color: #F8A100;
 }
 .learn-press-message.success {
   background-color: #EBF8E5;
   color: #3AB500;
+  border: 1px solid #28A746;
+}
+.learn-press-message.success::before {
+  content: "\f058";
+  color: #28A746;
 }
 .learn-press-message.info {
   background-color: rgba(0, 122, 255, 0.1019607843);
   color: #007AFF;
+  border: 1px solid #2E91FA;
+}
+.learn-press-message.info::before {
+  content: "\e931";
+  color: #2E91FA;
 }
 .learn-press-message a {
   text-decoration: underline;
@@ -630,20 +740,9 @@ ul .clearfix {
   content: "";
 }
 
-.lp-button {
-  padding: 8px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: var(--lp-border-radius);
-  color: #374151;
-  font-size: 0.9em;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-}
-
 @font-face {
   font-family: "lp-icon";
-  src: url("../../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=66") format("woff2");
+  src: url("../../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=73") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -663,16 +762,168 @@ ul .clearfix {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.lp-icon-plus:before {
-  content: "\f067";
+.lp-icon-my-courses:before {
+  content: "\e900";
 }
 
-.lp-icon-question:before {
-  content: "\f128";
+.lp-icon-clock:before {
+  content: "\e901";
 }
 
-.lp-icon-minus:before {
-  content: "\f068";
+.lp-icon-students:before {
+  content: "\e902";
+}
+
+.lp-icon-courses:before {
+  content: "\e903";
+}
+
+.lp-icon-co-instructor:before {
+  content: "\e904";
+}
+
+.lp-icon-dropbox:before {
+  content: "\e905";
+}
+
+.lp-icon-box:before {
+  content: "\e906";
+}
+
+.lp-icon-close-circle:before {
+  content: "\e907";
+}
+
+.lp-icon-tiktok-alt:before {
+  content: "\e908";
+}
+
+.lp-icon-alarm-clock:before {
+  content: "\e909";
+}
+
+.lp-icon-art-and-design:before {
+  content: "\e90a";
+}
+
+.lp-icon-best-customer-experience:before {
+  content: "\e90b";
+}
+
+.lp-icon-certificate-o:before {
+  content: "\e90c";
+}
+
+.lp-icon-community:before {
+  content: "\e90d";
+}
+
+.lp-icon-online-education:before {
+  content: "\e90e";
+}
+
+.lp-icon-concierge-bell:before {
+  content: "\e90f";
+}
+
+.lp-icon-target:before {
+  content: "\e910";
+}
+
+.lp-icon-content-marketing:before {
+  content: "\e911";
+}
+
+.lp-icon-dollar-sign:before {
+  content: "\e912";
+}
+
+.lp-icon-website:before {
+  content: "\e913";
+}
+
+.lp-icon-worldwide-security:before {
+  content: "\e914";
+}
+
+.lp-icon-educational-programs:before {
+  content: "\e915";
+}
+
+.lp-icon-online-class:before {
+  content: "\e916";
+}
+
+.lp-icon-monitor:before {
+  content: "\e917";
+}
+
+.lp-icon-lucide:before {
+  content: "\e918";
+}
+
+.lp-icon-ebook:before {
+  content: "\e919";
+}
+
+.lp-icon-layers:before {
+  content: "\e91a";
+}
+
+.lp-icon-map-pin:before {
+  content: "\e91b";
+}
+
+.lp-icon-map-marker:before {
+  content: "\e91b";
+}
+
+.lp-icon-filter:before {
+  content: "\e91c";
+}
+
+.lp-icon-in_progress_course:before {
+  content: "\e91d";
+}
+
+.lp-icon-finished_courses:before {
+  content: "\e91e";
+}
+
+.lp-icon-failed_courses:before {
+  content: "\e91f";
+}
+
+.lp-icon-passed_courses:before {
+  content: "\e920";
+}
+
+.lp-icon-comment-written:before {
+  content: "\e921";
+}
+
+.lp-icon-student_in_progress:before {
+  content: "\e924";
+}
+
+.lp-icon-student_completed:before {
+  content: "\e925";
+}
+
+.lp-icon-published_course:before {
+  content: "\e926";
+}
+
+.lp-icon-pending_course:before {
+  content: "\e927";
+}
+
+.lp-icon-list-check:before {
+  content: "\e929";
+}
+
+.lp-icon-icon-h5p:before {
+  content: "\e92a";
 }
 
 .lp-icon-search:before {
@@ -783,6 +1034,10 @@ ul .clearfix {
   content: "\f02e";
 }
 
+.lp-icon-list:before {
+  content: "\f03a";
+}
+
 .lp-icon-video-camera:before {
   content: "\f03d";
 }
@@ -833,6 +1088,14 @@ ul .clearfix {
 
 .lp-icon-compress:before {
   content: "\f066";
+}
+
+.lp-icon-plus:before {
+  content: "\f067";
+}
+
+.lp-icon-minus:before {
+  content: "\f068";
 }
 
 .lp-icon-exclamation-circle:before {
@@ -1079,6 +1342,10 @@ ul .clearfix {
   content: "\f121";
 }
 
+.lp-icon-question:before {
+  content: "\f128";
+}
+
 .lp-icon-puzzle-piece:before {
   content: "\f12e";
 }
@@ -1211,6 +1478,10 @@ ul .clearfix {
   content: "\f21b";
 }
 
+.lp-icon-pinterest-p:before {
+  content: "\f231";
+}
+
 .lp-icon-television:before {
   content: "\f26c";
 }
@@ -1235,184 +1506,24 @@ ul .clearfix {
   content: "\f2bd";
 }
 
-.lp-icon-user-graduate:before {
-  content: "\f501";
+.lp-icon-stopwatch:before {
+  content: "\f2f2";
 }
 
 .lp-icon-user-edit:before {
   content: "\f4ff";
 }
 
-.lp-icon-my-courses:before {
-  content: "\e900";
-}
-
-.lp-icon-clock:before {
-  content: "\e901";
-}
-
-.lp-icon-stopwatch:before {
-  content: "\f2f2";
-}
-
-.lp-icon-file-download:before {
-  content: "\f56d";
-}
-
-.lp-icon-list:before {
-  content: "\f03a";
-}
-
-.lp-icon-students:before {
-  content: "\e902";
-}
-
-.lp-icon-courses:before {
-  content: "\e903";
-}
-
-.lp-icon-tiktok-alt:before {
-  content: "\e908";
-}
-
-.lp-icon-alarm-clock:before {
-  content: "\e909";
-}
-
-.lp-icon-art-and-design:before {
-  content: "\e90a";
-}
-
-.lp-icon-best-customer-experience:before {
-  content: "\e90b";
-}
-
-.lp-icon-certificate-o:before {
-  content: "\e90c";
-}
-
-.lp-icon-community:before {
-  content: "\e90d";
-}
-
-.lp-icon-online-education:before {
-  content: "\e90e";
-}
-
-.lp-icon-concierge-bell:before {
-  content: "\e90f";
-}
-
-.lp-icon-target:before {
-  content: "\e910";
-}
-
-.lp-icon-content-marketing:before {
-  content: "\e911";
-}
-
-.lp-icon-dollar-sign:before {
-  content: "\e912";
-}
-
-.lp-icon-website:before {
-  content: "\e913";
-}
-
-.lp-icon-worldwide-security:before {
-  content: "\e914";
-}
-
-.lp-icon-educational-programs:before {
-  content: "\e915";
-}
-
-.lp-icon-online-class:before {
-  content: "\e916";
-}
-
-.lp-icon-monitor:before {
-  content: "\e917";
-}
-
-.lp-icon-lucide:before {
-  content: "\e918";
-}
-
-.lp-icon-ebook:before {
-  content: "\e919";
-}
-
-.lp-icon-co-instructor:before {
-  content: "\e904";
-}
-
-.lp-icon-close-circle:before {
-  content: "\e907";
-}
-
-.lp-icon-layers:before {
-  content: "\e91a";
-}
-
-.lp-icon-filter:before {
-  content: "\e91c";
-}
-
-.lp-icon-in_progress_course:before {
-  content: "\e91d";
-}
-
-.lp-icon-finished_courses:before {
-  content: "\e91e";
-}
-
-.lp-icon-failed_courses:before {
-  content: "\e91f";
-}
-
-.lp-icon-passed_courses:before {
-  content: "\e920";
-}
-
-.lp-icon-student_in_progress:before {
-  content: "\e924";
-}
-
-.lp-icon-student_completed:before {
-  content: "\e925";
-}
-
-.lp-icon-published_course:before {
-  content: "\e926";
-}
-
-.lp-icon-pending_course:before {
-  content: "\e927";
-}
-
-.lp-icon-list-check:before {
-  content: "\e929";
-}
-
-.lp-icon-icon-h5p:before {
-  content: "\e92a";
-}
-
-.lp-icon-comment-written:before {
-  content: "\e921";
+.lp-icon-user-graduate:before {
+  content: "\f501";
 }
 
 .lp-icon-book-open:before {
   content: "\f518";
 }
 
-.lp-icon-pinterest-p:before {
-  content: "\f231";
-}
-
-.lp-icon-dropbox:before {
-  content: "\e905";
+.lp-icon-file-download:before {
+  content: "\f56d";
 }
 
 .lp-icon-edit-square:before {
@@ -1423,16 +1534,40 @@ ul .clearfix {
   content: "\e922";
 }
 
-.lp-icon-map-pin:before {
-  content: "\e91b";
+.lp-icon-sidebar-left:before {
+  content: "\e928";
 }
 
-.lp-icon-map-marker:before {
-  content: "\e91b";
+.lp-icon-sidebar-right:before {
+  content: "\e92b";
 }
 
-.lp-icon-box:before {
-  content: "\e906";
+.lp-icon-link:before {
+  content: "\e92c";
+}
+
+.lp-icon-folder:before {
+  content: "\e92d";
+}
+
+.lp-icon-send:before {
+  content: "\e92e";
+}
+
+.lp-icon-warning-octagon:before {
+  content: "\e92f";
+}
+
+.lp-icon-warning-octagon-o:before {
+  content: "\e930";
+}
+
+.lp-icon-info-circle:before {
+  content: "\e931";
+}
+
+.lp-icon-info-triangle:before {
+  content: "\e932";
 }
 
 .lp-ico-ai {
@@ -1862,22 +1997,6 @@ ul .clearfix {
 
 .lp-hidden {
   display: none !important;
-}
-
-.lp-button.loading {
-  pointer-events: none;
-  opacity: 0.8;
-}
-.lp-button.loading:before {
-  display: inline-block;
-  font-family: "lp-icon";
-  content: "\f110";
-  animation: lp-rotating 1s linear infinite;
-  margin-right: 5px;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 .lp-max-width-768 {
@@ -3224,14 +3343,16 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
   --lp-addon-item-border-color: #c3c4c7;
 }
 
-@media screen and (min-width: 1600px) {
-  .plugin-card:not(.hide-if-js):nth-child(even) {
-    margin-right: 8px;
-  }
-  .plugin-card:not(.hide-if-js):nth-child(3n) {
-    margin-right: 0;
-  }
-}
+/*@media screen and (min-width: 1600px) {
+
+	.plugin-card:not(.hide-if-js):nth-child(even) {
+		margin-right: 8px;
+	}
+
+	.plugin-card:not(.hide-if-js):nth-child(3n) {
+		margin-right: 0;
+	}
+}*/
 /*** Style Addons Manager ***/
 #lp-addons {
   display: grid;
@@ -3239,9 +3360,85 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
   grid-gap: 20px;
   padding-right: 20px;
   /***** Toggle *****/
-}
-#lp-addons.max-3-items {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
+  /*.lp-toggle-switch {
+  	.lp-toggle-switch-label{
+  		height: 20px;
+  		align-items: center;
+  		margin-bottom: 0;
+  		background: #b4b9be;
+  		cursor: pointer;
+  		display: inline-flex;
+  		justify-content: space-between;
+  		position: relative;
+  		transition: left 0.15s ease-out;
+  		border-radius: 100px;
+
+  		&:after {
+  			background: #FFFFFF;
+  			content: "";
+  			display: block;
+  			position: absolute;
+  			left: 4px;
+  			width: 12px;
+  			height: 12px;
+  			transition: all 0.25s ease-in-out;
+  			border-radius: 50%;
+  		}
+
+  		&::before {
+  			left: 0;
+  		}
+
+  		.toggle-on,
+  		.toggle-off {
+  			opacity: 1;
+  			padding-left: 6px;
+  			padding-right: 6px;
+  			font-size: 0.8em;
+  			line-height: 1.125em;
+  		}
+
+  		.toggle-on {
+  			color: #fff;
+  			opacity: 0;
+  			padding-right: 0;
+  			width: 12px;
+  		}
+
+  		.toggle-off {
+  			width: 12px;
+  			color: #777;
+  			padding-left: 0;
+  		}
+  	}
+
+  	input.lp-toggle-switch-input{
+  		display: none;
+
+  		&:checked{
+  			+ label{
+  				background: #0073aa;
+
+  				&:after {
+  					left: auto;
+  					right: 5px;
+  					background: #ffffff;
+  				}
+  				.toggle-on {
+  					opacity: 1;
+  				}
+
+  				.toggle-off {
+  					opacity: 0;
+  				}
+  			}
+  		}
+  	}
+
+  	.dashicons {
+  		animation: rotation 2s infinite linear;
+  	}
+  }*/
 }
 #lp-addons a {
   text-decoration: none;
@@ -3254,12 +3451,6 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
   border: none;
   cursor: pointer;
 }
-#lp-addons button.btn-addon-action.handling span {
-  display: none;
-}
-#lp-addons button.btn-addon-action.handling span.dashicons {
-  display: inline-flex;
-}
 #lp-addons button.btn-addon-action[data-action=cancel] {
   position: absolute;
   right: 0;
@@ -3268,19 +3459,16 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
   top: 0;
   padding: 7px 10px;
 }
-#lp-addons button.btn-addon-action span.dashicons {
-  align-items: center;
+#lp-addons button.btn-addon-action[data-action=update] {
+  border-color: #3b82f6;
+  color: #ffffff;
+  background: #3b82f6;
+}
+#lp-addons button.btn-addon-action.loading:before {
+  color: white;
+}
+#lp-addons [data-action=setting] {
   display: none;
-  font-size: 1.125em;
-  width: auto;
-  height: auto;
-  animation: rotation 2s infinite linear;
-}
-#lp-addons button[data-action=update] {
-  background: #27BF49;
-}
-#lp-addons button[data-action=setting] {
-  background: #2D72DA;
 }
 #lp-addons .lp-addon-item {
   background: white;
@@ -3306,7 +3494,6 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
   width: 50px;
   height: 50px;
   border-radius: 10px;
-  margin-top: 20px;
 }
 #lp-addons .lp-addon-item__content a {
   text-decoration: none;
@@ -3325,17 +3512,22 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
   margin: 0 calc(var(--lp-addon-item-padding) * -1);
   display: flex;
   align-items: center;
+  overflow: auto;
 }
 #lp-addons .lp-addon-item__actions__left {
   flex: 3;
   display: flex;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
 }
-#lp-addons .lp-addon-item__actions__left button {
+#lp-addons .lp-addon-item__actions__left button, #lp-addons .lp-addon-item__actions__left a {
   display: none;
 }
-#lp-addons .lp-addon-item__actions__right button {
+#lp-addons .lp-addon-item__actions__right {
+  display: flex;
+  gap: 4px;
+}
+#lp-addons .lp-addon-item__actions__right button, #lp-addons .lp-addon-item__actions__right a {
   display: none;
   background: transparent;
   color: #2271b1;
@@ -3350,7 +3542,7 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
   background: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
 }
-#lp-addons .lp-addon-item__purchase__wrapper div {
+#lp-addons .lp-addon-item__purchase__wrapper > div {
   position: absolute;
   bottom: 20%;
   left: var(--lp-addon-item-padding);
@@ -3364,142 +3556,746 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
   gap: 5px;
   box-shadow: 0 4px 25px 1px rgba(0, 0, 0, 0.25);
 }
-#lp-addons .lp-addon-item__purchase__wrapper div input {
+#lp-addons .lp-addon-item__purchase__wrapper > div input {
   width: 100%;
 }
 #lp-addons .lp-addon-item__purchase label {
   text-transform: capitalize;
 }
-#lp-addons .lp-addon-item.installed.activated button[data-action=setting] {
-  display: block;
+#lp-addons .lp-addon-item.installed.activated button[data-action=setting], #lp-addons .lp-addon-item.installed.activated a[data-action=setting] {
+  display: flex;
 }
-#lp-addons .lp-addon-item.installed.activated button[data-action=deactivate] {
-  display: block;
+#lp-addons .lp-addon-item.installed.activated button[data-action=deactivate], #lp-addons .lp-addon-item.installed.activated a[data-action=deactivate] {
+  display: flex;
 }
-#lp-addons .lp-addon-item.installed.activated.update button[data-action=update] {
-  display: block;
+#lp-addons .lp-addon-item.installed:not(.activated) button[data-action=activate], #lp-addons .lp-addon-item.installed:not(.activated) a[data-action=activate] {
+  display: flex;
 }
-#lp-addons .lp-addon-item.installed:not(.activated) button[data-action=activate] {
-  display: block;
-}
-#lp-addons .lp-addon-item.installed.purchase button[data-action=update-purchase-code] {
+#lp-addons .lp-addon-item.installed.purchase button[data-action=update-purchase-code], #lp-addons .lp-addon-item.installed.purchase a[data-action=update-purchase-code] {
   display: inline-flex;
   align-items: center;
-  padding: 0 5px;
   height: 12px;
 }
-#lp-addons .lp-addon-item.installed.purchase button[data-action=update-purchase-code] span {
+#lp-addons .lp-addon-item.installed.purchase button[data-action=update-purchase-code] span, #lp-addons .lp-addon-item.installed.purchase a[data-action=update-purchase-code] span {
   animation: none;
   display: inline;
 }
-#lp-addons .lp-addon-item.not_installed.purchase button[data-action=purchase] {
-  display: block;
+#lp-addons .lp-addon-item.not_installed {
+  /*.lp-addon-item {
+  	&__actions {
+  		&__right {
+  			display: none;
+  		}
+  	}
+  }*/
 }
-#lp-addons .lp-addon-item.not_installed.free button[data-action=install] {
-  display: block;
+#lp-addons .lp-addon-item.not_installed.purchase button[data-action=purchase], #lp-addons .lp-addon-item.not_installed.purchase a[data-action=purchase] {
+  display: flex;
 }
-#lp-addons .lp-addon-item.not_installed .lp-addon-item__actions__right {
-  display: none;
+#lp-addons .lp-addon-item.not_installed.free button[data-action=install], #lp-addons .lp-addon-item.not_installed.free a[data-action=install] {
+  display: flex;
 }
-#lp-addons .lp-addon-item.update button[data-action=update] {
-  display: block;
-}
-#lp-addons .lp-toggle-switch .lp-toggle-switch-label {
-  height: 20px;
-  align-items: center;
-  margin-bottom: 0;
-  background: #b4b9be;
-  cursor: pointer;
-  display: inline-flex;
-  justify-content: space-between;
-  position: relative;
-  transition: left 0.15s ease-out;
-  border-radius: 100px;
-}
-#lp-addons .lp-toggle-switch .lp-toggle-switch-label:after {
-  background: #FFFFFF;
-  content: "";
-  display: block;
-  position: absolute;
-  left: 4px;
-  width: 12px;
-  height: 12px;
-  transition: all 0.25s ease-in-out;
-  border-radius: 50%;
-}
-#lp-addons .lp-toggle-switch .lp-toggle-switch-label::before {
-  left: 0;
-}
-#lp-addons .lp-toggle-switch .lp-toggle-switch-label .toggle-on,
-#lp-addons .lp-toggle-switch .lp-toggle-switch-label .toggle-off {
-  opacity: 1;
-  padding-left: 6px;
-  padding-right: 6px;
-  font-size: 0.8em;
-  line-height: 1.125em;
-}
-#lp-addons .lp-toggle-switch .lp-toggle-switch-label .toggle-on {
-  color: #fff;
-  opacity: 0;
-  padding-right: 0;
-  width: 12px;
-}
-#lp-addons .lp-toggle-switch .lp-toggle-switch-label .toggle-off {
-  width: 12px;
-  color: #777;
-  padding-left: 0;
-}
-#lp-addons .lp-toggle-switch input.lp-toggle-switch-input {
-  display: none;
-}
-#lp-addons .lp-toggle-switch input.lp-toggle-switch-input:checked + label {
-  background: #0073aa;
-}
-#lp-addons .lp-toggle-switch input.lp-toggle-switch-input:checked + label:after {
-  left: auto;
-  right: 5px;
-  background: #ffffff;
-}
-#lp-addons .lp-toggle-switch input.lp-toggle-switch-input:checked + label .toggle-on {
-  opacity: 1;
-}
-#lp-addons .lp-toggle-switch input.lp-toggle-switch-input:checked + label .toggle-off {
-  opacity: 0;
-}
-#lp-addons .lp-toggle-switch .dashicons {
-  animation: rotation 2s infinite linear;
+#lp-addons .lp-addon-item.update:not(.expired) button[data-action=update] {
+  display: flex;
 }
 #lp-addons .screen-reader-text:focus {
   clip-path: inset(50%);
   -webkit-clip-path: inset(50%);
 }
 
-/*** Tab of Addons Manager ***/
-.lp-nav-tab-wrapper {
+/*** Add-ons card redesign ***/
+#lp-addons {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+#lp-addons .lp-addon-item {
+  overflow: hidden;
+  min-width: 0;
+  min-height: 280px;
+  padding: 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  /*&__actions__left,
+  &__actions__right {
+  	display: flex;
+  	align-items: center;
+  	gap: $cb-spacing-sm;
+  }*/
+  /*&__actions__left {
+  	flex: 1;
+  	justify-content: flex-end;
+  }*/
+  /*&__actions__right {
+  	display: grid;
+  	grid-template-columns: max-content;
+  }*/
+  /*.lp-addon-button,*/
+  /*		.lp-addon-button {
+  			border-color: $cb-border-input;
+  			color: $cb-text-secondary;
+  			background: $cb-bg;
+
+  			&:hover,
+  			&:focus {
+  				border-color: $cb-primary;
+  				color: $cb-primary;
+  				background: $cb-bg-hover;
+  			}
+  		}*/
+  /*		.lp-addon-button {
+  			display: none;
+  			align-items: center;
+  		}*/
+  /*&.installed [data-action="setting"] {
+  	display: inline-flex;
+  	visibility: hidden;
+  }*/
+  /*&.installed.activated [data-action="setting"] {
+  	visibility: visible;
+  }
+
+  &.installed .lp-addon-item__actions__right .btn-addon-action[data-action="activate"],
+  &.installed .lp-addon-item__actions__right .btn-addon-action[data-action="deactivate"] {
+  	grid-area: 1 / 1;
+  	display: inline-flex;
+  	align-items: center;
+  	justify-content: center;
+  	visibility: hidden;
+  }
+
+  &.installed:not(.activated) .lp-addon-item__actions__right .btn-addon-action[data-action="activate"],
+  &.installed.activated .lp-addon-item__actions__right .btn-addon-action[data-action="deactivate"] {
+  	visibility: visible;
+  }*/
+}
+#lp-addons .lp-addon-item:hover, #lp-addons .lp-addon-item:focus-within {
+  border-color: #7067ED;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+#lp-addons .lp-addon-item__content {
+  min-height: 0;
+  text-align: start;
+}
+#lp-addons .lp-addon-item__header {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+#lp-addons .lp-addon-item__heading {
   display: flex;
-  margin-bottom: 20px;
-  justify-content: start;
-  gap: 5px;
-  border-bottom: 1px solid #c3c4c7;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
 }
-.lp-nav-tab-wrapper .nav-tab {
-  border: 1px solid #c3c4c7;
-  border-bottom: none;
-  margin-left: 0;
-  padding: 5px 10px;
-  line-height: 1.6em;
+#lp-addons .lp-addon-item__content #lp-addons .lp-addon-item__image {
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  border-radius: 8px;
+  object-fit: cover;
+}
+#lp-addons .lp-addon-item__title {
+  display: -webkit-box;
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+  margin: 0;
+  color: #1e1e1e;
+  font-size: 16px;
   font-weight: 600;
-  background: #dcdcde;
-  color: #50575e;
-  text-decoration: none;
-  white-space: nowrap;
-  border-radius: 3px 3px 0 0;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
-.lp-nav-tab-wrapper .nav-tab-active {
-  background: #f0f0f1;
-  border-bottom: 1px solid #f0f0f1;
+#lp-addons .lp-addon-item__title a,
+#lp-addons .lp-addon-item__title a:visited {
+  color: inherit;
+}
+#lp-addons .lp-addon-item__title a:hover,
+#lp-addons .lp-addon-item__title a:focus {
+  color: #7067ED;
+}
+#lp-addons .lp-addon-item__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #ffffff;
+  background: #E31A1B;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+#lp-addons .lp-addon-item__price {
+  display: flex;
+  align-items: baseline;
+  flex-shrink: 0;
+  gap: 4px;
+  white-space: nowrap;
+}
+#lp-addons .lp-addon-item__price-sale {
+  color: #E31A1B;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+#lp-addons .lp-addon-item__price-regular {
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 300;
+}
+#lp-addons .lp-addon-item__price-regular--current, #lp-addons .lp-addon-item__price-regular--free {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+#lp-addons .lp-addon-item__price-regular--current {
+  color: #E31A1B;
+}
+#lp-addons .lp-addon-item__price-regular--free {
+  color: #28A746;
+}
+#lp-addons .lp-addon-item__description {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 4.35em;
+  margin: 0 0 8px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+#lp-addons .lp-addon-item .lp-addon-license {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid rgba(40, 167, 70, 0.28);
+  border-radius: 8px;
+  color: #374151;
+  background: #E7F6E9;
+  font-size: 12px;
+  line-height: 1.45;
+}
+#lp-addons .lp-addon-item .lp-addon-license__summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+#lp-addons .lp-addon-item .lp-addon-license__status {
+  color: #28A746;
+  font-weight: 600;
+}
+#lp-addons .lp-addon-item .lp-addon-license__expiry {
+  color: #6b7280;
+}
+#lp-addons .lp-addon-item .lp-addon-license--not-activated {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: #fff7e6;
+}
+#lp-addons .lp-addon-item .lp-addon-license--not-activated .lp-addon-license__status {
+  color: #b45309;
+}
+#lp-addons .lp-addon-item .lp-addon-license--expired {
+  border-color: rgba(217, 119, 6, 0.35);
+  background: #ffedd5;
+}
+#lp-addons .lp-addon-item .lp-addon-license--expired .lp-addon-license__status {
+  color: #c2410c;
+}
+#lp-addons .lp-addon-item .lp-addon-license--deactivated {
+  border-color: #d1d5db;
+  background: #F7F7F7;
+}
+#lp-addons .lp-addon-item .lp-addon-license--deactivated .lp-addon-license__status {
+  color: #6b7280;
+}
+#lp-addons .lp-addon-item .lp-addon-license__manage.btn-addon-action[data-action=update-purchase-code] {
+  display: inline-flex;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: #2E91FA;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-decoration: underline;
+}
+#lp-addons .lp-addon-item .lp-addon-license__manage.btn-addon-action[data-action=update-purchase-code]:hover, #lp-addons .lp-addon-item .lp-addon-license__manage.btn-addon-action[data-action=update-purchase-code]:focus {
+  color: #7067ED;
+  background: transparent;
+}
+#lp-addons .lp-addon-item__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: #898989;
+  font-size: 12px;
+  line-height: 1.4;
+}
+#lp-addons .lp-addon-item__meta a {
+  color: #2E91FA;
+  font-weight: 500;
+}
+#lp-addons .lp-addon-item__meta a:focus {
+  outline: none;
+  box-shadow: none;
+}
+#lp-addons .lp-addon-item__meta > * + *::before {
+  margin-inline-end: 8px;
+  color: #d1d5db;
+  content: "|";
+}
+#lp-addons .lp-addon-item .new-update,
+#lp-addons .lp-addon-item .need-extend {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+#lp-addons .lp-addon-item .new-update {
+  color: #28A746;
+}
+#lp-addons .lp-addon-item .need-extend {
+  color: #991b1b;
+}
+#lp-addons .lp-addon-item .need-extend__link {
+  color: #dc2626;
+  font-weight: 500;
+  text-decoration: underline;
+}
+#lp-addons .lp-addon-item .need-extend__days {
+  color: #dc2626;
+}
+#lp-addons .lp-addon-item__actions {
+  gap: 8px;
+  min-height: 41px;
+  margin: 20px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid #e5e7eb;
+}
+#lp-addons .lp-addon-item .btn-addon-action {
+  box-sizing: border-box;
+  padding: 8px 16px;
+  border: 1px solid #7067ED;
+  border-radius: 12px;
+  color: #ffffff;
+  background: #7067ED;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-decoration: none;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+#lp-addons .lp-addon-item .btn-addon-action:hover, #lp-addons .lp-addon-item .btn-addon-action:focus {
+  border-color: #5b52d1;
+  color: #ffffff;
+  background: #5b52d1;
+}
+#lp-addons .lp-addon-item .btn-addon-action:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+#lp-addons .lp-addon-item .lp-addon-item__actions .btn-addon-action[data-action=activate] {
+  border-color: #28A746;
+  color: #ffffff;
+  background: #28A746;
+}
+#lp-addons .lp-addon-item .lp-addon-item__actions .btn-addon-action[data-action=deactivate] {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: #ffffff;
+}
+#lp-addons .lp-addon-item .lp-addon-item__actions .btn-addon-action[data-action=deactivate]:hover, #lp-addons .lp-addon-item .lp-addon-item__actions .btn-addon-action[data-action=deactivate]:focus {
+  border-color: #dc2626;
+  color: #991b1b;
+  background: #fee2e2;
+}
+#lp-addons .lp-addon-item .btn-addon-action[data-action=update-purchase-code] {
+  min-height: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-color: transparent;
+  color: #6b7280;
+  background: transparent;
+}
+#lp-addons .lp-addon-item__purchase {
+  z-index: 5;
+  inset: 0;
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: inherit;
+  background: #ffffff;
+  text-transform: none;
+}
+#lp-addons .lp-addon-item__purchase__wrapper {
+  height: 100%;
+}
+#lp-addons .lp-addon-item__purchase__wrapper .purchase-install {
+  position: static;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 16px;
 }
 
+#lp-addons .lp-addon-purchase__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #1e1e1e;
+  font-size: 14px;
+  line-height: 1.4;
+}
+#lp-addons .lp-addon-purchase__field {
+  display: block;
+}
+#lp-addons .lp-addon-purchase__title {
+  display: block;
+  color: #1e1e1e;
+  font-size: 14px;
+  font-weight: 600;
+}
+#lp-addons .lp-addon-purchase__field input.enter-purchase-code {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #1a1a1a;
+  background: #ffffff;
+  font-size: 14px;
+  box-shadow: none;
+}
+#lp-addons .lp-addon-purchase__field input.enter-purchase-code::placeholder {
+  color: #9ca3af;
+}
+#lp-addons .lp-addon-purchase__field input.enter-purchase-code:focus {
+  border-color: #7067ED;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+#lp-addons .lp-addon-purchase__field input.enter-purchase-code.is-error, #lp-addons .lp-addon-purchase__field input.enter-purchase-code.is-error:focus {
+  border-color: #dc2626;
+  background: #fee2e2;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+#lp-addons .lp-addon-purchase__submit.btn-addon-action, #lp-addons .lp-addon-purchase__buy.btn-addon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+}
+#lp-addons .lp-addon-purchase__buy.btn-addon-action {
+  border-color: #d1d5db;
+  color: #374151;
+  background: #ffffff;
+}
+#lp-addons .lp-addon-purchase__buy.btn-addon-action:hover, #lp-addons .lp-addon-purchase__buy.btn-addon-action:focus {
+  border-color: #7067ED;
+  color: #7067ED;
+  background: #F7F7F7;
+}
+#lp-addons .lp-addon-purchase__close.btn-addon-action[data-action=cancel] {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  color: #6b7280;
+  background: transparent;
+  font-size: 16px;
+}
+#lp-addons .lp-addon-purchase__close.btn-addon-action[data-action=cancel]:hover, #lp-addons .lp-addon-purchase__close.btn-addon-action[data-action=cancel]:focus {
+  color: #7067ED;
+  background: #F7F7F7;
+}
+#lp-addons .lp-addon-purchase__close-symbol {
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+}
+#lp-addons .lp-addon-purchase__divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 12px;
+  white-space: nowrap;
+}
+#lp-addons .lp-addon-purchase__divider::before, #lp-addons .lp-addon-purchase__divider::after {
+  width: 100%;
+  height: 1px;
+  background: #e5e7eb;
+  content: "";
+}
+
+@media (max-width: 1550px) {
+  #lp-addons {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1200px) {
+  #lp-addons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 960px) {
+  #lp-addons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 782px) {
+  #lp-addons {
+    grid-template-columns: 1fr;
+    padding-right: 0;
+  }
+}
+/*** Tab of Addons Manager ***/
+.learn-press-addons {
+  max-width: 100%;
+}
+.learn-press-addons .wp-heading-inline {
+  color: #1e1e1e;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.learn-press-addons .lp-addons-page-subtitle {
+  margin: 4px 0 24px;
+  color: #374151;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.lp-addons-controls {
+  margin-bottom: 20px;
+  padding-right: 20px;
+}
+.lp-addons-controls[hidden] {
+  display: none;
+}
+
+.lp-addons-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-sizing: border-box;
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.lp-addons-toolbar[hidden] {
+  display: none;
+}
+.lp-addons-toolbar .lp-addons-filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 12px;
+  margin: -4px;
+  padding: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.lp-addons-toolbar .nav-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 49px;
+  margin-left: 0;
+  padding: 8px 20px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: #7067ED;
+  background: #EEF1FF;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.lp-addons-toolbar .nav-tab:hover, .lp-addons-toolbar .nav-tab:focus {
+  border-color: #7067ED;
+  color: #7067ED;
+  background: #F7F7F7;
+}
+.lp-addons-toolbar .nav-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.lp-addons-toolbar .nav-tab-active {
+  border-color: #7067ED;
+  color: #ffffff;
+  background: #7067ED;
+}
+.lp-addons-toolbar .nav-tab-active:hover, .lp-addons-toolbar .nav-tab-active:focus {
+  border-color: #5b52d1;
+  color: #ffffff;
+  background: #5b52d1;
+}
+
+.lp-addons-categories {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lp-addons-category {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  color: #9ca3af;
+  background: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.lp-addons-category__count {
+  margin-inline-start: 4px;
+}
+.lp-addons-category:hover, .lp-addons-category:focus {
+  border-color: #7067ED;
+  color: #7067ED;
+  background: #F7F7F7;
+}
+.lp-addons-category:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.lp-addons-category.active {
+  border-color: #7067ED;
+  color: #7067ED;
+  background: #ffffff;
+}
+.lp-addons-category[hidden] {
+  display: none;
+}
+
+.lp-addons-search {
+  position: relative;
+  flex-shrink: 0;
+  width: 360px;
+  max-width: 100%;
+}
+.lp-addons-search__icon {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #9ca3af;
+  font-size: 16px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.lp-addons-page .lp-addon-notice {
+  margin-bottom: 20px;
+}
+.lp-addons-page input.lp-addons-search__input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 4px 12px;
+  padding-inline-start: 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  color: #1a1a1a;
+  background: #ffffff;
+  font-size: 14px;
+}
+.lp-addons-page input.lp-addons-search__input::placeholder {
+  color: #9ca3af;
+}
+.lp-addons-page input.lp-addons-search__input:focus {
+  border-color: #7067ED;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+@media (max-width: 1200px) {
+  .lp-addons-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .lp-addons-toolbar .lp-addons-filter {
+    width: 100%;
+    min-width: 0;
+  }
+  .lp-addons-search {
+    width: 100%;
+  }
+}
+@media (max-width: 782px) {
+  .lp-addons-controls {
+    padding-right: 0;
+  }
+  .lp-addons-toolbar {
+    padding: 12px;
+  }
+  .lp-addons-toolbar .nav-tab {
+    flex: 0 0 auto;
+  }
+  .lp-addons-categories {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+  .lp-addons-category {
+    flex: 0 0 auto;
+  }
+}
 .wp-submenu .lp-notify {
   display: none;
   vertical-align: top;
@@ -5160,6 +5956,29 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
   display: inline-flex;
   border-radius: 999px;
   vertical-align: middle;
+}
+
+.learn-press-admin-notices {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+.learn-press-admin-notices .lp-target {
+  display: grid;
+  gap: 10px;
+}
+.learn-press-admin-notices .btn-lp-notice-dismiss {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  color: #898989;
+}
+.learn-press-admin-notices .btn-lp-notice-dismiss:hover {
+  cursor: pointer;
+  color: #dc2626;
+}
+.learn-press-admin-notices.notice a, .learn-press-admin-notices a {
+  text-decoration: none;
 }
 
 /**
@@ -6998,6 +7817,7 @@ body.lp-item-moving {
   /**
   * Style for the buttons
   */
+  /* 5. Minimal Bottom Line */
 }
 .lp-popup-items-to-select .lp-btn-edit-primary {
   border: none;
@@ -7011,6 +7831,30 @@ body.lp-item-moving {
   background: #135E96;
   color: #fff;
   opacity: 1;
+}
+.lp-popup-items-to-select .btn-line::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  width: 0%;
+  background-color: #38bdf8;
+  animation: lineLoad 2s ease-in-out infinite;
+}
+@keyframes lineLoad {
+  0% {
+    width: 0%;
+    left: 0;
+  }
+  50% {
+    width: 100%;
+    left: 0;
+  }
+  100% {
+    width: 0%;
+    left: 100%;
+  }
 }
 .lp-popup-items-to-select .header {
   position: relative;
@@ -8222,15 +9066,20 @@ table.lp-material--table tr:nth-child(even) {
 }
 
 .lp-material-btn-wrap.loading::before:before, #btn-lp--save-material.loading:before {
-  display: inline-block;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: "lp-icon";
   content: "\f110";
   animation: lp-rotating 1s linear infinite;
-  margin-right: 5px;
+  line-height: 1;
   font-variant: normal;
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: black;
 }
 
 .button.lp-material--delete {
@@ -8639,15 +9488,20 @@ input[name=course-faqs-box-ratio]:checked + .course-faqs-box .course-faqs-box__t
   outline: none;
 }
 .course-curriculum .section-item__loadmore.loading button:before {
-  display: inline-block;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: "lp-icon";
   content: "\f110";
   animation: lp-rotating 1s linear infinite;
-  margin-right: 5px;
+  line-height: 1;
   font-variant: normal;
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: black;
 }
 .course-curriculum .section-header {
   display: table;
@@ -8864,15 +9718,20 @@ input[name=course-faqs-box-ratio]:checked + .course-faqs-box .course-faqs-box__t
   margin-bottom: 20px;
 }
 .course-curriculum .curriculum-more__button.loading:before {
-  display: inline-block;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: "lp-icon";
   content: "\f110";
   animation: lp-rotating 1s linear infinite;
-  margin-right: 5px;
+  line-height: 1;
   font-variant: normal;
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: black;
 }
 
 body .content-item-summary .form-button-finish-course, body .lp-quiz-buttons .form-button-finish-course {
@@ -9117,6 +9976,9 @@ body .content-item-summary .form-button-finish-course, body .lp-quiz-buttons .fo
   color: #999;
 }
 
+.info-learning .course-progress > div {
+  margin-bottom: 8px;
+}
 .info-learning .course-progress__line {
   width: 100%;
   background: #ccc;
@@ -9146,6 +10008,9 @@ body .content-item-summary .form-button-finish-course, body .lp-quiz-buttons .fo
   width: 2px;
   height: 100%;
   background: var(--lp-secondary-color);
+}
+.info-learning .start-date, .info-learning .end-date {
+  margin-bottom: 8px;
 }
 
 /*
@@ -9277,6 +10142,24 @@ Breadcrumb
   text-align: center;
   align-items: center;
   justify-content: center;
+  /*.lp-button {
+  	cursor: pointer;
+  	border: 1px solid $border-color;
+  	border-radius: $border-radius-global;
+  	padding: $spacing-base-2x $spacing-base-4x;
+
+  	&.loading {
+  		pointer-events: none;
+  		opacity: 0.8;
+  		@include loading();
+  	}
+
+  	&:hover {
+  		border-color: $color-primary;
+  		color: #fff;
+  		background: $color-primary;
+  	}
+  }*/
 }
 .lp-modal-dialog .learn-press-message {
   width: auto;
@@ -9347,32 +10230,6 @@ Breadcrumb
   align-items: center;
   gap: 10px;
 }
-.lp-modal-dialog .lp-button {
-  cursor: pointer;
-  border: 1px solid #C3C4C7;
-  border-radius: var(--lp-border-radius, 5px);
-  padding: 8px 16px;
-}
-.lp-modal-dialog .lp-button.loading {
-  pointer-events: none;
-  opacity: 0.8;
-}
-.lp-modal-dialog .lp-button.loading:before {
-  display: inline-block;
-  font-family: "lp-icon";
-  content: "\f110";
-  animation: lp-rotating 1s linear infinite;
-  margin-right: 5px;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-.lp-modal-dialog .lp-button:hover {
-  border-color: var(--lp-primary-color, #ffb606);
-  color: #fff;
-  background: var(--lp-primary-color, #ffb606);
-}
 
 .lp-button.btn-finish-course {
   cursor: pointer;
@@ -9392,21 +10249,6 @@ Breadcrumb
 .lp-button.btn-finish-course:hover {
   background-color: var(--lp-secondary-color, #442e66);
   border-color: var(--lp-secondary-color, #442e66);
-}
-.lp-button.btn-finish-course.loading {
-  pointer-events: none;
-  opacity: 0.8;
-}
-.lp-button.btn-finish-course.loading:before {
-  display: inline-block;
-  font-family: "lp-icon";
-  content: "\f110";
-  animation: lp-rotating 1s linear infinite;
-  margin-right: 5px;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 /**
@@ -9479,16 +10321,20 @@ Breadcrumb
 }
 .wp-block-learnpress-course-button-read-more.loading:before,
 .wp-block-learnpress-course-button.loading:before {
-  display: inline-block;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: "lp-icon";
   content: "\f110";
   animation: lp-rotating 1s linear infinite;
-  margin-right: 5px;
+  line-height: 1;
   font-variant: normal;
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  vertical-align: middle;
+  color: black;
 }
 
 @media (min-width: 992px) {
@@ -10765,6 +11611,10 @@ a.block-editor-block-list__block.wp-block-learnpress-course-button:hover {
   align-items: center;
   gap: 8px;
 }
+.lp-generate-data-ai-wrap .lp-form-generate-data-ai .btn.loading:before,
+.lp-generate-data-ai-wrap .lp-form-generate-data-ai .lp-button.loading:before {
+  color: white !important;
+}
 .lp-generate-data-ai-wrap .lp-form-generate-data-ai .btn-primary,
 .lp-generate-data-ai-wrap .lp-form-generate-data-ai .lp-button-primary {
   background-color: #7E6CE2;
@@ -11468,7 +12318,6 @@ a.block-editor-block-list__block.wp-block-learnpress-course-button:hover {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  border-top: 1px solid #e2e8f0;
 }
 .lp-enrolled-students-table-footer__count {
   color: #64748b;
@@ -11589,6 +12438,8 @@ a.block-editor-block-list__block.wp-block-learnpress-course-button:hover {
 
 /**
 * Style for table LearnPress
+* @since 4.3.3
+* @version 1.0.1
 */
 .lp-table-wrap {
   border-radius: 5px;
@@ -11604,6 +12455,7 @@ table.lp-list-table {
   width: 100%;
   margin: 0;
   min-width: 768px;
+  border: none;
 }
 table.lp-list-table td {
   padding: 0;
@@ -11612,59 +12464,82 @@ table.lp-list-table .learn-press-pagination {
   text-align: left;
 }
 table.lp-list-table thead {
-  background-color: var(--lp-white-grey, #F7F7FB);
   border: none;
+}
+table.lp-list-table thead tr:first-child td, table.lp-list-table thead tr:first-child th {
+  border-block-start: none;
 }
 table.lp-list-table thead tr {
   border-bottom: 1px solid var(--lp-border-color, #E2E0DB);
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #fff;
-}
-table.lp-list-table thead tr:hover {
-  background: #eff6ff;
+  background-color: var(--lp-white-grey, #F7F7FB);
 }
 table.lp-list-table thead th {
   background: none;
   border: none;
-  font-size: 1em;
   padding: 10px 20px;
   text-align: left;
+}
+table.lp-list-table thead th.sortable > a, table.lp-list-table thead th.sorted > a {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+table.lp-list-table thead th .sorting-indicator {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05em;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+}
+table.lp-list-table thead th .sorting-indicator i {
+  color: #aaa;
+  height: 10px;
+}
+table.lp-list-table thead th .sorting-indicator i.is-active {
+  color: #000;
 }
 table.lp-list-table thead th td {
   border: none;
   padding: 0;
 }
-table.lp-list-table tbody {
-  font-size: 14px;
-}
 table.lp-list-table tbody tr {
   border: none;
-  border-bottom: 1px solid var(--lp-white-grey, #F7F7FB);
-}
-table.lp-list-table tbody tr:hover {
-  background: #eff6ff !important;
-}
-table.lp-list-table tbody tr:nth-child(odd) {
-  background: #f6f7f7;
 }
 table.lp-list-table tbody tr:nth-child(even) {
-  background: #fff;
+  background-color: hsla(0, 0%, 50%, 0.05);
+}
+table.lp-list-table tbody tr:hover {
+  background-color: #eff6ff;
 }
 table.lp-list-table tbody tr td {
   border: none;
+  border-bottom: 1px solid var(--lp-border-color, #E2E0DB);
   padding: 10px 20px;
   text-align: left;
 }
 table.lp-list-table tbody tr td a {
   text-decoration: none;
 }
+table.lp-list-table tbody tr:last-child td, table.lp-list-table tbody tr:last-child th {
+  border-bottom: none;
+}
+table.lp-list-table tbody th {
+  border: none;
+  border-bottom: 1px solid var(--lp-border-color, #E2E0DB);
+  padding: 10px 20px;
+  text-align: left;
+}
 table.lp-list-table tfoot tr {
   border: none;
 }
 table.lp-list-table tfoot tr td, table.lp-list-table tfoot tr th {
   border: none;
+  border-top: 1px solid var(--lp-border-color, #E2E0DB);
 }
 table.lp-list-table tfoot tr td > div, table.lp-list-table tfoot tr th > div {
   padding: 20px;
@@ -11687,14 +12562,6 @@ table.lp-list-table.order-table-details tfoot tr:not(:last-child) td, table.lp-l
   padding-bottom: 0;
 }
 
-.lp_profile_course_progress__nav {
-  margin-top: 1rem;
-}
-
-#profile-content-order-details .lp-table-wrap {
-  margin-bottom: 1rem;
-}
-
 /**
 * Style for the Form Filter list
 * @since 4.4.5
@@ -11715,13 +12582,25 @@ table.lp-list-table.order-table-details tfoot tr:not(:last-child) td, table.lp-l
   flex: 1 1 0;
   min-width: 0;
 }
+@media screen and (max-width: 782px) {
+  .lp-form-filter__fields > * {
+    flex: 1 1 50%;
+  }
+}
+@media screen and (max-width: 500px) {
+  .lp-form-filter__fields > * {
+    flex: 1 1 100%;
+  }
+}
 .lp-form-filter .filter-field {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  max-width: 200px;
 }
 .lp-form-filter .filter-field label {
   text-align: left;
+  font-weight: bold;
 }
 .lp-form-filter button {
   display: inline-flex;
@@ -11732,6 +12611,21 @@ table.lp-list-table.order-table-details tfoot tr:not(:last-child) td, table.lp-l
   display: flex;
   gap: 8px;
   align-items: center;
+}
+.lp-form-filter input, .lp-form-filter select {
+  min-height: 40px;
+  padding: 0 12px;
+}
+.lp-form-filter .lp-tom-select.ts-wrapper {
+  width: 100%;
+  min-width: auto;
+  /*&.dropdown-active {
+  	width: 100%;
+  }*/
+}
+.lp-form-filter .lp-tom-select.ts-wrapper .ts-control {
+  min-height: 40px;
+  padding: 0 12px;
 }
 
 /**
@@ -12427,4 +13321,8 @@ body.post-type-lp_question #button-new-question:hover div {
 
 #wp-admin-bar-lp-course-builder svg {
   vertical-align: text-bottom;
+}
+
+#wpbody-content .lp-list-table {
+  background-color: white;
 }

@@ -1,74 +1,1591 @@
 /******/ (() => { // webpackBootstrap
-/******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./assets/src/js/api.js"
-/*!******************************!*\
-  !*** ./assets/src/js/api.js ***!
-  \******************************/
+/***/ "./assets/src/js/lpToastify.js"
+/*!*************************************!*\
+  !*** ./assets/src/js/lpToastify.js ***!
+  \*************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   show: () => (/* binding */ show)
+/* harmony export */ });
+/* harmony import */ var toastify_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! toastify-js */ "./node_modules/toastify-js/src/toastify.js");
+/* harmony import */ var toastify_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(toastify_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var toastify_js_src_toastify_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! toastify-js/src/toastify.css */ "./node_modules/toastify-js/src/toastify.css");
+/**
+ * Utils functions
+ *
+ * @param url
+ * @param data
+ * @param functions
+ * @since 4.3.0
+ * @version 1.0.0
+ */
+
+
+const argsToastify = {
+  text: '',
+  gravity: lpData.toast.gravity,
+  // `top` or `bottom`
+  position: lpData.toast.position,
+  // `left`, `center` or `right`
+  className: `${lpData.toast.classPrefix}`,
+  close: lpData.toast.close == 1,
+  stopOnFocus: lpData.toast.stopOnFocus == 1,
+  duration: lpData.toast.duration
+};
+const show = (message, status = 'success', argsCustom) => {
+  let args = argsToastify;
+  if (argsCustom) {
+    args = {
+      ...args,
+      ...argsCustom
+    };
+  }
+  const toastify = new (toastify_js__WEBPACK_IMPORTED_MODULE_0___default())({
+    ...args,
+    text: message,
+    className: `${lpData.toast.classPrefix} ${status}`
+  });
+  toastify.showToast();
+};
+
+/***/ },
+
+/***/ "./assets/src/js/utils.js"
+/*!********************************!*\
+  !*** ./assets/src/js/utils.js ***!
+  \********************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   debounce: () => (/* binding */ debounce),
+/* harmony export */   eventHandlers: () => (/* binding */ eventHandlers),
+/* harmony export */   fullScreenView: () => (/* binding */ fullScreenView),
+/* harmony export */   getDataOfForm: () => (/* binding */ getDataOfForm),
+/* harmony export */   getFieldKeysOfForm: () => (/* binding */ getFieldKeysOfForm),
+/* harmony export */   listenElementCreated: () => (/* binding */ listenElementCreated),
+/* harmony export */   listenElementViewed: () => (/* binding */ listenElementViewed),
+/* harmony export */   lpAddQueryArgs: () => (/* binding */ lpAddQueryArgs),
+/* harmony export */   lpAjaxParseJsonOld: () => (/* binding */ lpAjaxParseJsonOld),
+/* harmony export */   lpClassName: () => (/* binding */ lpClassName),
+/* harmony export */   lpFetchAPI: () => (/* binding */ lpFetchAPI),
+/* harmony export */   lpGetCurrentURLNoParam: () => (/* binding */ lpGetCurrentURLNoParam),
+/* harmony export */   lpOnElementReady: () => (/* binding */ lpOnElementReady),
+/* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
+/* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
+/* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
+/* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
+/* harmony export */ });
+/**
+ * Utils functions
+ *
+ * @param url
+ * @param data
+ * @param functions
+ * @since 4.2.5.1
+ * @version 1.0.7
+ */
+const lpClassName = {
+  hidden: 'lp-hidden',
+  loading: 'loading',
+  elCollapse: 'lp-collapse',
+  elSectionToggle: '.lp-section-toggle',
+  elTriggerToggle: '.lp-trigger-toggle',
+  elBtnFullScreen: '.lp-btn-full-screen-view',
+  elFullScreen: 'lp-full-screen-view',
+  elBtnFullScreenClose: 'lp-full-screen-view__close'
+};
+const lpFetchAPI = (url, data = {}, functions = {}) => {
+  if ('function' === typeof functions.before) {
+    functions.before();
+  }
+  fetch(url, {
+    method: 'GET',
+    ...data
+  }).then(response => response.json()).then(response => {
+    if ('function' === typeof functions.success) {
+      functions.success(response);
+    }
+  }).catch(err => {
+    if ('function' === typeof functions.error) {
+      functions.error(err);
+    }
+  }).finally(() => {
+    if ('function' === typeof functions.completed) {
+      functions.completed();
+    }
+  });
+};
+
+/**
+ * Get current URL without params.
+ *
+ * @since 4.2.5.1
+ */
+const lpGetCurrentURLNoParam = () => {
+  let currentUrl = window.location.href;
+  const hasParams = currentUrl.includes('?');
+  if (hasParams) {
+    currentUrl = currentUrl.split('?')[0];
+  }
+  return currentUrl;
+};
+const lpAddQueryArgs = (endpoint, args) => {
+  const url = new URL(endpoint);
+  Object.keys(args).forEach(arg => {
+    url.searchParams.set(arg, args[arg]);
+  });
+  return url;
+};
+
+/**
+ * Listen element viewed.
+ *
+ * @param el
+ * @param callback
+ * @since 4.2.5.8
+ */
+const listenElementViewed = (el, callback) => {
+  const observerSeeItem = new IntersectionObserver(function (entries) {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        callback(entry);
+      }
+    }
+  });
+  observerSeeItem.observe(el);
+};
+
+/**
+ * Listen element created.
+ *
+ * @param callback
+ * @since 4.2.5.8
+ */
+const listenElementCreated = callback => {
+  const observerCreateItem = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      if (mutation.addedNodes) {
+        mutation.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1) {
+            callback(node);
+          }
+        });
+      }
+    });
+  });
+  observerCreateItem.observe(document, {
+    childList: true,
+    subtree: true
+  });
+  // End.
+};
+
+/**
+ * Listen element created.
+ *
+ * @param selector
+ * @param callback
+ * @since 4.2.7.1
+ */
+const lpOnElementReady = (selector, callback) => {
+  const element = document.querySelector(selector);
+  if (element) {
+    callback(element);
+    return;
+  }
+  const observer = new MutationObserver((mutations, obs) => {
+    const element = document.querySelector(selector);
+    if (element) {
+      obs.disconnect();
+      callback(element);
+    }
+  });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+};
+
+// Parse JSON from string with content include LP_AJAX_START.
+const lpAjaxParseJsonOld = data => {
+  if (typeof data !== 'string') {
+    return data;
+  }
+  const m = String.raw({
+    raw: data
+  }).match(/<-- LP_AJAX_START -->(.*)<-- LP_AJAX_END -->/s);
+  try {
+    if (m) {
+      data = JSON.parse(m[1].replace(/(?:\r\n|\r|\n)/g, ''));
+    } else {
+      data = JSON.parse(data);
+    }
+  } catch (e) {
+    data = {};
+  }
+  return data;
+};
+
+// status 0: hide, 1: show
+const lpShowHideEl = (el, status = 0) => {
+  if (!el) {
+    return;
+  }
+  if (!status) {
+    el.classList.add(lpClassName.hidden);
+  } else {
+    el.classList.remove(lpClassName.hidden);
+  }
+};
+
+// status 0: hide, 1: show
+const lpSetLoadingEl = (el, status) => {
+  if (!el) {
+    return;
+  }
+  if (!status) {
+    el.classList.remove(lpClassName.loading);
+  } else {
+    el.classList.add(lpClassName.loading);
+  }
+};
+
+// Toggle collapse section
+const toggleCollapse = (e, target, elTriggerClassName = '', elsExclude = [], callback) => {
+  if (!elTriggerClassName) {
+    elTriggerClassName = lpClassName.elTriggerToggle;
+  }
+
+  // Exclude elements, which should not trigger the collapse toggle
+  if (elsExclude && elsExclude.length > 0) {
+    for (const elExclude of elsExclude) {
+      if (target.closest(elExclude)) {
+        return;
+      }
+    }
+  }
+  const elTrigger = target.closest(elTriggerClassName);
+  if (!elTrigger) {
+    return;
+  }
+
+  //console.log( 'elTrigger', elTrigger );
+
+  const elSectionToggle = elTrigger.closest(`${lpClassName.elSectionToggle}`);
+  if (!elSectionToggle) {
+    return;
+  }
+  elSectionToggle.classList.toggle(`${lpClassName.elCollapse}`);
+  if ('function' === typeof callback) {
+    callback(elSectionToggle);
+  }
+};
+
+// Get data of form
+const getDataOfForm = form => {
+  const dataSend = {};
+  const formData = new FormData(form);
+  for (const pair of formData.entries()) {
+    const key = pair[0];
+    const value = formData.getAll(key);
+    if (!dataSend.hasOwnProperty(key)) {
+      // Convert value array to string.
+      dataSend[key] = value.join(',');
+    }
+  }
+  return dataSend;
+};
+
+// Get field keys of form
+const getFieldKeysOfForm = form => {
+  const keys = [];
+  const elements = form.elements;
+  for (let i = 0; i < elements.length; i++) {
+    const name = elements[i].name;
+    if (name && !keys.includes(name)) {
+      keys.push(name);
+    }
+  }
+  return keys;
+};
+
+// Merge data handle with data form.
+const mergeDataWithDatForm = (elForm, dataHandle) => {
+  const dataForm = getDataOfForm(elForm);
+  const keys = getFieldKeysOfForm(elForm);
+  keys.forEach(key => {
+    if (!dataForm.hasOwnProperty(key)) {
+      delete dataHandle[key];
+    } else if (dataForm[key][0] === '') {
+      delete dataForm[key];
+      delete dataHandle[key];
+    }
+  });
+  dataHandle = {
+    ...dataHandle,
+    ...dataForm
+  };
+  return dataHandle;
+};
+
+/**
+ * Event trigger
+ * For each list of event handlers, listen event on document.
+ *
+ * eventName: 'click', 'change', ...
+ * eventHandlers = [ { selector: '.lp-button', callBack: function(){}, class: object } ]
+ *
+ * @param eventName
+ * @param eventHandlers
+ */
+const eventHandlers = (eventName, eventHandlers) => {
+  document.addEventListener(eventName, e => {
+    const target = e.target;
+    let args = {
+      e,
+      target
+    };
+    eventHandlers.forEach(eventHandler => {
+      args = {
+        ...args,
+        ...eventHandler
+      };
+
+      //console.log( args );
+
+      // Check condition before call back
+      if (eventHandler.conditionBeforeCallBack) {
+        if (eventHandler.conditionBeforeCallBack(args) !== true) {
+          return;
+        }
+      }
+
+      // Special check for keydown event with checkIsEventEnter = true
+      if (eventName === 'keydown' && eventHandler.checkIsEventEnter) {
+        if (e.key !== 'Enter') {
+          return;
+        }
+      }
+      if (target.closest(eventHandler.selector)) {
+        if (eventHandler.class) {
+          // Call method of class, function callBack will understand exactly {this} is class object.
+          eventHandler.class[eventHandler.callBack](args);
+        } else {
+          // For send args is objected, {this} is eventHandler object, not class object.
+          eventHandler.callBack(args);
+        }
+      }
+    });
+  });
+};
+
+/**
+ * Debounce - delays function execution until after `wait` ms of inactivity.
+ *
+ * Each call resets the timer. Only the last call in a burst executes.
+ *
+ * USE CASES:
+ * - Search inputs, form validation, window resize
+ * - Multiple elements need independent timers
+ * - When you need to call with different arguments
+ *
+ * EXAMPLES:
+ * const debouncedSearch = debounce( (query) => fetchResults(query), 300 );
+ * searchInput.addEventListener('input', (e) => debouncedSearch(e.target.value));
+ *
+ * const debouncedResize = debounce( recalculateLayout, 250 );
+ * window.addEventListener('resize', debouncedResize);
+ *
+ * ⚠️ Create ONCE outside event handlers, not inside.
+ *
+ * @param {Function} func - Function to debounce (can be anonymous)
+ * @param {number}   wait - Milliseconds to wait (default: 500)
+ * @return {Function} Debounced wrapper function
+ * @since 4.3.7
+ * @version 1.0.0
+ */
+const debounce = (func, wait = 500) => {
+  let timer;
+  return args => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func(args), wait);
+  };
+};
+
+/**
+ * Initialize lp-toggle-enable components.
+ *
+ * Finds all `.lp-toggle-enable` elements and wires up toggle behavior.
+ * Reads initial state from `data-enabled` attribute ("true"/"false").
+ * Calls `data-on-toggle` callback (if provided via options) on state change.
+ *
+ * HTML structure:
+ * <label class="lp-toggle-enable" data-enabled="true">
+ *   <input type="checkbox" class="lp-toggle-enable__input" />
+ *   <span class="lp-toggle-enable__track"></span>
+ * </label>
+ *
+ * @param {string}   selector CSS selector for toggle elements (default: '.lp-toggle-enable')
+ * @param {Function} onToggle Optional callback( el, isEnabled ) called on state change
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpToggleEnableInit = 0;
+const toggleEnable = (onToggle = null) => {
+  if (window.lpToggleEnableInit) {
+    return;
+  }
+  window.lpToggleEnableInit = 1;
+  const selector = '.lp-toggle-enable';
+  const updateUI = (toggle, isEnabled) => {
+    toggle.classList.toggle('is-enabled', isEnabled);
+    const input = toggle.querySelector('.lp-toggle-enable__input');
+    if (input) {
+      input.checked = isEnabled;
+      input.value = isEnabled ? '1' : '0';
+    }
+  };
+
+  // Delegate click handling via eventHandlers.
+  eventHandlers('click', [{
+    selector,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const toggle = target.closest(selector);
+      if (!toggle || toggle.classList.contains('is-disabled')) {
+        return;
+      }
+      e.preventDefault();
+      const isEnabled = !toggle.classList.contains('is-enabled');
+      updateUI(toggle, isEnabled);
+      if ('function' === typeof onToggle) {
+        onToggle(toggle, isEnabled);
+      }
+    }
+  }]);
+};
+
+/**
+ * Initialize custom fullscreen view buttons.
+ *
+ * Delegates clicks on `.lp-btn-full-screen-view` buttons to
+ * `lpToggleFullscreenView`. Reads the `data-target` attribute to find the
+ * target element. Falls back to the button's parent element when
+ * `data-target` is not provided.
+ *
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpFullScreenViewInit = 0;
+const fullScreenView = () => {
+  if (window.lpFullScreenViewInit) {
+    return;
+  }
+  window.lpFullScreenViewInit = 1;
+  let lastScrollY = 0;
+  const lpToggleFullscreenView = (elTarget, elBtnFullScreen = null) => {
+    const isFullscreen = elTarget.classList.contains(lpClassName.elFullScreen);
+    if (isFullscreen) {
+      elTarget.classList.remove(lpClassName.elFullScreen);
+      document.documentElement.classList.remove('lp-full-screen-active');
+      window.scrollTo(0, lastScrollY);
+    } else {
+      lastScrollY = window.scrollY;
+      elTarget.classList.add(lpClassName.elFullScreen);
+      document.documentElement.classList.add('lp-full-screen-active');
+    }
+    if (!isFullscreen) {
+      if (!elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`)) {
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = lpClassName.elBtnFullScreenClose;
+        closeButton.setAttribute('aria-label', 'Close');
+        closeButton.innerHTML = lpData.i18n.closeButtonFullScreen || 'Close &times;';
+        closeButton.addEventListener('click', e => {
+          e.preventDefault();
+          lpToggleFullscreenView(elTarget);
+        });
+        elTarget.appendChild(closeButton);
+      }
+    } else {
+      const closeButton = elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`);
+      if (closeButton) {
+        closeButton.remove();
+      }
+    }
+  };
+  eventHandlers('click', [{
+    selector: lpClassName.elBtnFullScreen,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const elBtnFullScreen = target.closest(lpClassName.elBtnFullScreen);
+      if (!elBtnFullScreen) {
+        console.log('No full screen button found');
+        return;
+      }
+      e.preventDefault();
+      let elTarget = null;
+      const targetSelector = elBtnFullScreen.dataset.targetFullscreen;
+      console.log(targetSelector);
+      if (targetSelector) {
+        elTarget = document.querySelector(targetSelector);
+      }
+      if (!elTarget) {
+        console.log('No target element found');
+        return;
+      }
+      lpToggleFullscreenView(elTarget, elBtnFullScreen);
+    }
+  }]);
+};
+
+/***/ },
+
+/***/ "./node_modules/css-loader/dist/cjs.js!./node_modules/toastify-js/src/toastify.css"
+/*!*****************************************************************************************!*\
+  !*** ./node_modules/css-loader/dist/cjs.js!./node_modules/toastify-js/src/toastify.css ***!
+  \*****************************************************************************************/
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/**
- * List API on backend
+/* harmony import */ var _css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../css-loader/dist/runtime/sourceMaps.js */ "./node_modules/css-loader/dist/runtime/sourceMaps.js");
+/* harmony import */ var _css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js");
+/* harmony import */ var _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/*!
+ * Toastify js 1.12.0
+ * https://github.com/apvarun/toastify-js
+ * @license MIT licensed
  *
- * @since 4.2.6
- * @version 1.0.2
+ * Copyright (C) 2018 Varun A P
  */
 
-const lplistAPI = {};
-let lp_rest_url;
-if ('undefined' !== typeof lpDataAdmin) {
-  lp_rest_url = lpDataAdmin.lp_rest_url;
-  lplistAPI.admin = {
-    apiAdminNotice: lp_rest_url + 'lp/v1/admin/tools/admin-notices',
-    apiAddons: lp_rest_url + 'lp/v1/addon/all',
-    apiAddonAction: lp_rest_url + 'lp/v1/addon/action-n',
-    apiAddonsPurchase: lp_rest_url + 'lp/v1/addon/info-addons-purchase',
-    apiSearchCourses: lp_rest_url + 'lp/v1/admin/tools/search-course',
-    apiSearchUsers: lp_rest_url + 'lp/v1/admin/tools/search-user',
-    apiAssignUserCourse: lp_rest_url + 'lp/v1/admin/tools/assign-user-course',
-    apiUnAssignUserCourse: lp_rest_url + 'lp/v1/admin/tools/unassign-user-course'
+.toastify {
+    padding: 12px 20px;
+    color: #ffffff;
+    display: inline-block;
+    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.12), 0 10px 36px -4px rgba(77, 96, 232, 0.3);
+    background: -webkit-linear-gradient(315deg, #73a5ff, #5477f5);
+    background: linear-gradient(135deg, #73a5ff, #5477f5);
+    position: fixed;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+    border-radius: 2px;
+    cursor: pointer;
+    text-decoration: none;
+    max-width: calc(50% - 20px);
+    z-index: 2147483647;
+}
+
+.toastify.on {
+    opacity: 1;
+}
+
+.toast-close {
+    background: transparent;
+    border: 0;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1em;
+    opacity: 0.4;
+    padding: 0 5px;
+}
+
+.toastify-right {
+    right: 15px;
+}
+
+.toastify-left {
+    left: 15px;
+}
+
+.toastify-top {
+    top: -150px;
+}
+
+.toastify-bottom {
+    bottom: -150px;
+}
+
+.toastify-rounded {
+    border-radius: 25px;
+}
+
+.toastify-avatar {
+    width: 1.5em;
+    height: 1.5em;
+    margin: -7px 5px;
+    border-radius: 2px;
+}
+
+.toastify-center {
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    max-width: fit-content;
+    max-width: -moz-fit-content;
+}
+
+@media only screen and (max-width: 360px) {
+    .toastify-right, .toastify-left {
+        margin-left: auto;
+        margin-right: auto;
+        left: 0;
+        right: 0;
+        max-width: fit-content;
+    }
+}
+`, "",{"version":3,"sources":["webpack://./node_modules/toastify-js/src/toastify.css"],"names":[],"mappings":"AAAA;;;;;;EAME;;AAEF;IACI,kBAAkB;IAClB,cAAc;IACd,qBAAqB;IACrB,uFAAuF;IACvF,6DAA6D;IAC7D,qDAAqD;IACrD,eAAe;IACf,UAAU;IACV,wDAAwD;IACxD,kBAAkB;IAClB,eAAe;IACf,qBAAqB;IACrB,2BAA2B;IAC3B,mBAAmB;AACvB;;AAEA;IACI,UAAU;AACd;;AAEA;IACI,uBAAuB;IACvB,SAAS;IACT,YAAY;IACZ,eAAe;IACf,oBAAoB;IACpB,cAAc;IACd,YAAY;IACZ,cAAc;AAClB;;AAEA;IACI,WAAW;AACf;;AAEA;IACI,UAAU;AACd;;AAEA;IACI,WAAW;AACf;;AAEA;IACI,cAAc;AAClB;;AAEA;IACI,mBAAmB;AACvB;;AAEA;IACI,YAAY;IACZ,aAAa;IACb,gBAAgB;IAChB,kBAAkB;AACtB;;AAEA;IACI,iBAAiB;IACjB,kBAAkB;IAClB,OAAO;IACP,QAAQ;IACR,sBAAsB;IACtB,2BAA2B;AAC/B;;AAEA;IACI;QACI,iBAAiB;QACjB,kBAAkB;QAClB,OAAO;QACP,QAAQ;QACR,sBAAsB;IAC1B;AACJ","sourcesContent":["/*!\n * Toastify js 1.12.0\n * https://github.com/apvarun/toastify-js\n * @license MIT licensed\n *\n * Copyright (C) 2018 Varun A P\n */\n\n.toastify {\n    padding: 12px 20px;\n    color: #ffffff;\n    display: inline-block;\n    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.12), 0 10px 36px -4px rgba(77, 96, 232, 0.3);\n    background: -webkit-linear-gradient(315deg, #73a5ff, #5477f5);\n    background: linear-gradient(135deg, #73a5ff, #5477f5);\n    position: fixed;\n    opacity: 0;\n    transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);\n    border-radius: 2px;\n    cursor: pointer;\n    text-decoration: none;\n    max-width: calc(50% - 20px);\n    z-index: 2147483647;\n}\n\n.toastify.on {\n    opacity: 1;\n}\n\n.toast-close {\n    background: transparent;\n    border: 0;\n    color: white;\n    cursor: pointer;\n    font-family: inherit;\n    font-size: 1em;\n    opacity: 0.4;\n    padding: 0 5px;\n}\n\n.toastify-right {\n    right: 15px;\n}\n\n.toastify-left {\n    left: 15px;\n}\n\n.toastify-top {\n    top: -150px;\n}\n\n.toastify-bottom {\n    bottom: -150px;\n}\n\n.toastify-rounded {\n    border-radius: 25px;\n}\n\n.toastify-avatar {\n    width: 1.5em;\n    height: 1.5em;\n    margin: -7px 5px;\n    border-radius: 2px;\n}\n\n.toastify-center {\n    margin-left: auto;\n    margin-right: auto;\n    left: 0;\n    right: 0;\n    max-width: fit-content;\n    max-width: -moz-fit-content;\n}\n\n@media only screen and (max-width: 360px) {\n    .toastify-right, .toastify-left {\n        margin-left: auto;\n        margin-right: auto;\n        left: 0;\n        right: 0;\n        max-width: fit-content;\n    }\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ "./node_modules/css-loader/dist/runtime/api.js"
+/*!*****************************************************!*\
+  !*** ./node_modules/css-loader/dist/runtime/api.js ***!
+  \*****************************************************/
+(module) {
+
+"use strict";
+
+
+/*
+  MIT License http://www.opensource.org/licenses/mit-license.php
+  Author Tobias Koppers @sokra
+*/
+module.exports = function (cssWithMappingToString) {
+  var list = [];
+
+  // return the list of modules as css string
+  list.toString = function toString() {
+    return this.map(function (item) {
+      var content = "";
+      var needLayer = typeof item[5] !== "undefined";
+      if (item[4]) {
+        content += "@supports (".concat(item[4], ") {");
+      }
+      if (item[2]) {
+        content += "@media ".concat(item[2], " {");
+      }
+      if (needLayer) {
+        content += "@layer".concat(item[5].length > 0 ? " ".concat(item[5]) : "", " {");
+      }
+      content += cssWithMappingToString(item);
+      if (needLayer) {
+        content += "}";
+      }
+      if (item[2]) {
+        content += "}";
+      }
+      if (item[4]) {
+        content += "}";
+      }
+      return content;
+    }).join("");
+  };
+
+  // import a list of modules into the list
+  list.i = function i(modules, media, dedupe, supports, layer) {
+    if (typeof modules === "string") {
+      modules = [[null, modules, undefined]];
+    }
+    var alreadyImportedModules = {};
+    if (dedupe) {
+      for (var k = 0; k < this.length; k++) {
+        var id = this[k][0];
+        if (id != null) {
+          alreadyImportedModules[id] = true;
+        }
+      }
+    }
+    for (var _k = 0; _k < modules.length; _k++) {
+      var item = [].concat(modules[_k]);
+      if (dedupe && alreadyImportedModules[item[0]]) {
+        continue;
+      }
+      if (typeof layer !== "undefined") {
+        if (typeof item[5] === "undefined") {
+          item[5] = layer;
+        } else {
+          item[1] = "@layer".concat(item[5].length > 0 ? " ".concat(item[5]) : "", " {").concat(item[1], "}");
+          item[5] = layer;
+        }
+      }
+      if (media) {
+        if (!item[2]) {
+          item[2] = media;
+        } else {
+          item[1] = "@media ".concat(item[2], " {").concat(item[1], "}");
+          item[2] = media;
+        }
+      }
+      if (supports) {
+        if (!item[4]) {
+          item[4] = "".concat(supports);
+        } else {
+          item[1] = "@supports (".concat(item[4], ") {").concat(item[1], "}");
+          item[4] = supports;
+        }
+      }
+      list.push(item);
+    }
+  };
+  return list;
+};
+
+/***/ },
+
+/***/ "./node_modules/css-loader/dist/runtime/sourceMaps.js"
+/*!************************************************************!*\
+  !*** ./node_modules/css-loader/dist/runtime/sourceMaps.js ***!
+  \************************************************************/
+(module) {
+
+"use strict";
+
+
+module.exports = function (item) {
+  var content = item[1];
+  var cssMapping = item[3];
+  if (!cssMapping) {
+    return content;
+  }
+  if (typeof btoa === "function") {
+    var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(cssMapping))));
+    var data = "sourceMappingURL=data:application/json;charset=utf-8;base64,".concat(base64);
+    var sourceMapping = "/*# ".concat(data, " */");
+    return [content].concat([sourceMapping]).join("\n");
+  }
+  return [content].join("\n");
+};
+
+/***/ },
+
+/***/ "./node_modules/toastify-js/src/toastify.css"
+/*!***************************************************!*\
+  !*** ./node_modules/toastify-js/src/toastify.css ***!
+  \***************************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! !../../style-loader/dist/runtime/injectStylesIntoStyleTag.js */ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js");
+/* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !../../style-loader/dist/runtime/styleDomAPI.js */ "./node_modules/style-loader/dist/runtime/styleDomAPI.js");
+/* harmony import */ var _style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../style-loader/dist/runtime/insertBySelector.js */ "./node_modules/style-loader/dist/runtime/insertBySelector.js");
+/* harmony import */ var _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../style-loader/dist/runtime/setAttributesWithoutAttributes.js */ "./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js");
+/* harmony import */ var _style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! !../../style-loader/dist/runtime/insertStyleElement.js */ "./node_modules/style-loader/dist/runtime/insertStyleElement.js");
+/* harmony import */ var _style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! !../../style-loader/dist/runtime/styleTagTransform.js */ "./node_modules/style-loader/dist/runtime/styleTagTransform.js");
+/* harmony import */ var _style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js!./toastify.css */ "./node_modules/css-loader/dist/cjs.js!./node_modules/toastify-js/src/toastify.css");
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var options = {};
+
+options.styleTagTransform = (_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default());
+options.setAttributes = (_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default());
+
+      options.insert = _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default().bind(null, "head");
+    
+options.domAPI = (_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default());
+options.insertStyleElement = (_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default());
+
+var update = _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__["default"], options);
+
+
+
+
+       /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__["default"] && _css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__["default"].locals ? _css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__["default"].locals : undefined);
+
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js"
+/*!****************************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js ***!
+  \****************************************************************************/
+(module) {
+
+"use strict";
+
+
+var stylesInDOM = [];
+function getIndexByIdentifier(identifier) {
+  var result = -1;
+  for (var i = 0; i < stylesInDOM.length; i++) {
+    if (stylesInDOM[i].identifier === identifier) {
+      result = i;
+      break;
+    }
+  }
+  return result;
+}
+function modulesToDom(list, options) {
+  var idCountMap = {};
+  var identifiers = [];
+  for (var i = 0; i < list.length; i++) {
+    var item = list[i];
+    var id = options.base ? item[0] + options.base : item[0];
+    var count = idCountMap[id] || 0;
+    var identifier = "".concat(id, " ").concat(count);
+    idCountMap[id] = count + 1;
+    var indexByIdentifier = getIndexByIdentifier(identifier);
+    var obj = {
+      css: item[1],
+      media: item[2],
+      sourceMap: item[3],
+      supports: item[4],
+      layer: item[5]
+    };
+    if (indexByIdentifier !== -1) {
+      stylesInDOM[indexByIdentifier].references++;
+      stylesInDOM[indexByIdentifier].updater(obj);
+    } else {
+      var updater = addElementStyle(obj, options);
+      options.byIndex = i;
+      stylesInDOM.splice(i, 0, {
+        identifier: identifier,
+        updater: updater,
+        references: 1
+      });
+    }
+    identifiers.push(identifier);
+  }
+  return identifiers;
+}
+function addElementStyle(obj, options) {
+  var api = options.domAPI(options);
+  api.update(obj);
+  var updater = function updater(newObj) {
+    if (newObj) {
+      if (newObj.css === obj.css && newObj.media === obj.media && newObj.sourceMap === obj.sourceMap && newObj.supports === obj.supports && newObj.layer === obj.layer) {
+        return;
+      }
+      api.update(obj = newObj);
+    } else {
+      api.remove();
+    }
+  };
+  return updater;
+}
+module.exports = function (list, options) {
+  options = options || {};
+  list = list || [];
+  var lastIdentifiers = modulesToDom(list, options);
+  return function update(newList) {
+    newList = newList || [];
+    for (var i = 0; i < lastIdentifiers.length; i++) {
+      var identifier = lastIdentifiers[i];
+      var index = getIndexByIdentifier(identifier);
+      stylesInDOM[index].references--;
+    }
+    var newLastIdentifiers = modulesToDom(newList, options);
+    for (var _i = 0; _i < lastIdentifiers.length; _i++) {
+      var _identifier = lastIdentifiers[_i];
+      var _index = getIndexByIdentifier(_identifier);
+      if (stylesInDOM[_index].references === 0) {
+        stylesInDOM[_index].updater();
+        stylesInDOM.splice(_index, 1);
+      }
+    }
+    lastIdentifiers = newLastIdentifiers;
+  };
+};
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/insertBySelector.js"
+/*!********************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/insertBySelector.js ***!
+  \********************************************************************/
+(module) {
+
+"use strict";
+
+
+var memo = {};
+
+/* istanbul ignore next  */
+function getTarget(target) {
+  if (typeof memo[target] === "undefined") {
+    var styleTarget = document.querySelector(target);
+
+    // Special case to return head of iframe instead of iframe itself
+    if (window.HTMLIFrameElement && styleTarget instanceof window.HTMLIFrameElement) {
+      try {
+        // This will throw an exception if access to iframe is blocked
+        // due to cross-origin restrictions
+        styleTarget = styleTarget.contentDocument.head;
+      } catch (e) {
+        // istanbul ignore next
+        styleTarget = null;
+      }
+    }
+    memo[target] = styleTarget;
+  }
+  return memo[target];
+}
+
+/* istanbul ignore next  */
+function insertBySelector(insert, style) {
+  var target = getTarget(insert);
+  if (!target) {
+    throw new Error("Couldn't find a style target. This probably means that the value for the 'insert' parameter is invalid.");
+  }
+  target.appendChild(style);
+}
+module.exports = insertBySelector;
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/insertStyleElement.js"
+/*!**********************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/insertStyleElement.js ***!
+  \**********************************************************************/
+(module) {
+
+"use strict";
+
+
+/* istanbul ignore next  */
+function insertStyleElement(options) {
+  var element = document.createElement("style");
+  options.setAttributes(element, options.attributes);
+  options.insert(element, options.options);
+  return element;
+}
+module.exports = insertStyleElement;
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js"
+/*!**********************************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js ***!
+  \**********************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
+
+"use strict";
+
+
+/* istanbul ignore next  */
+function setAttributesWithoutAttributes(styleElement) {
+  var nonce =  true ? __webpack_require__.nc : 0;
+  if (nonce) {
+    styleElement.setAttribute("nonce", nonce);
+  }
+}
+module.exports = setAttributesWithoutAttributes;
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/styleDomAPI.js"
+/*!***************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/styleDomAPI.js ***!
+  \***************************************************************/
+(module) {
+
+"use strict";
+
+
+/* istanbul ignore next  */
+function apply(styleElement, options, obj) {
+  var css = "";
+  if (obj.supports) {
+    css += "@supports (".concat(obj.supports, ") {");
+  }
+  if (obj.media) {
+    css += "@media ".concat(obj.media, " {");
+  }
+  var needLayer = typeof obj.layer !== "undefined";
+  if (needLayer) {
+    css += "@layer".concat(obj.layer.length > 0 ? " ".concat(obj.layer) : "", " {");
+  }
+  css += obj.css;
+  if (needLayer) {
+    css += "}";
+  }
+  if (obj.media) {
+    css += "}";
+  }
+  if (obj.supports) {
+    css += "}";
+  }
+  var sourceMap = obj.sourceMap;
+  if (sourceMap && typeof btoa !== "undefined") {
+    css += "\n/*# sourceMappingURL=data:application/json;base64,".concat(btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))), " */");
+  }
+
+  // For old IE
+  /* istanbul ignore if  */
+  options.styleTagTransform(css, styleElement, options.options);
+}
+function removeStyleElement(styleElement) {
+  // istanbul ignore if
+  if (styleElement.parentNode === null) {
+    return false;
+  }
+  styleElement.parentNode.removeChild(styleElement);
+}
+
+/* istanbul ignore next  */
+function domAPI(options) {
+  if (typeof document === "undefined") {
+    return {
+      update: function update() {},
+      remove: function remove() {}
+    };
+  }
+  var styleElement = options.insertStyleElement(options);
+  return {
+    update: function update(obj) {
+      apply(styleElement, options, obj);
+    },
+    remove: function remove() {
+      removeStyleElement(styleElement);
+    }
   };
 }
-if ('undefined' !== typeof lpData) {
-  lp_rest_url = lpData.lp_rest_url;
-  lplistAPI.frontend = {
-    apiWidgets: lp_rest_url + 'lp/v1/widgets/api',
-    apiCourses: lp_rest_url + 'lp/v1/courses/archive-course',
-    // Deprecated API, don't load from v4.3.7
-    apiAJAX: lp_rest_url + 'lp/v1/load_content_via_ajax/',
-    // Deprecated since 4.3.0
-    apiProfileCoverImage: lp_rest_url + 'lp/v1/profile/cover-image'
+module.exports = domAPI;
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/styleTagTransform.js"
+/*!*********************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/styleTagTransform.js ***!
+  \*********************************************************************/
+(module) {
+
+"use strict";
+
+
+/* istanbul ignore next  */
+function styleTagTransform(css, styleElement) {
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = css;
+  } else {
+    while (styleElement.firstChild) {
+      styleElement.removeChild(styleElement.firstChild);
+    }
+    styleElement.appendChild(document.createTextNode(css));
+  }
+}
+module.exports = styleTagTransform;
+
+/***/ },
+
+/***/ "./node_modules/toastify-js/src/toastify.js"
+/*!**************************************************!*\
+  !*** ./node_modules/toastify-js/src/toastify.js ***!
+  \**************************************************/
+(module) {
+
+/*!
+ * Toastify js 1.12.0
+ * https://github.com/apvarun/toastify-js
+ * @license MIT licensed
+ *
+ * Copyright (C) 2018 Varun A P
+ */
+(function(root, factory) {
+  if ( true && module.exports) {
+    module.exports = factory();
+  } else {
+    root.Toastify = factory();
+  }
+})(this, function(global) {
+  // Object initialization
+  var Toastify = function(options) {
+      // Returning a new init object
+      return new Toastify.lib.init(options);
+    },
+    // Library version
+    version = "1.12.0";
+
+  // Set the default global options
+  Toastify.defaults = {
+    oldestFirst: true,
+    text: "Toastify is awesome!",
+    node: undefined,
+    duration: 3000,
+    selector: undefined,
+    callback: function () {
+    },
+    destination: undefined,
+    newWindow: false,
+    close: false,
+    gravity: "toastify-top",
+    positionLeft: false,
+    position: '',
+    backgroundColor: '',
+    avatar: "",
+    className: "",
+    stopOnFocus: true,
+    onClick: function () {
+    },
+    offset: {x: 0, y: 0},
+    escapeMarkup: true,
+    ariaLive: 'polite',
+    style: {background: ''}
   };
-}
-if (lp_rest_url) {
-  lplistAPI.apiCourses = lp_rest_url + 'lp/v1/courses/';
-  lplistAPI.apiEditCoursesArchiveBlock = lp_rest_url + 'lp/v1/courses/edit-archive-block';
-  lplistAPI.apiCoursesSuggest = lp_rest_url + 'lp/v1/courses/courses-suggest';
-}
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (lplistAPI);
+
+  // Defining the prototype of the object
+  Toastify.lib = Toastify.prototype = {
+    toastify: version,
+
+    constructor: Toastify,
+
+    // Initializing the object with required parameters
+    init: function(options) {
+      // Verifying and validating the input object
+      if (!options) {
+        options = {};
+      }
+
+      // Creating the options object
+      this.options = {};
+
+      this.toastElement = null;
+
+      // Validating the options
+      this.options.text = options.text || Toastify.defaults.text; // Display message
+      this.options.node = options.node || Toastify.defaults.node;  // Display content as node
+      this.options.duration = options.duration === 0 ? 0 : options.duration || Toastify.defaults.duration; // Display duration
+      this.options.selector = options.selector || Toastify.defaults.selector; // Parent selector
+      this.options.callback = options.callback || Toastify.defaults.callback; // Callback after display
+      this.options.destination = options.destination || Toastify.defaults.destination; // On-click destination
+      this.options.newWindow = options.newWindow || Toastify.defaults.newWindow; // Open destination in new window
+      this.options.close = options.close || Toastify.defaults.close; // Show toast close icon
+      this.options.gravity = options.gravity === "bottom" ? "toastify-bottom" : Toastify.defaults.gravity; // toast position - top or bottom
+      this.options.positionLeft = options.positionLeft || Toastify.defaults.positionLeft; // toast position - left or right
+      this.options.position = options.position || Toastify.defaults.position; // toast position - left or right
+      this.options.backgroundColor = options.backgroundColor || Toastify.defaults.backgroundColor; // toast background color
+      this.options.avatar = options.avatar || Toastify.defaults.avatar; // img element src - url or a path
+      this.options.className = options.className || Toastify.defaults.className; // additional class names for the toast
+      this.options.stopOnFocus = options.stopOnFocus === undefined ? Toastify.defaults.stopOnFocus : options.stopOnFocus; // stop timeout on focus
+      this.options.onClick = options.onClick || Toastify.defaults.onClick; // Callback after click
+      this.options.offset = options.offset || Toastify.defaults.offset; // toast offset
+      this.options.escapeMarkup = options.escapeMarkup !== undefined ? options.escapeMarkup : Toastify.defaults.escapeMarkup;
+      this.options.ariaLive = options.ariaLive || Toastify.defaults.ariaLive;
+      this.options.style = options.style || Toastify.defaults.style;
+      if(options.backgroundColor) {
+        this.options.style.background = options.backgroundColor;
+      }
+
+      // Returning the current object for chaining functions
+      return this;
+    },
+
+    // Building the DOM element
+    buildToast: function() {
+      // Validating if the options are defined
+      if (!this.options) {
+        throw "Toastify is not initialized";
+      }
+
+      // Creating the DOM object
+      var divElement = document.createElement("div");
+      divElement.className = "toastify on " + this.options.className;
+
+      // Positioning toast to left or right or center
+      if (!!this.options.position) {
+        divElement.className += " toastify-" + this.options.position;
+      } else {
+        // To be depreciated in further versions
+        if (this.options.positionLeft === true) {
+          divElement.className += " toastify-left";
+          console.warn('Property `positionLeft` will be depreciated in further versions. Please use `position` instead.')
+        } else {
+          // Default position
+          divElement.className += " toastify-right";
+        }
+      }
+
+      // Assigning gravity of element
+      divElement.className += " " + this.options.gravity;
+
+      if (this.options.backgroundColor) {
+        // This is being deprecated in favor of using the style HTML DOM property
+        console.warn('DEPRECATION NOTICE: "backgroundColor" is being deprecated. Please use the "style.background" property.');
+      }
+
+      // Loop through our style object and apply styles to divElement
+      for (var property in this.options.style) {
+        divElement.style[property] = this.options.style[property];
+      }
+
+      // Announce the toast to screen readers
+      if (this.options.ariaLive) {
+        divElement.setAttribute('aria-live', this.options.ariaLive)
+      }
+
+      // Adding the toast message/node
+      if (this.options.node && this.options.node.nodeType === Node.ELEMENT_NODE) {
+        // If we have a valid node, we insert it
+        divElement.appendChild(this.options.node)
+      } else {
+        if (this.options.escapeMarkup) {
+          divElement.innerText = this.options.text;
+        } else {
+          divElement.innerHTML = this.options.text;
+        }
+
+        if (this.options.avatar !== "") {
+          var avatarElement = document.createElement("img");
+          avatarElement.src = this.options.avatar;
+
+          avatarElement.className = "toastify-avatar";
+
+          if (this.options.position == "left" || this.options.positionLeft === true) {
+            // Adding close icon on the left of content
+            divElement.appendChild(avatarElement);
+          } else {
+            // Adding close icon on the right of content
+            divElement.insertAdjacentElement("afterbegin", avatarElement);
+          }
+        }
+      }
+
+      // Adding a close icon to the toast
+      if (this.options.close === true) {
+        // Create a span for close element
+        var closeElement = document.createElement("button");
+        closeElement.type = "button";
+        closeElement.setAttribute("aria-label", "Close");
+        closeElement.className = "toast-close";
+        closeElement.innerHTML = "&#10006;";
+
+        // Triggering the removal of toast from DOM on close click
+        closeElement.addEventListener(
+          "click",
+          function(event) {
+            event.stopPropagation();
+            this.removeElement(this.toastElement);
+            window.clearTimeout(this.toastElement.timeOutValue);
+          }.bind(this)
+        );
+
+        //Calculating screen width
+        var width = window.innerWidth > 0 ? window.innerWidth : screen.width;
+
+        // Adding the close icon to the toast element
+        // Display on the right if screen width is less than or equal to 360px
+        if ((this.options.position == "left" || this.options.positionLeft === true) && width > 360) {
+          // Adding close icon on the left of content
+          divElement.insertAdjacentElement("afterbegin", closeElement);
+        } else {
+          // Adding close icon on the right of content
+          divElement.appendChild(closeElement);
+        }
+      }
+
+      // Clear timeout while toast is focused
+      if (this.options.stopOnFocus && this.options.duration > 0) {
+        var self = this;
+        // stop countdown
+        divElement.addEventListener(
+          "mouseover",
+          function(event) {
+            window.clearTimeout(divElement.timeOutValue);
+          }
+        )
+        // add back the timeout
+        divElement.addEventListener(
+          "mouseleave",
+          function() {
+            divElement.timeOutValue = window.setTimeout(
+              function() {
+                // Remove the toast from DOM
+                self.removeElement(divElement);
+              },
+              self.options.duration
+            )
+          }
+        )
+      }
+
+      // Adding an on-click destination path
+      if (typeof this.options.destination !== "undefined") {
+        divElement.addEventListener(
+          "click",
+          function(event) {
+            event.stopPropagation();
+            if (this.options.newWindow === true) {
+              window.open(this.options.destination, "_blank");
+            } else {
+              window.location = this.options.destination;
+            }
+          }.bind(this)
+        );
+      }
+
+      if (typeof this.options.onClick === "function" && typeof this.options.destination === "undefined") {
+        divElement.addEventListener(
+          "click",
+          function(event) {
+            event.stopPropagation();
+            this.options.onClick();
+          }.bind(this)
+        );
+      }
+
+      // Adding offset
+      if(typeof this.options.offset === "object") {
+
+        var x = getAxisOffsetAValue("x", this.options);
+        var y = getAxisOffsetAValue("y", this.options);
+
+        var xOffset = this.options.position == "left" ? x : "-" + x;
+        var yOffset = this.options.gravity == "toastify-top" ? y : "-" + y;
+
+        divElement.style.transform = "translate(" + xOffset + "," + yOffset + ")";
+
+      }
+
+      // Returning the generated element
+      return divElement;
+    },
+
+    // Displaying the toast
+    showToast: function() {
+      // Creating the DOM object for the toast
+      this.toastElement = this.buildToast();
+
+      // Getting the root element to with the toast needs to be added
+      var rootElement;
+      if (typeof this.options.selector === "string") {
+        rootElement = document.getElementById(this.options.selector);
+      } else if (this.options.selector instanceof HTMLElement || (typeof ShadowRoot !== 'undefined' && this.options.selector instanceof ShadowRoot)) {
+        rootElement = this.options.selector;
+      } else {
+        rootElement = document.body;
+      }
+
+      // Validating if root element is present in DOM
+      if (!rootElement) {
+        throw "Root element is not defined";
+      }
+
+      // Adding the DOM element
+      var elementToInsert = Toastify.defaults.oldestFirst ? rootElement.firstChild : rootElement.lastChild;
+      rootElement.insertBefore(this.toastElement, elementToInsert);
+
+      // Repositioning the toasts in case multiple toasts are present
+      Toastify.reposition();
+
+      if (this.options.duration > 0) {
+        this.toastElement.timeOutValue = window.setTimeout(
+          function() {
+            // Remove the toast from DOM
+            this.removeElement(this.toastElement);
+          }.bind(this),
+          this.options.duration
+        ); // Binding `this` for function invocation
+      }
+
+      // Supporting function chaining
+      return this;
+    },
+
+    hideToast: function() {
+      if (this.toastElement.timeOutValue) {
+        clearTimeout(this.toastElement.timeOutValue);
+      }
+      this.removeElement(this.toastElement);
+    },
+
+    // Removing the element from the DOM
+    removeElement: function(toastElement) {
+      // Hiding the element
+      // toastElement.classList.remove("on");
+      toastElement.className = toastElement.className.replace(" on", "");
+
+      // Removing the element from DOM after transition end
+      window.setTimeout(
+        function() {
+          // remove options node if any
+          if (this.options.node && this.options.node.parentNode) {
+            this.options.node.parentNode.removeChild(this.options.node);
+          }
+
+          // Remove the element from the DOM, only when the parent node was not removed before.
+          if (toastElement.parentNode) {
+            toastElement.parentNode.removeChild(toastElement);
+          }
+
+          // Calling the callback function
+          this.options.callback.call(toastElement);
+
+          // Repositioning the toasts again
+          Toastify.reposition();
+        }.bind(this),
+        400
+      ); // Binding `this` for function invocation
+    },
+  };
+
+  // Positioning the toasts on the DOM
+  Toastify.reposition = function() {
+
+    // Top margins with gravity
+    var topLeftOffsetSize = {
+      top: 15,
+      bottom: 15,
+    };
+    var topRightOffsetSize = {
+      top: 15,
+      bottom: 15,
+    };
+    var offsetSize = {
+      top: 15,
+      bottom: 15,
+    };
+
+    // Get all toast messages on the DOM
+    var allToasts = document.getElementsByClassName("toastify");
+
+    var classUsed;
+
+    // Modifying the position of each toast element
+    for (var i = 0; i < allToasts.length; i++) {
+      // Getting the applied gravity
+      if (containsClass(allToasts[i], "toastify-top") === true) {
+        classUsed = "toastify-top";
+      } else {
+        classUsed = "toastify-bottom";
+      }
+
+      var height = allToasts[i].offsetHeight;
+      classUsed = classUsed.substr(9, classUsed.length-1)
+      // Spacing between toasts
+      var offset = 15;
+
+      var width = window.innerWidth > 0 ? window.innerWidth : screen.width;
+
+      // Show toast in center if screen with less than or equal to 360px
+      if (width <= 360) {
+        // Setting the position
+        allToasts[i].style[classUsed] = offsetSize[classUsed] + "px";
+
+        offsetSize[classUsed] += height + offset;
+      } else {
+        if (containsClass(allToasts[i], "toastify-left") === true) {
+          // Setting the position
+          allToasts[i].style[classUsed] = topLeftOffsetSize[classUsed] + "px";
+
+          topLeftOffsetSize[classUsed] += height + offset;
+        } else {
+          // Setting the position
+          allToasts[i].style[classUsed] = topRightOffsetSize[classUsed] + "px";
+
+          topRightOffsetSize[classUsed] += height + offset;
+        }
+      }
+    }
+
+    // Supporting function chaining
+    return this;
+  };
+
+  // Helper function to get offset.
+  function getAxisOffsetAValue(axis, options) {
+
+    if(options.offset[axis]) {
+      if(isNaN(options.offset[axis])) {
+        return options.offset[axis];
+      }
+      else {
+        return options.offset[axis] + 'px';
+      }
+    }
+
+    return '0px';
+
+  }
+
+  function containsClass(elem, yourClass) {
+    if (!elem || typeof yourClass !== "string") {
+      return false;
+    } else if (
+      elem.className &&
+      elem.className
+        .trim()
+        .split(/\s+/gi)
+        .indexOf(yourClass) > -1
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // Setting up the prototype for the init object
+  Toastify.lib.init.prototype = Toastify.lib;
+
+  // Returning the Toastify function to be assigned to the window object/module
+  return Toastify;
+});
+
 
 /***/ }
 
 /******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
+/******/ 	const __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		const cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
 /******/ 			return cachedModule.exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
+/******/ 		const module = __webpack_module_cache__[moduleId] = {
+/******/ 			id: moduleId,
 /******/ 			// no module.loaded needed
 /******/ 			exports: {}
 /******/ 		};
@@ -76,24 +1593,51 @@ if (lp_rest_url) {
 /******/ 		// Execute the module function
 /******/ 		if (!(moduleId in __webpack_modules__)) {
 /******/ 			delete __webpack_module_cache__[moduleId];
-/******/ 			var e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			const e = new Error("Cannot find module '" + moduleId + "'");
 /******/ 			e.code = 'MODULE_NOT_FOUND';
 /******/ 			throw e;
 /******/ 		}
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			const getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
+/******/ 		// define getter/value functions for harmony exports
 /******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 			if(Array.isArray(definition)) {
+/******/ 				var i = 0;
+/******/ 				while(i < definition.length) {
+/******/ 					var key = definition[i++];
+/******/ 					var binding = definition[i++];
+/******/ 					if(!__webpack_require__.o(exports, key)) {
+/******/ 						if(binding === 0) {
+/******/ 							Object.defineProperty(exports, key, { enumerable: true, value: definition[i++] });
+/******/ 						} else {
+/******/ 							Object.defineProperty(exports, key, { enumerable: true, get: binding });
+/******/ 						}
+/******/ 					} else if(binding === 0) { i++; }
+/******/ 				}
+/******/ 			} else {
+/******/ 				for(var key in definition) {
+/******/ 					if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 						Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 					}
 /******/ 				}
 /******/ 			}
 /******/ 		};
@@ -101,356 +1645,427 @@ if (lp_rest_url) {
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.hasOwn(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
 /******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			if(Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
 /******/ 			Object.defineProperty(exports, '__esModule', { value: true });
 /******/ 		};
 /******/ 	})();
 /******/ 	
+/******/ 	/* webpack/runtime/nonce */
+/******/ 	(() => {
+/******/ 		__webpack_require__.nc = undefined;
+/******/ 	})();
+/******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
+let __webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
 (() => {
+"use strict";
 /*!***************************************!*\
   !*** ./assets/src/js/admin/addons.js ***!
   \***************************************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _api__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../api */ "./assets/src/js/api.js");
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var lpAssetsJsPath_lpToastify_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lpAssetsJsPath/lpToastify.js */ "./assets/src/js/lpToastify.js");
+/* harmony import */ var lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lpAssetsJsPath/utils.js */ "./assets/src/js/utils.js");
 /**
- * Script handle admin notices.
+ * Admin Add-ons page JS handler as a class.
  *
- * @since 4.1.7.3.2
- * @version 1.0.1
+ * Add-ons list is rendered server-side via AdminAddonsPage::render_addons()
+ * through TemplateAJAX::load_content_via_ajax(). This class only handles
+ * UI interactions and addon actions via window.lpAJAXG.
+ *
+ * @since 4.4.7
+ * @version 1.0.0
  */
 
-let elAddonsPage;
-let dataHtml;
-let dataAddons;
-let elLPAddons;
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const tab = urlParams.get('tab');
-let elNotifyActionWrapper;
-const isHandling = [];
 
-// API get list addons.
-const getAddons = (set = '') => {
-  const params = tab ? `?tab=${tab}` : `?${set}`;
-  fetch(_api__WEBPACK_IMPORTED_MODULE_0__["default"].admin.apiAddons + params, {
-    method: 'GET',
-    headers: {
-      'X-WP-Nonce': lpDataAdmin.nonce
-    }
-  }).then(res => res.json()).then(res => {
-    // console.log(data);
-    const {
-      status,
-      message,
-      data
-    } = res;
-    if (status === 'success') {
-      dataHtml = data.html;
-      dataAddons = data.addons;
-    } else {
-      dataHtml = message;
-    }
-  }).catch(err => {
-    console.log(err);
-  });
-};
-// API send action install, update, activate, deactivate.
-const addonsAction = (data, callBack) => {
-  const addonSlug = data.addon.slug;
-  if (isHandling.indexOf(addonSlug) !== -1) {
-    return;
+class AdminAddons {
+  constructor() {
+    this.elAddonsPage = null;
+    this.urlParams = new URLSearchParams(window.location.search);
   }
-  isHandling.push(addonSlug);
-  fetch(_api__WEBPACK_IMPORTED_MODULE_0__["default"].admin.apiAddonAction, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-WP-Nonce': lpDataAdmin.nonce
-    },
-    body: JSON.stringify({
-      ...data
-    })
-  }).then(res => res.json()).then(res => {
-    const indexAddonHanding = isHandling.indexOf(addonSlug);
-    if (indexAddonHanding !== -1) {
-      isHandling.splice(indexAddonHanding, 1);
-    }
-    const {
-      status,
-      message,
-      data
-    } = res;
-    if (callBack) {
-      callBack(status, message, data);
-    }
-    handleNotify(status, message);
-  }).catch(err => {
-    handleNotify('error', `error js: ${err}`);
-    console.log(err);
-  });
-};
-// Show notify.
-const handleNotify = (status, message) => {
-  const elNotifyAction = elNotifyActionWrapper.querySelector('.lp-notify-action');
-  const elNotifyActionNew = elNotifyAction.cloneNode(true);
-  elNotifyActionNew.classList.remove('clone');
-  elNotifyActionWrapper.insertBefore(elNotifyActionNew, elNotifyActionWrapper[0]);
-  const elSuccess = elNotifyActionNew.querySelector(`.${elNotifyActionNew.classList.value}__success`);
-  const elFailed = elNotifyActionNew.querySelector(`.${elNotifyActionNew.classList.value}__error`);
-  if (status === 'success') {
-    elSuccess.classList.add('show');
-    elSuccess.querySelector('.message').innerHTML = message;
-  } else {
-    elFailed.classList.add('show');
-    elFailed.querySelector('.message').innerHTML = message;
+  static selectors = {
+    elAddonsPage: '.lp-addons-page',
+    elLPAddons: '#lp-addons',
+    elAddonItem: '.lp-addon-item',
+    elBtnAction: '.btn-addon-action',
+    elNavTab: '.nav-tab',
+    elNavTabActive: '.nav-tab.nav-tab-active',
+    elCategory: '.lp-addons-category',
+    elCategoryActive: '.lp-addons-category.active',
+    elSearchInput: '#lp-search-addons__input',
+    elItemPurchase: '.lp-addon-item__purchase',
+    elPurchaseInstall: '.purchase-install',
+    elPurchaseCode: '.enter-purchase-code',
+    elLicense: '.lp-addon-license'
+  };
+  init() {
+    // Content is injected via AJAX into .lp-target, wait for #lp-addons.
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.lpOnElementReady(AdminAddons.selectors.elLPAddons, () => {
+      this.elAddonsPage = document.querySelector(AdminAddons.selectors.elAddonsPage);
+      if (!this.elAddonsPage) {
+        return;
+      }
+      this.filterAddons();
+      this.events();
+    });
   }
-  elNotifyActionWrapper.classList.add('show');
-  setTimeout(() => {
-    elNotifyActionNew.remove();
-    const elNotifyAction = elNotifyActionWrapper.querySelectorAll('.lp-notify-action');
-    if (elNotifyAction.length === 1) {
-      elNotifyActionWrapper.classList.remove('show');
+
+  /**
+   * Register events.
+   *
+   * @return void
+   */
+  events() {
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.eventHandlers('click', [{
+      selector: AdminAddons.selectors.elBtnAction,
+      class: this,
+      callBack: this.handleBtnAction.name
+    }, {
+      selector: AdminAddons.selectors.elNavTab,
+      class: this,
+      callBack: this.handleTabClick.name
+    }, {
+      selector: AdminAddons.selectors.elCategory,
+      class: this,
+      callBack: this.handleCategoryClick.name
+    }, {
+      selector: AdminAddons.selectors.elPurchaseCode,
+      class: this,
+      callBack: this.handlePurchaseCodeClick.name
+    }]);
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.eventHandlers('input', [{
+      selector: AdminAddons.selectors.elSearchInput,
+      class: this,
+      callBack: this.handleSearchInput.name
+    }, {
+      selector: AdminAddons.selectors.elPurchaseCode,
+      class: this,
+      callBack: this.handlePurchaseCodeInput.name
+    }]);
+  }
+
+  /**
+   * Get addon data embedded on the item element.
+   *
+   * @param {Element} elAddonItem Addon item element.
+   * @return {Object|null}
+   */
+  getAddonData(elAddonItem) {
+    try {
+      return JSON.parse(elAddonItem.dataset.addon);
+    } catch (e) {
+      return null;
     }
-  }, status === 'success' ? 3000 : 4000);
-};
-// Get addons when js loaded.
-getAddons();
-// Search Addons.
-const searchAddons = name => {
-  const elAddonItems = elAddonsPage.querySelectorAll('.lp-addon-item');
-  let totalItems = 0;
-  elAddonItems.forEach(elAddonItem => {
-    const addonName = elAddonItem.querySelector('a').textContent;
-    if (elAddonItem.classList.contains('hide')) {
+  }
+
+  /**
+   * Send addon action to server via lpAJAXG.
+   *
+   * @param {Object} data { action, addon, purchase_code, el, elAddonItem }.
+   * @return void
+   */
+  addonsAction(data) {
+    const {
+      action,
+      addon,
+      el,
+      elAddonItem
+    } = data;
+    const selectors = AdminAddons.selectors;
+    const params = {
+      action: 'addon_action',
+      action_type: action,
+      addon,
+      purchase_code: data.purchase_code || '',
+      id_url: 'addon-action'
+    };
+    window.lpAJAXG.fetchAJAX(params, {
+      success: response => {
+        const {
+          status,
+          message,
+          data: resData
+        } = response;
+        lpAssetsJsPath_lpToastify_js__WEBPACK_IMPORTED_MODULE_0__.show(message, status);
+        if (status === 'success' && resData?.html) {
+          elAddonItem.outerHTML = resData.html;
+        } else if ('install' === action || 'update-purchase' === action) {
+          const elPurchasePanel = el.closest(selectors.elPurchaseInstall);
+          const elPurchaseCode = elPurchasePanel ? elPurchasePanel.querySelector(selectors.elPurchaseCode) : null;
+          if (elPurchaseCode) {
+            elPurchaseCode.classList.add('is-error');
+            elPurchaseCode.setAttribute('aria-invalid', 'true');
+          }
+        }
+
+        //this.filterAddons();
+        lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.lpSetLoadingEl(el, 0);
+      },
+      error: error => {
+        lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.lpSetLoadingEl(el, 0);
+        lpAssetsJsPath_lpToastify_js__WEBPACK_IMPORTED_MODULE_0__.show(`error js: ${error}`, 'error');
+      }
+    });
+  }
+
+  /**
+   * Filter add-ons by status, category, and search query.
+   *
+   * @return void
+   */
+  filterAddons() {
+    const selectors = AdminAddons.selectors;
+    const elAddonItems = this.elAddonsPage.querySelectorAll(selectors.elAddonItem);
+
+    // Count items for each tab
+    this.updateTabCounts(elAddonItems);
+    const elActiveTab = this.elAddonsPage.querySelector(selectors.elNavTabActive);
+    const elActiveCategory = this.elAddonsPage.querySelector(selectors.elCategoryActive);
+    const elSearch = this.elAddonsPage.querySelector(selectors.elSearchInput);
+    const tabName = elActiveTab ? elActiveTab.dataset.tab : 'all';
+    const category = elActiveCategory ? elActiveCategory.dataset.category : 'all';
+    const keyword = elSearch ? elSearch.value.trim().toLowerCase() : '';
+    const searchTerms = keyword.split(/\s+/).filter(Boolean);
+
+    // Count items for category by tab
+    this.updateCategoryCounts(elAddonItems, tabName);
+    elAddonItems.forEach(elAddonItem => {
+      const addonInfo = JSON.parse(elAddonItem.dataset.addon);
+      const addonName = elAddonItem.querySelector('a').textContent.toLowerCase();
+      const textCompare = addonName + addonInfo.description;
+      const addonCategories = (elAddonItem.dataset.category || '').split(/\s+/).filter(Boolean);
+      const matchesTab = 'all' === tabName || elAddonItem.classList.contains(tabName);
+      const matchesCategory = 'all' === category || addonCategories.includes(category);
+      const matchesSearch = searchTerms.every(term => textCompare.includes(term));
+      const isVisible = matchesTab && matchesCategory && matchesSearch;
+      elAddonItem.classList.toggle('hide', !matchesTab);
+      elAddonItem.classList.toggle('search-not-found', !isVisible);
+    });
+  }
+  updateCategoryCounts(elAddonItems, tabName) {
+    const categoryCounts = {
+      all: 0
+    };
+    elAddonItems.forEach(elAddonItem => {
+      const matchesTab = 'all' === tabName || elAddonItem.classList.contains(tabName);
+      if (!matchesTab) {
+        return;
+      }
+      categoryCounts.all++;
+      (elAddonItem.dataset.category || '').split(/\s+/).filter(Boolean).forEach(addonCategory => {
+        categoryCounts[addonCategory] = (categoryCounts[addonCategory] || 0) + 1;
+      });
+    });
+    this.elAddonsPage.querySelectorAll(AdminAddons.selectors.elCategory).forEach(elCategory => {
+      const count = categoryCounts[elCategory.dataset.category] || 0;
+      const elCount = elCategory.querySelector('.lp-addons-category__count');
+      if (elCount) {
+        elCount.textContent = `(${count})`;
+      }
+      elCategory.hidden = 'all' !== elCategory.dataset.category && 0 === count;
+    });
+  }
+  updateTabCounts(elAddonItems) {
+    this.elAddonsPage.querySelectorAll(AdminAddons.selectors.elNavTab).forEach(elNavTab => {
+      const tabName = elNavTab.dataset.tab;
+      const count = Array.from(elAddonItems).filter(elAddonItem => 'all' === tabName || elAddonItem.classList.contains(tabName)).length;
+      const elCount = elNavTab.querySelector('span');
+      if (elCount) {
+        elCount.textContent = count;
+      }
+    });
+  }
+
+  /**
+   * Handle click events.
+   *
+   * @param {Object} args Click event arguments.
+   * @return void
+   */
+  handlePurchaseCodeClick(args) {
+    const {
+      target: el
+    } = args;
+    if (!el.value.startsWith('***')) {
       return;
     }
-    if (addonName.toLowerCase().includes(name.toLowerCase())) {
-      elAddonItem.classList.remove('search-not-found');
-      totalItems++;
-    } else {
-      elAddonItem.classList.add('search-not-found');
+    el.value = '';
+    const elItemPurchase = el.closest(AdminAddons.selectors.elItemPurchase);
+    if (elItemPurchase) {
+      elItemPurchase.querySelector('input[name=purchase-code]').value = '';
     }
-  });
-  setGridItems(totalItems);
-};
-// Set grid style items.
-const setGridItems = totalItems => {
-  if (totalItems < 4) {
-    elLPAddons.classList.add('max-3-items');
-  } else {
-    elLPAddons.classList.remove('max-3-items');
   }
-};
-// Check element loaded and data API returned.
-const loadElData = setInterval(() => {
-  if (!elAddonsPage || !elNotifyActionWrapper) {
-    elAddonsPage = document.querySelector('.lp-addons-page');
-    elNotifyActionWrapper = document.querySelector('.lp-notify-action-wrapper');
-  } else if (dataHtml && elAddonsPage && elNotifyActionWrapper) {
-    elAddonsPage.innerHTML = dataHtml;
-    elLPAddons = elAddonsPage.querySelector('#lp-addons');
-    const elNavTabWrapper = document.querySelector('.lp-nav-tab-wrapper');
-    if (!elNavTabWrapper) {
-      clearInterval(loadElData);
+
+  /**
+   * Handle addon action button click.
+   *
+   * @param {Object} args Click event arguments.
+   * @return void
+   */
+  handleBtnAction(args) {
+    const {
+      e,
+      target
+    } = args;
+    const selectors = AdminAddons.selectors;
+    const el = target.closest(selectors.elBtnAction);
+
+    // Ignore button type link
+    if ('A' === el.tagName) {
       return;
     }
-    const elNavTabWrapperClone = elNavTabWrapper.cloneNode(true);
-    elAddonsPage.insertBefore(elNavTabWrapperClone, elAddonsPage.children[0]);
-    elNavTabWrapperClone.style.display = 'flex';
-    elNavTabWrapper.remove();
-    const elNavActive = elNavTabWrapperClone.querySelector('.nav-tab.nav-tab-active span');
-    setGridItems(parseInt(elNavActive.textContent));
-    clearInterval(loadElData);
-  }
-}, 1);
-document.addEventListener('DOMContentLoaded', e => {});
-
-/*** Events ***/
-document.addEventListener('click', e => {
-  let el = e.target;
-  const tagName = el.tagName.toLowerCase();
-  if (tagName === 'span') {
     e.preventDefault();
-    const elBtnAction = el.closest('.btn-addon-action');
-    if (elBtnAction) {
-      elBtnAction.click();
-    }
-  }
-
-  // Events actions: activate, deactivate.
-  /*if ( el.classList.contains( 'lp-toggle-switch-label' ) ) {
-  	//e.preventDefault();
-  		const elAddonItem = el.closest( '.lp-addon-item' );
-  	const idLabel = el.getAttribute( 'for' );
-  	const elInput = document.querySelector( `#${ idLabel }` );
-  	const action = elInput.getAttribute( 'data-action' );
-  	const addon = dataAddons[ elAddonItem.dataset.slug ];
-  	const addonSlug = addon.slug;
-  	const parent = el.closest( '.lp-toggle-switch' );
-  	const label = parent.querySelector( `label[for=${ idLabel }]` );
-  	const dashicons = parent.querySelector( '.dashicons-update' );
-  	dashicons.style.display = 'inline-block';
-  	label.style.display = 'none';
-  	const data = { action, addon };
-  	addonsAction( data, function( status, message, data ) {
-  		const elAddon = document.querySelector( `#${ addonSlug }` );
-  		if ( elAddon ) {
-  			const parent = elAddon.closest( '.lp-toggle-switch' );
-  			if ( parent ) {
-  				const dashicons = parent.querySelector( '.dashicons-update' );
-  				dashicons.style.display = 'none';
-  				if ( action === 'deactivate' ) {
-  					elAddon.setAttribute( 'data-action', 'activate' );
-  				} else if ( action === 'activate' ) {
-  					elAddon.setAttribute( 'data-action', 'deactivate' );
-  				}
-  				const label = parent.querySelector( `label[for=${ addonSlug }]` );
-  				label.style.display = 'inline-flex';
-  			}
-  		}
-  			if ( status === 'success' ) {
-  			if ( action === 'deactivate' ) {
-  				elAddonItem.classList.remove( 'activated' );
-  			}
-  			if ( action === 'activate' ) {
-  				elAddonItem.classList.add( 'activated' );
-  			}
-  		}
-  	} );
-  }*/
-
-  // Events actions: install, update, delete.
-  if (el.closest('.btn-addon-action')) {
-    el = el.closest('.btn-addon-action');
-    e.preventDefault();
-    el.classList.add('handling');
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.lpSetLoadingEl(el, 1);
     let purchaseCode = '';
-    const elAddonItem = el.closest('.lp-addon-item');
-    const addon = dataAddons[elAddonItem.dataset.slug];
+    const elAddonItem = el.closest(selectors.elAddonItem);
+    const addon = this.getAddonData(elAddonItem);
     const action = el.dataset.action;
-    const elItemPurchase = elAddonItem.querySelector('.lp-addon-item__purchase');
-    //const elToggleSwitchInput = elAddonItem.querySelector( '.lp-toggle-switch-input' );
-
-    if (action === 'purchase') {
-      elItemPurchase.style.display = 'block';
-      elItemPurchase.querySelector('.purchase-install').style.display = 'flex';
+    const elItemPurchase = elAddonItem.querySelector(selectors.elItemPurchase);
+    if (!addon) {
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.lpSetLoadingEl(el, 0);
       return;
-    } else if (action === 'update-purchase-code') {
-      elItemPurchase.querySelector('.purchase-update').style.display = 'flex';
+    }
+    if (action === 'purchase' || action === 'update-purchase-code') {
+      const elPurchaseInstall = elItemPurchase.querySelector(selectors.elPurchaseInstall);
+      const elPurchaseCode = elPurchaseInstall.querySelector(selectors.elPurchaseCode);
+      const elPurchaseSubmit = elPurchaseInstall.querySelector('.lp-addon-purchase__submit');
+      if (action === 'update-purchase-code') {
+        const elLicense = elAddonItem.querySelector(selectors.elLicense);
+        elPurchaseCode.value = elLicense ? elLicense.dataset.purchaseCodeMasked || '' : '';
+        elPurchaseSubmit.dataset.action = 'update-purchase';
+      } else {
+        elPurchaseCode.value = '';
+        elPurchaseSubmit.dataset.action = 'install';
+      }
+      elPurchaseCode.classList.remove('is-error');
+      elPurchaseCode.removeAttribute('aria-invalid');
+      elItemPurchase.querySelector('input[name=purchase-code]').value = '';
+      elPurchaseInstall.style.display = 'flex';
       elItemPurchase.style.display = 'block';
-      return;
-    } else if (action === 'buy') {
-      const link = el.dataset.link;
-      window.open(link, '_blank');
+      elPurchaseCode.focus();
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.lpSetLoadingEl(el, 0);
       return;
     } else if (action === 'cancel') {
       elItemPurchase.style.display = 'none';
+      elItemPurchase.querySelector(selectors.elPurchaseInstall).style.display = 'none';
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.lpSetLoadingEl(el, 0);
       return;
-    } else if (action === 'install') {
-      if (el.dataset.link) {
-        el.classList.remove('handling');
-        const link = el.dataset.link;
-        window.open(link, '_blank');
-        return;
-      }
     }
 
     // Send request to server.
     if (elItemPurchase) {
       purchaseCode = elItemPurchase.querySelector('input[name=purchase-code]').value;
     }
-    const data = {
+    this.addonsAction({
       purchase_code: purchaseCode,
       action,
-      addon
-    };
-    addonsAction(data, function (status, message, data) {
-      if (status === 'success') {
-        if (action === 'install') {
-          elAddonItem.classList.add('installed', 'activated');
-          elAddonItem.classList.remove('not_installed');
-          elItemPurchase.style.display = 'none';
-          /*elToggleSwitchInput.setAttribute( 'checked', 'checked' );
-          elToggleSwitchInput.setAttribute( 'data-action', 'deactivate' );*/
-          const elNavInstalled = document.querySelector('.nav-tab[data-tab=installed] span');
-          elNavInstalled.textContent = parseInt(elNavInstalled.textContent) + 1;
-          const elNavNoInstalled = document.querySelector('.nav-tab[data-tab=not_installed] span');
-          elNavNoInstalled.textContent = parseInt(elNavNoInstalled.textContent) - 1;
-          elItemPurchase.querySelector('.purchase-install').style.display = 'none';
-          elItemPurchase.querySelector('.purchase-update').querySelector('.enter-purchase-code').value = purchaseCode;
-        } else if (action === 'update') {
-          const elAddonVersionCurrent = elAddonItem.querySelector('.addon-version-current');
-          elAddonVersionCurrent.innerHTML = addon.version;
-          elAddonItem.classList.remove('update');
-        } else if (action === 'activate') {
-          elAddonItem.classList.add('activated');
-        } else if (action === 'deactivate') {
-          elAddonItem.classList.remove('activated');
-        } else if (action === 'update-purchase') {
-          elItemPurchase.style.display = 'none';
-        }
-      }
-      el.classList.remove('handling');
+      addon,
+      el,
+      elAddonItem
     });
   }
-  if (el.classList.contains('nav-tab')) {
+
+  /**
+   * Handle tab click.
+   *
+   * @param {Object} args Click event arguments.
+   * @return void
+   */
+  handleTabClick(args) {
+    const {
+      e,
+      target
+    } = args;
+    const selectors = AdminAddons.selectors;
+    const el = target.closest(selectors.elNavTab);
     e.preventDefault();
-    const elTabs = document.querySelectorAll('.nav-tab');
-    elTabs.forEach(function (elTab) {
+    const elTabs = this.elAddonsPage.querySelectorAll(selectors.elNavTab);
+    elTabs.forEach(elTab => {
       elTab.classList.remove('nav-tab-active');
+      elTab.setAttribute('aria-pressed', 'false');
     });
     el.classList.add('nav-tab-active');
+    el.setAttribute('aria-pressed', 'true');
     const tabName = el.dataset.tab;
-    const elAddonItems = elAddonsPage.querySelectorAll('.lp-addon-item');
-    const elSearch = elAddonsPage.querySelector('#lp-search-addons__input');
+    const elSearch = this.elAddonsPage.querySelector(selectors.elSearchInput);
     elSearch.value = '';
-    urlParams.set('tab', tabName);
-    window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
-    let totalItems = 0;
-    elAddonItems.forEach(elAddonItem => {
-      elAddonItem.classList.remove('search-not-found');
-      if ('all' === tabName || elAddonItem.classList.contains(tabName)) {
-        elAddonItem.classList.remove('hide');
-        totalItems++;
-      } else {
-        elAddonItem.classList.add('hide');
-      }
+    this.elAddonsPage.querySelectorAll(selectors.elCategory).forEach(elCategory => {
+      const isActive = 'all' === elCategory.dataset.category;
+      elCategory.classList.toggle('active', isActive);
+      elCategory.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
-    setGridItems(totalItems);
-  }
-});
-
-/*** Event search addons. ***/
-document.addEventListener('input', e => {
-  const el = e.target;
-  if ('lp-search-addons__input' === el.id) {
-    const keyword = el.value;
-    searchAddons(keyword);
+    this.urlParams.set('tab', tabName);
+    window.history.pushState({}, '', `${window.location.pathname}?${this.urlParams.toString()}`);
+    this.filterAddons();
   }
 
-  // Events change input purchase code.
-  if (el.classList.contains('enter-purchase-code')) {
+  /**
+   * Handle category click.
+   *
+   * @param {Object} args Click event arguments.
+   * @return void
+   */
+  handleCategoryClick(args) {
+    const {
+      e,
+      target
+    } = args;
+    const elCategory = target.closest(AdminAddons.selectors.elCategory);
     e.preventDefault();
+    this.elAddonsPage.querySelectorAll(AdminAddons.selectors.elCategory).forEach(item => {
+      const isActive = item === elCategory;
+      item.classList.toggle('active', isActive);
+      item.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+    this.filterAddons();
+  }
+
+  /**
+   * Handle search input.
+   *
+   * @return void
+   */
+  handleSearchInput() {
+    this.filterAddons();
+  }
+
+  /**
+   * Handle purchase code input.
+   *
+   * @param {Object} args Input event arguments.
+   * @return void
+   */
+  handlePurchaseCodeInput(args) {
+    const {
+      e,
+      target: el
+    } = args;
+    e.preventDefault();
+    el.classList.remove('is-error');
+    el.removeAttribute('aria-invalid');
     const purchaseCode = el.value;
-    const elItemPurchase = el.closest('.lp-addon-item__purchase');
+    const elItemPurchase = el.closest(AdminAddons.selectors.elItemPurchase);
     if (elItemPurchase) {
       const input = elItemPurchase.querySelector('input[name=purchase-code]');
       input.value = purchaseCode;
     }
   }
-});
+}
+const adminAddons = new AdminAddons();
+adminAddons.init();
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (AdminAddons);
 })();
 
 /******/ })()

@@ -3454,7 +3454,6 @@ class GenerateWithOpenai {
       });
       _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpOnElementReady('#wp-content-media-buttons', el => {
         el.insertAdjacentHTML('beforeend', `<button type="button"
-					style="padding: 5px 10px; justify-content: center;"
 					class="lp-btn-generate-with-ai lp-btn-ai-style"
 					data-template="#lp-tmpl-edit-description-ai">
 					<i class="lp-ico-ai"></i><span>Generate description with AI</span>
@@ -3463,7 +3462,6 @@ class GenerateWithOpenai {
       _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpOnElementReady('#postimagediv', el => {
         const elInside = el.querySelector('.postbox-header');
         elInside.insertAdjacentHTML('afterend', `<button type="button"
-					style="padding: 5px 10px; justify-content: center;"
 					class="lp-btn-generate-with-ai lp-btn-ai-style"
 					data-template="#lp-tmpl-edit-image-ai">
 					<i class="lp-ico-ai"></i><span>${lpData.i18n.generate_with_ai}</span>
@@ -3490,7 +3488,6 @@ class GenerateWithOpenai {
         // For layout Gutenberg - button for description
         _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpOnElementReady('.editor-post-featured-image', el => {
           el.insertAdjacentHTML('beforebegin', `<button type="button"
-						style="padding: 5px 10px; justify-content: center;"
 						class="lp-btn-generate-with-ai"
 						data-template="#lp-tmpl-edit-description-ai">
 						<i class="lp-ico-ai"></i><span>Generate description with AI</span>
@@ -3500,7 +3497,6 @@ class GenerateWithOpenai {
         // For layout Gutenberg - button for image
         _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpOnElementReady('.editor-post-featured-image', el => {
           el.insertAdjacentHTML('afterend', `<button type="button"
-						style="padding: 5px 10px; justify-content: center;"
 						class="lp-btn-generate-with-ai"
 						data-template="#lp-tmpl-edit-image-ai">
 						<i class="lp-ico-ai"></i><span>${lpData.i18n.generate_with_ai}</span>
@@ -16322,6 +16318,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   debounce: () => (/* binding */ debounce),
 /* harmony export */   eventHandlers: () => (/* binding */ eventHandlers),
+/* harmony export */   fullScreenView: () => (/* binding */ fullScreenView),
 /* harmony export */   getDataOfForm: () => (/* binding */ getDataOfForm),
 /* harmony export */   getFieldKeysOfForm: () => (/* binding */ getFieldKeysOfForm),
 /* harmony export */   listenElementCreated: () => (/* binding */ listenElementCreated),
@@ -16335,7 +16332,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
-/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse)
+/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
+/* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
 /**
  * Utils functions
@@ -16344,14 +16342,17 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.6
+ * @version 1.0.7
  */
 const lpClassName = {
   hidden: 'lp-hidden',
   loading: 'loading',
   elCollapse: 'lp-collapse',
   elSectionToggle: '.lp-section-toggle',
-  elTriggerToggle: '.lp-trigger-toggle'
+  elTriggerToggle: '.lp-trigger-toggle',
+  elBtnFullScreen: '.lp-btn-full-screen-view',
+  elFullScreen: 'lp-full-screen-view',
+  elBtnFullScreenClose: 'lp-full-screen-view__close'
 };
 const lpFetchAPI = (url, data = {}, functions = {}) => {
   if ('function' === typeof functions.before) {
@@ -16669,6 +16670,139 @@ const debounce = (func, wait = 500) => {
     clearTimeout(timer);
     timer = setTimeout(() => func(args), wait);
   };
+};
+
+/**
+ * Initialize lp-toggle-enable components.
+ *
+ * Finds all `.lp-toggle-enable` elements and wires up toggle behavior.
+ * Reads initial state from `data-enabled` attribute ("true"/"false").
+ * Calls `data-on-toggle` callback (if provided via options) on state change.
+ *
+ * HTML structure:
+ * <label class="lp-toggle-enable" data-enabled="true">
+ *   <input type="checkbox" class="lp-toggle-enable__input" />
+ *   <span class="lp-toggle-enable__track"></span>
+ * </label>
+ *
+ * @param {string}   selector CSS selector for toggle elements (default: '.lp-toggle-enable')
+ * @param {Function} onToggle Optional callback( el, isEnabled ) called on state change
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpToggleEnableInit = 0;
+const toggleEnable = (onToggle = null) => {
+  if (window.lpToggleEnableInit) {
+    return;
+  }
+  window.lpToggleEnableInit = 1;
+  const selector = '.lp-toggle-enable';
+  const updateUI = (toggle, isEnabled) => {
+    toggle.classList.toggle('is-enabled', isEnabled);
+    const input = toggle.querySelector('.lp-toggle-enable__input');
+    if (input) {
+      input.checked = isEnabled;
+      input.value = isEnabled ? '1' : '0';
+    }
+  };
+
+  // Delegate click handling via eventHandlers.
+  eventHandlers('click', [{
+    selector,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const toggle = target.closest(selector);
+      if (!toggle || toggle.classList.contains('is-disabled')) {
+        return;
+      }
+      e.preventDefault();
+      const isEnabled = !toggle.classList.contains('is-enabled');
+      updateUI(toggle, isEnabled);
+      if ('function' === typeof onToggle) {
+        onToggle(toggle, isEnabled);
+      }
+    }
+  }]);
+};
+
+/**
+ * Initialize custom fullscreen view buttons.
+ *
+ * Delegates clicks on `.lp-btn-full-screen-view` buttons to
+ * `lpToggleFullscreenView`. Reads the `data-target` attribute to find the
+ * target element. Falls back to the button's parent element when
+ * `data-target` is not provided.
+ *
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpFullScreenViewInit = 0;
+const fullScreenView = () => {
+  if (window.lpFullScreenViewInit) {
+    return;
+  }
+  window.lpFullScreenViewInit = 1;
+  let lastScrollY = 0;
+  const lpToggleFullscreenView = (elTarget, elBtnFullScreen = null) => {
+    const isFullscreen = elTarget.classList.contains(lpClassName.elFullScreen);
+    if (isFullscreen) {
+      elTarget.classList.remove(lpClassName.elFullScreen);
+      document.documentElement.classList.remove('lp-full-screen-active');
+      window.scrollTo(0, lastScrollY);
+    } else {
+      lastScrollY = window.scrollY;
+      elTarget.classList.add(lpClassName.elFullScreen);
+      document.documentElement.classList.add('lp-full-screen-active');
+    }
+    if (!isFullscreen) {
+      if (!elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`)) {
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = lpClassName.elBtnFullScreenClose;
+        closeButton.setAttribute('aria-label', 'Close');
+        closeButton.innerHTML = lpData.i18n.closeButtonFullScreen || 'Close &times;';
+        closeButton.addEventListener('click', e => {
+          e.preventDefault();
+          lpToggleFullscreenView(elTarget);
+        });
+        elTarget.appendChild(closeButton);
+      }
+    } else {
+      const closeButton = elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`);
+      if (closeButton) {
+        closeButton.remove();
+      }
+    }
+  };
+  eventHandlers('click', [{
+    selector: lpClassName.elBtnFullScreen,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const elBtnFullScreen = target.closest(lpClassName.elBtnFullScreen);
+      if (!elBtnFullScreen) {
+        console.log('No full screen button found');
+        return;
+      }
+      e.preventDefault();
+      let elTarget = null;
+      const targetSelector = elBtnFullScreen.dataset.targetFullscreen;
+      console.log(targetSelector);
+      if (targetSelector) {
+        elTarget = document.querySelector(targetSelector);
+      }
+      if (!elTarget) {
+        console.log('No target element found');
+        return;
+      }
+      lpToggleFullscreenView(elTarget, elBtnFullScreen);
+    }
+  }]);
 };
 
 /***/ },
@@ -20622,7 +20756,7 @@ module.exports = styleTagTransform;
 (module) {
 
 /*!
-* sweetalert2 v11.26.17
+* sweetalert2 v11.26.25
 * Released under the MIT License.
 */
 (function (global, factory) {
@@ -20791,6 +20925,11 @@ module.exports = styleTagTransform;
    * @returns {boolean}
    */
   const isPromise = arg => arg && Promise.resolve(arg) === arg;
+
+  /**
+   * @returns {boolean}
+   */
+  const isFirefox = () => navigator.userAgent.includes('Firefox');
 
   /**
    * Gets the popup container which contains the backdrop and the popup itself.
@@ -21016,13 +21155,7 @@ module.exports = styleTagTransform;
     if (!className) {
       return false;
     }
-    const classList = className.split(/\s+/);
-    for (let i = 0; i < classList.length; i++) {
-      if (!elem.classList.contains(classList[i])) {
-        return false;
-      }
-    }
-    return true;
+    return className.split(/\s+/).every(cls => elem.classList.contains(cls));
   };
 
   /**
@@ -21107,25 +21240,16 @@ module.exports = styleTagTransform;
     if (!target || !classList) {
       return;
     }
-    if (typeof classList === 'string') {
-      classList = classList.split(/\s+/).filter(Boolean);
-    }
-    classList.forEach(className => {
-      if (Array.isArray(target)) {
-        target.forEach(elem => {
-          if (condition) {
-            elem.classList.add(className);
-          } else {
-            elem.classList.remove(className);
-          }
-        });
-      } else {
+    const classes = typeof classList === 'string' ? classList.split(/\s+/).filter(Boolean) : classList;
+    const targets = Array.isArray(target) ? target : [target];
+    targets.forEach(elem => {
+      classes.forEach(className => {
         if (condition) {
-          target.classList.add(className);
+          elem.classList.add(className);
         } else {
-          target.classList.remove(className);
+          elem.classList.remove(className);
         }
-      }
+      });
     });
   };
 
@@ -21152,15 +21276,8 @@ module.exports = styleTagTransform;
    * @param {string} className
    * @returns {HTMLElement | undefined}
    */
-  const getDirectChildByClass = (elem, className) => {
-    const children = Array.from(elem.children);
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (child instanceof HTMLElement && hasClass(child, className)) {
-        return child;
-      }
-    }
-  };
+  const getDirectChildByClass = (elem, className) => (/** @type {HTMLElement | undefined} */
+  Array.from(elem.children).find(child => child instanceof HTMLElement && hasClass(child, className)));
 
   /**
    * @param {HTMLElement} elem
@@ -21171,7 +21288,7 @@ module.exports = styleTagTransform;
     if (value === `${parseInt(`${value}`)}`) {
       value = parseInt(value);
     }
-    if (value || parseInt(`${value}`) === 0) {
+    if (value || value === 0) {
       elem.style.setProperty(property, typeof value === 'number' ? `${value}px` : (/** @type {string} */value));
     } else {
       elem.style.removeProperty(property);
@@ -21620,21 +21737,15 @@ module.exports = styleTagTransform;
     }
     addClass([confirmButton, denyButton, cancelButton], swalClasses.styled);
 
-    // Apply custom background colors to action buttons
-    if (params.confirmButtonColor) {
-      confirmButton.style.setProperty('--swal2-confirm-button-background-color', params.confirmButtonColor);
-    }
-    if (params.denyButtonColor) {
-      denyButton.style.setProperty('--swal2-deny-button-background-color', params.denyButtonColor);
-    }
-    if (params.cancelButtonColor) {
-      cancelButton.style.setProperty('--swal2-cancel-button-background-color', params.cancelButtonColor);
-    }
-
-    // Apply the outline color to action buttons
-    applyOutlineColor(confirmButton);
-    applyOutlineColor(denyButton);
-    applyOutlineColor(cancelButton);
+    // Apply custom background colors and outline colors to action buttons
+    /** @type {[HTMLElement, string, string | undefined][]} */
+    const buttons = [[confirmButton, 'confirm', params.confirmButtonColor], [denyButton, 'deny', params.denyButtonColor], [cancelButton, 'cancel', params.cancelButtonColor]];
+    buttons.forEach(([button, type, color]) => {
+      if (color) {
+        button.style.setProperty(`--swal2-${type}-button-background-color`, color);
+      }
+      applyOutlineColor(button);
+    });
   }
 
   /**
@@ -21751,7 +21862,8 @@ module.exports = styleTagTransform;
 
   var privateProps = {
     innerParams: new WeakMap(),
-    domCache: new WeakMap()
+    domCache: new WeakMap(),
+    focusedElement: new WeakMap()
   };
 
   /// <reference path="../../../../sweetalert2.d.ts"/>
@@ -21825,10 +21937,11 @@ module.exports = styleTagTransform;
    * @param {HTMLInputElement} input
    */
   const removeAttributes = input => {
-    for (let i = 0; i < input.attributes.length; i++) {
-      const attrName = input.attributes[i].name;
-      if (!['id', 'type', 'value', 'style'].includes(attrName)) {
-        input.removeAttribute(attrName);
+    for (const {
+      name
+    } of Array.from(input.attributes)) {
+      if (!['id', 'type', 'value', 'style'].includes(name)) {
+        input.removeAttribute(name);
       }
     }
   };
@@ -21928,10 +22041,12 @@ module.exports = styleTagTransform;
    */
   renderInputType.text = renderInputType.email = renderInputType.password = renderInputType.number = renderInputType.tel = renderInputType.url = renderInputType.search = renderInputType.date = renderInputType['datetime-local'] = renderInputType.time = renderInputType.week = renderInputType.month = /** @type {(input: Input | HTMLElement, params: SweetAlertOptions) => Input} */
   (input, params) => {
+    // oxfmt-ignore
     const inputElement = /** @type {HTMLInputElement} */input;
     checkAndSetInputValue(inputElement, params.inputValue);
     setInputLabel(inputElement, inputElement, params);
     setInputPlaceholder(inputElement, params);
+    // oxfmt-ignore
     inputElement.type = /** @type {string} */params.input;
     return inputElement;
   };
@@ -22197,9 +22312,9 @@ module.exports = styleTagTransform;
     const popupBackgroundColor = window.getComputedStyle(popup).getPropertyValue('background-color');
     /** @type {NodeListOf<HTMLElement>} */
     const successIconParts = popup.querySelectorAll('[class^=swal2-success-circular-line], .swal2-success-fix');
-    for (let i = 0; i < successIconParts.length; i++) {
-      successIconParts[i].style.backgroundColor = popupBackgroundColor;
-    }
+    successIconParts.forEach(part => {
+      part.style.backgroundColor = popupBackgroundColor;
+    });
   };
 
   /**
@@ -22381,18 +22496,10 @@ module.exports = styleTagTransform;
    * @returns {{ clientX: number, clientY: number }}
    */
   const getClientXY = event => {
-    let clientX = 0,
-      clientY = 0;
-    if (event.type.startsWith('mouse')) {
-      clientX = /** @type {MouseEvent} */event.clientX;
-      clientY = /** @type {MouseEvent} */event.clientY;
-    } else if (event.type.startsWith('touch')) {
-      clientX = /** @type {TouchEvent} */event.touches[0].clientX;
-      clientY = /** @type {TouchEvent} */event.touches[0].clientY;
-    }
+    const source = event.type.startsWith('touch') ? /** @type {TouchEvent} */event.touches[0] : (/** @type {MouseEvent} */event);
     return {
-      clientX,
-      clientY
+      clientX: source.clientX,
+      clientY: source.clientY
     };
   };
 
@@ -22622,7 +22729,8 @@ module.exports = styleTagTransform;
    */
   const removeKeydownHandler = globalState => {
     if (globalState.keydownTarget && globalState.keydownHandlerAdded && globalState.keydownHandler) {
-      const handler = /** @type {EventListenerOrEventListenerObject} */ /** @type {unknown} */globalState.keydownHandler;
+      const handler = /** @type {EventListenerOrEventListenerObject} */
+      /** @type {unknown} */globalState.keydownHandler;
       globalState.keydownTarget.removeEventListener('keydown', handler, {
         capture: globalState.keydownListenerCapture
       });
@@ -22657,6 +22765,7 @@ module.exports = styleTagTransform;
   /**
    * @param {number} index
    * @param {number} increment
+   * @returns {boolean} shouldPreventDefault
    */
   const setFocus = (index, increment) => {
     var _dom$getPopup;
@@ -22679,10 +22788,17 @@ module.exports = styleTagTransform;
         index = focusableElements.length - 1;
       }
       focusableElements[index].focus();
-      return;
+
+      // don't prevent default for iframes (Firefox fix)
+      // https://github.com/sweetalert2/sweetalert2/issues/2931
+      if (isFirefox() && focusableElements[index] instanceof HTMLIFrameElement) {
+        return false;
+      }
+      return true;
     }
     // no visible focusable elements, focus the popup
     (_dom$getPopup = getPopup()) === null || _dom$getPopup === void 0 || _dom$getPopup.focus();
+    return true;
   };
   const arrowKeysNextButton = ['ArrowRight', 'ArrowDown'];
   const arrowKeysPreviousButton = ['ArrowLeft', 'ArrowUp'];
@@ -22758,25 +22874,25 @@ module.exports = styleTagTransform;
   const handleTab = event => {
     const targetElement = event.target;
     const focusableElements = getFocusableElements();
-    let btnIndex = -1;
-    for (let i = 0; i < focusableElements.length; i++) {
-      if (targetElement === focusableElements[i]) {
-        btnIndex = i;
-        break;
-      }
-    }
+    const btnIndex = focusableElements.findIndex(el => el === targetElement);
+
+    // don't prevent default for iframes (Firefox fix)
+    // https://github.com/sweetalert2/sweetalert2/issues/2931
+    let shouldPreventDefault = true;
 
     // Cycle to the next button
     if (!event.shiftKey) {
-      setFocus(btnIndex, 1);
+      shouldPreventDefault = setFocus(btnIndex, 1);
     }
 
     // Cycle to the prev button
     else {
-      setFocus(btnIndex, -1);
+      shouldPreventDefault = setFocus(btnIndex, -1);
     }
     event.stopPropagation();
-    event.preventDefault();
+    if (shouldPreventDefault) {
+      event.preventDefault();
+    }
   };
 
   /**
@@ -22873,6 +22989,9 @@ module.exports = styleTagTransform;
 
   // @ts-ignore
   const isSafariOrIOS = typeof window !== 'undefined' && Boolean(window.GestureEvent); // true for Safari desktop + all iOS browsers https://stackoverflow.com/a/70585394
+
+  // @ts-ignore
+  const isIOS = isSafariOrIOS && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
   /**
    * Fix iOS scrolling
@@ -23457,28 +23576,8 @@ module.exports = styleTagTransform;
    * @returns {InputOptionFlattened[]}
    */
   const formatInputOptions = inputOptions => {
-    /** @type {InputOptionFlattened[]} */
-    const result = [];
-    if (inputOptions instanceof Map) {
-      inputOptions.forEach((value, key) => {
-        let valueFormatted = value;
-        if (typeof valueFormatted === 'object') {
-          // case of <optgroup>
-          valueFormatted = formatInputOptions(valueFormatted);
-        }
-        result.push([key, valueFormatted]);
-      });
-    } else {
-      Object.keys(inputOptions).forEach(key => {
-        let valueFormatted = inputOptions[key];
-        if (typeof valueFormatted === 'object') {
-          // case of <optgroup>
-          valueFormatted = formatInputOptions(valueFormatted);
-        }
-        result.push([key, valueFormatted]);
-      });
-    }
-    return result;
+    const entries = inputOptions instanceof Map ? Array.from(inputOptions) : Object.entries(inputOptions);
+    return entries.map(([key, value]) => [key, typeof value === 'object' ? formatInputOptions(value) : value]); // case of <optgroup>
   };
 
   /**
@@ -23486,9 +23585,7 @@ module.exports = styleTagTransform;
    * @param {SweetAlertInputValue} inputValue
    * @returns {boolean}
    */
-  const isSelected = (optionValue, inputValue) => {
-    return Boolean(inputValue) && inputValue !== null && inputValue !== undefined && inputValue.toString() === optionValue.toString();
-  };
+  const isSelected = (optionValue, inputValue) => Boolean(inputValue) && inputValue != null && inputValue.toString() === optionValue.toString();
 
   /**
    * @param {SweetAlert} instance
@@ -23671,9 +23768,7 @@ module.exports = styleTagTransform;
     removeClass([domCache.popup, domCache.actions], swalClasses.loading);
     domCache.popup.removeAttribute('aria-busy');
     domCache.popup.removeAttribute('data-loading');
-    domCache.confirmButton.disabled = false;
-    domCache.denyButton.disabled = false;
-    domCache.cancelButton.disabled = false;
+    this.enableButtons();
   }
 
   /**
@@ -23728,9 +23823,9 @@ module.exports = styleTagTransform;
     if (input.type === 'radio') {
       /** @type {NodeListOf<HTMLInputElement>} */
       const radios = popup.querySelectorAll(`[name="${swalClasses.radio}"]`);
-      for (let i = 0; i < radios.length; i++) {
-        radios[i].disabled = disabled;
-      }
+      radios.forEach(radio => {
+        radio.disabled = disabled;
+      });
     } else {
       input.disabled = disabled;
     }
@@ -23742,6 +23837,11 @@ module.exports = styleTagTransform;
    */
   function enableButtons() {
     setButtonsDisabled(this, ['confirmButton', 'denyButton', 'cancelButton'], false);
+    const focusedElement = privateProps.focusedElement.get(this);
+    if (focusedElement instanceof HTMLElement && document.activeElement === document.body) {
+      focusedElement.focus();
+    }
+    privateProps.focusedElement.delete(this);
   }
 
   /**
@@ -23749,6 +23849,7 @@ module.exports = styleTagTransform;
    * @this {SweetAlert}
    */
   function disableButtons() {
+    privateProps.focusedElement.set(this, document.activeElement);
     setButtonsDisabled(this, ['confirmButton', 'denyButton', 'cancelButton'], true);
   }
 
@@ -24257,23 +24358,23 @@ module.exports = styleTagTransform;
   };
 
   /**
-   * @param {any} elem
+   * @param {unknown} elem
    * @returns {boolean}
    */
-  const isJqueryElement = elem => typeof elem === 'object' && elem.jquery;
+  const isJqueryElement = elem => typeof elem === 'object' && elem !== null && 'jquery' in elem;
 
   /**
-   * @param {any} elem
+   * @param {unknown} elem
    * @returns {boolean}
    */
   const isElement = elem => elem instanceof Element || isJqueryElement(elem);
 
   /**
-   * @param {any[]} args
+   * @param {ReadonlyArray<unknown>} args
    * @returns {SweetAlertOptions}
    */
   const argsToParams = args => {
-    /** @type {Record<string, any>} */
+    /** @type {Record<string, unknown>} */
     const params = {};
     if (typeof args[0] === 'object' && !isElement(args[0])) {
       Object.assign(params, args[0]);
@@ -24287,7 +24388,7 @@ module.exports = styleTagTransform;
         }
       });
     }
-    return params;
+    return /** @type {SweetAlertOptions} */params;
   };
 
   /**
@@ -24780,17 +24881,13 @@ module.exports = styleTagTransform;
       }
       result[`${type}ButtonText`] = button.innerHTML;
       result[`show${capitalizeFirstLetter(type)}Button`] = true;
-      if (button.hasAttribute('color')) {
-        const color = button.getAttribute('color');
-        if (color !== null) {
-          result[`${type}ButtonColor`] = color;
-        }
+      const color = button.getAttribute('color');
+      if (color !== null) {
+        result[`${type}ButtonColor`] = color;
       }
-      if (button.hasAttribute('aria-label')) {
-        const ariaLabel = button.getAttribute('aria-label');
-        if (ariaLabel !== null) {
-          result[`${type}ButtonAriaLabel`] = ariaLabel;
-        }
+      const ariaLabel = button.getAttribute('aria-label');
+      if (ariaLabel !== null) {
+        result[`${type}ButtonAriaLabel`] = ariaLabel;
       }
     });
     return result;
@@ -24806,18 +24903,15 @@ module.exports = styleTagTransform;
     const image = templateContent.querySelector('swal-image');
     if (image) {
       showWarningsForAttributes(image, ['src', 'width', 'height', 'alt']);
-      if (image.hasAttribute('src')) {
-        result.imageUrl = image.getAttribute('src') || undefined;
-      }
-      if (image.hasAttribute('width')) {
-        result.imageWidth = image.getAttribute('width') || undefined;
-      }
-      if (image.hasAttribute('height')) {
-        result.imageHeight = image.getAttribute('height') || undefined;
-      }
-      if (image.hasAttribute('alt')) {
-        result.imageAlt = image.getAttribute('alt') || undefined;
-      }
+      // getAttribute returns null if attribute is absent; `|| undefined` converts empty string to undefined
+      const src = image.getAttribute('src');
+      if (src !== null) result.imageUrl = src || undefined;
+      const width = image.getAttribute('width');
+      if (width !== null) result.imageWidth = width || undefined;
+      const height = image.getAttribute('height');
+      if (height !== null) result.imageHeight = height || undefined;
+      const alt = image.getAttribute('alt');
+      if (alt !== null) result.imageAlt = alt || undefined;
     }
     return result;
   };
@@ -24954,9 +25048,14 @@ module.exports = styleTagTransform;
       setScrollingVisibility(container, popup);
     }, SHOW_CLASS_TIMEOUT);
     if (isModal()) {
-      // Using ternary instead of ?? operator for Webpack 4 compatibility
       fixScrollContainer(container, params.scrollbarPadding !== undefined ? params.scrollbarPadding : false, initialBodyOverflow);
       setAriaHidden();
+    }
+
+    // https://github.com/sweetalert2/sweetalert2/issues/2923
+    if (isIOS && params.backdrop === false && popup.scrollHeight > container.clientHeight) {
+      // remove pointer-events: none from container, it breaks scrolling tall popups in iOS
+      container.style.pointerEvents = 'auto';
     }
     if (!isToast() && !globalState.previousActiveElement) {
       globalState.previousActiveElement = document.activeElement;
@@ -25131,7 +25230,8 @@ module.exports = styleTagTransform;
       /**
        * @type {Promise<SweetAlertResult>}
        */
-      _classPrivateFieldInitSpec(this, _promise, /** @type {Promise<SweetAlertResult>} */Promise.resolve({
+      _classPrivateFieldInitSpec(this, _promise, /** @type {Promise<SweetAlertResult>} */
+      Promise.resolve({
         isConfirmed: false,
         isDenied: false,
         isDismissed: true
@@ -25197,6 +25297,7 @@ module.exports = styleTagTransform;
     /**
      * @param {any} onFulfilled
      */
+    // oxlint-disable-next-line unicorn/no-thenable
     then(onFulfilled) {
       return _classPrivateFieldGet2(_promise, this).then(onFulfilled);
     }
@@ -25342,8 +25443,8 @@ module.exports = styleTagTransform;
     }
     // TODO: this is dumb, remove `allowEnterKey` param in the next major version
     if (!callIfFunction(innerParams.allowEnterKey)) {
-      warnAboutDeprecation('allowEnterKey');
-      blurActiveElement();
+      warnAboutDeprecation('allowEnterKey', 'preConfirm: () => false');
+      domCache.popup.focus();
       return;
     }
     if (focusAutofocus(domCache)) {
@@ -25390,11 +25491,6 @@ module.exports = styleTagTransform;
     }
     return false;
   };
-  const blurActiveElement = () => {
-    if (document.activeElement instanceof HTMLElement && typeof document.activeElement.blur === 'function') {
-      document.activeElement.blur();
-    }
-  };
 
   // Assign instance methods from src/instanceMethods/*.js to prototype
   SweetAlert.prototype.disableButtons = disableButtons;
@@ -25434,7 +25530,7 @@ module.exports = styleTagTransform;
     };
   });
   SweetAlert.DismissReason = DismissReason;
-  SweetAlert.version = '11.26.17';
+  SweetAlert.version = '11.26.25';
 
   const Swal = SweetAlert;
   // @ts-ignore
@@ -25444,7 +25540,7 @@ module.exports = styleTagTransform;
 
 }));
 if (typeof this !== 'undefined' && this.Sweetalert2){this.swal = this.sweetAlert = this.Swal = this.SweetAlert = this.Sweetalert2}
-"undefined"!=typeof document&&function(e,t){var n=e.createElement("style");if(e.getElementsByTagName("head")[0].appendChild(n),n.styleSheet)n.styleSheet.disabled||(n.styleSheet.cssText=t);else try{n.innerHTML=t}catch(e){n.innerText=t}}(document,":root{--swal2-outline: 0 0 0 3px rgba(100, 150, 200, 0.5);--swal2-container-padding: 0.625em;--swal2-backdrop: rgba(0, 0, 0, 0.4);--swal2-backdrop-transition: background-color 0.15s;--swal2-width: 32em;--swal2-padding: 0 0 1.25em;--swal2-border: none;--swal2-border-radius: 0.3125rem;--swal2-background: white;--swal2-color: #545454;--swal2-show-animation: swal2-show 0.3s;--swal2-hide-animation: swal2-hide 0.15s forwards;--swal2-icon-zoom: 1;--swal2-icon-animations: true;--swal2-title-padding: 0.8em 1em 0;--swal2-html-container-padding: 1em 1.6em 0.3em;--swal2-input-border: 1px solid #d9d9d9;--swal2-input-border-radius: 0.1875em;--swal2-input-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06), 0 0 0 3px transparent;--swal2-input-background: transparent;--swal2-input-transition: border-color 0.2s, box-shadow 0.2s;--swal2-input-hover-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06), 0 0 0 3px transparent;--swal2-input-focus-border: 1px solid #b4dbed;--swal2-input-focus-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06), 0 0 0 3px rgba(100, 150, 200, 0.5);--swal2-progress-step-background: #add8e6;--swal2-validation-message-background: #f0f0f0;--swal2-validation-message-color: #666;--swal2-footer-border-color: #eee;--swal2-footer-background: transparent;--swal2-footer-color: inherit;--swal2-timer-progress-bar-background: rgba(0, 0, 0, 0.3);--swal2-close-button-position: initial;--swal2-close-button-inset: auto;--swal2-close-button-font-size: 2.5em;--swal2-close-button-color: #ccc;--swal2-close-button-transition: color 0.2s, box-shadow 0.2s;--swal2-close-button-outline: initial;--swal2-close-button-box-shadow: inset 0 0 0 3px transparent;--swal2-close-button-focus-box-shadow: inset var(--swal2-outline);--swal2-close-button-hover-transform: none;--swal2-actions-justify-content: center;--swal2-actions-width: auto;--swal2-actions-margin: 1.25em auto 0;--swal2-actions-padding: 0;--swal2-actions-border-radius: 0;--swal2-actions-background: transparent;--swal2-action-button-transition: background-color 0.2s, box-shadow 0.2s;--swal2-action-button-hover: black 10%;--swal2-action-button-active: black 10%;--swal2-confirm-button-box-shadow: none;--swal2-confirm-button-border-radius: 0.25em;--swal2-confirm-button-background-color: #7066e0;--swal2-confirm-button-color: #fff;--swal2-deny-button-box-shadow: none;--swal2-deny-button-border-radius: 0.25em;--swal2-deny-button-background-color: #dc3741;--swal2-deny-button-color: #fff;--swal2-cancel-button-box-shadow: none;--swal2-cancel-button-border-radius: 0.25em;--swal2-cancel-button-background-color: #6e7881;--swal2-cancel-button-color: #fff;--swal2-toast-show-animation: swal2-toast-show 0.5s;--swal2-toast-hide-animation: swal2-toast-hide 0.1s forwards;--swal2-toast-border: none;--swal2-toast-box-shadow: 0 0 1px hsl(0deg 0% 0% / 0.075), 0 1px 2px hsl(0deg 0% 0% / 0.075), 1px 2px 4px hsl(0deg 0% 0% / 0.075), 1px 3px 8px hsl(0deg 0% 0% / 0.075), 2px 4px 16px hsl(0deg 0% 0% / 0.075)}[data-swal2-theme=dark]{--swal2-dark-theme-black: #19191a;--swal2-dark-theme-white: #e1e1e1;--swal2-background: var(--swal2-dark-theme-black);--swal2-color: var(--swal2-dark-theme-white);--swal2-footer-border-color: #555;--swal2-input-background: color-mix(in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10%);--swal2-validation-message-background: color-mix( in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10% );--swal2-validation-message-color: var(--swal2-dark-theme-white);--swal2-timer-progress-bar-background: rgba(255, 255, 255, 0.7)}@media(prefers-color-scheme: dark){[data-swal2-theme=auto]{--swal2-dark-theme-black: #19191a;--swal2-dark-theme-white: #e1e1e1;--swal2-background: var(--swal2-dark-theme-black);--swal2-color: var(--swal2-dark-theme-white);--swal2-footer-border-color: #555;--swal2-input-background: color-mix(in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10%);--swal2-validation-message-background: color-mix( in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10% );--swal2-validation-message-color: var(--swal2-dark-theme-white);--swal2-timer-progress-bar-background: rgba(255, 255, 255, 0.7)}}body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown){overflow:hidden}body.swal2-height-auto{height:auto !important}body.swal2-no-backdrop .swal2-container{background-color:rgba(0,0,0,0) !important;pointer-events:none}body.swal2-no-backdrop .swal2-container .swal2-popup{pointer-events:all}body.swal2-no-backdrop .swal2-container .swal2-modal{box-shadow:0 0 10px var(--swal2-backdrop)}body.swal2-toast-shown .swal2-container{box-sizing:border-box;width:360px;max-width:100%;background-color:rgba(0,0,0,0);pointer-events:none}body.swal2-toast-shown .swal2-container.swal2-top{inset:0 auto auto 50%;transform:translateX(-50%)}body.swal2-toast-shown .swal2-container.swal2-top-end,body.swal2-toast-shown .swal2-container.swal2-top-right{inset:0 0 auto auto}body.swal2-toast-shown .swal2-container.swal2-top-start,body.swal2-toast-shown .swal2-container.swal2-top-left{inset:0 auto auto 0}body.swal2-toast-shown .swal2-container.swal2-center-start,body.swal2-toast-shown .swal2-container.swal2-center-left{inset:50% auto auto 0;transform:translateY(-50%)}body.swal2-toast-shown .swal2-container.swal2-center{inset:50% auto auto 50%;transform:translate(-50%, -50%)}body.swal2-toast-shown .swal2-container.swal2-center-end,body.swal2-toast-shown .swal2-container.swal2-center-right{inset:50% 0 auto auto;transform:translateY(-50%)}body.swal2-toast-shown .swal2-container.swal2-bottom-start,body.swal2-toast-shown .swal2-container.swal2-bottom-left{inset:auto auto 0 0}body.swal2-toast-shown .swal2-container.swal2-bottom{inset:auto auto 0 50%;transform:translateX(-50%)}body.swal2-toast-shown .swal2-container.swal2-bottom-end,body.swal2-toast-shown .swal2-container.swal2-bottom-right{inset:auto 0 0 auto}@media print{body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown){overflow-y:scroll !important}body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown)>[aria-hidden=true]{display:none}body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown) .swal2-container{position:static !important}}div:where(.swal2-container){display:grid;position:fixed;z-index:1060;inset:0;box-sizing:border-box;grid-template-areas:\"top-start     top            top-end\" \"center-start  center         center-end\" \"bottom-start  bottom-center  bottom-end\";grid-template-rows:minmax(min-content, auto) minmax(min-content, auto) minmax(min-content, auto);height:100%;padding:var(--swal2-container-padding);overflow-x:hidden;transition:var(--swal2-backdrop-transition);-webkit-overflow-scrolling:touch}div:where(.swal2-container).swal2-backdrop-show,div:where(.swal2-container).swal2-noanimation{background:var(--swal2-backdrop)}div:where(.swal2-container).swal2-backdrop-hide{background:rgba(0,0,0,0) !important}div:where(.swal2-container).swal2-top-start,div:where(.swal2-container).swal2-center-start,div:where(.swal2-container).swal2-bottom-start{grid-template-columns:minmax(0, 1fr) auto auto}div:where(.swal2-container).swal2-top,div:where(.swal2-container).swal2-center,div:where(.swal2-container).swal2-bottom{grid-template-columns:auto minmax(0, 1fr) auto}div:where(.swal2-container).swal2-top-end,div:where(.swal2-container).swal2-center-end,div:where(.swal2-container).swal2-bottom-end{grid-template-columns:auto auto minmax(0, 1fr)}div:where(.swal2-container).swal2-top-start>.swal2-popup{align-self:start}div:where(.swal2-container).swal2-top>.swal2-popup{grid-column:2;place-self:start center}div:where(.swal2-container).swal2-top-end>.swal2-popup,div:where(.swal2-container).swal2-top-right>.swal2-popup{grid-column:3;place-self:start end}div:where(.swal2-container).swal2-center-start>.swal2-popup,div:where(.swal2-container).swal2-center-left>.swal2-popup{grid-row:2;align-self:center}div:where(.swal2-container).swal2-center>.swal2-popup{grid-column:2;grid-row:2;place-self:center center}div:where(.swal2-container).swal2-center-end>.swal2-popup,div:where(.swal2-container).swal2-center-right>.swal2-popup{grid-column:3;grid-row:2;place-self:center end}div:where(.swal2-container).swal2-bottom-start>.swal2-popup,div:where(.swal2-container).swal2-bottom-left>.swal2-popup{grid-column:1;grid-row:3;align-self:end}div:where(.swal2-container).swal2-bottom>.swal2-popup{grid-column:2;grid-row:3;place-self:end center}div:where(.swal2-container).swal2-bottom-end>.swal2-popup,div:where(.swal2-container).swal2-bottom-right>.swal2-popup{grid-column:3;grid-row:3;place-self:end end}div:where(.swal2-container).swal2-grow-row>.swal2-popup,div:where(.swal2-container).swal2-grow-fullscreen>.swal2-popup{grid-column:1/4;width:100%}div:where(.swal2-container).swal2-grow-column>.swal2-popup,div:where(.swal2-container).swal2-grow-fullscreen>.swal2-popup{grid-row:1/4;align-self:stretch}div:where(.swal2-container).swal2-no-transition{transition:none !important}div:where(.swal2-container)[popover]{width:auto;border:0}div:where(.swal2-container) div:where(.swal2-popup){display:none;position:relative;box-sizing:border-box;grid-template-columns:minmax(0, 100%);width:var(--swal2-width);max-width:100%;padding:var(--swal2-padding);border:var(--swal2-border);border-radius:var(--swal2-border-radius);background:var(--swal2-background);color:var(--swal2-color);font-family:inherit;font-size:1rem;container-name:swal2-popup}div:where(.swal2-container) div:where(.swal2-popup):focus{outline:none}div:where(.swal2-container) div:where(.swal2-popup).swal2-loading{overflow-y:hidden}div:where(.swal2-container) div:where(.swal2-popup).swal2-draggable{cursor:grab}div:where(.swal2-container) div:where(.swal2-popup).swal2-draggable div:where(.swal2-icon){cursor:grab}div:where(.swal2-container) div:where(.swal2-popup).swal2-dragging{cursor:grabbing}div:where(.swal2-container) div:where(.swal2-popup).swal2-dragging div:where(.swal2-icon){cursor:grabbing}div:where(.swal2-container) h2:where(.swal2-title){position:relative;max-width:100%;margin:0;padding:var(--swal2-title-padding);color:inherit;font-size:1.875em;font-weight:600;text-align:center;text-transform:none;overflow-wrap:break-word;cursor:initial}div:where(.swal2-container) div:where(.swal2-actions){display:flex;z-index:1;box-sizing:border-box;flex-wrap:wrap;align-items:center;justify-content:var(--swal2-actions-justify-content);width:var(--swal2-actions-width);margin:var(--swal2-actions-margin);padding:var(--swal2-actions-padding);border-radius:var(--swal2-actions-border-radius);background:var(--swal2-actions-background)}div:where(.swal2-container) div:where(.swal2-loader){display:none;align-items:center;justify-content:center;width:2.2em;height:2.2em;margin:0 1.875em;animation:swal2-rotate-loading 1.5s linear 0s infinite normal;border-width:.25em;border-style:solid;border-radius:100%;border-color:#2778c4 rgba(0,0,0,0) #2778c4 rgba(0,0,0,0)}div:where(.swal2-container) button:where(.swal2-styled){margin:.3125em;padding:.625em 1.1em;transition:var(--swal2-action-button-transition);border:none;box-shadow:0 0 0 3px rgba(0,0,0,0);font-weight:500}div:where(.swal2-container) button:where(.swal2-styled):not([disabled]){cursor:pointer}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm){border-radius:var(--swal2-confirm-button-border-radius);background:initial;background-color:var(--swal2-confirm-button-background-color);box-shadow:var(--swal2-confirm-button-box-shadow);color:var(--swal2-confirm-button-color);font-size:1em}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm):hover{background-color:color-mix(in srgb, var(--swal2-confirm-button-background-color), var(--swal2-action-button-hover))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm):active{background-color:color-mix(in srgb, var(--swal2-confirm-button-background-color), var(--swal2-action-button-active))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny){border-radius:var(--swal2-deny-button-border-radius);background:initial;background-color:var(--swal2-deny-button-background-color);box-shadow:var(--swal2-deny-button-box-shadow);color:var(--swal2-deny-button-color);font-size:1em}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny):hover{background-color:color-mix(in srgb, var(--swal2-deny-button-background-color), var(--swal2-action-button-hover))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny):active{background-color:color-mix(in srgb, var(--swal2-deny-button-background-color), var(--swal2-action-button-active))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-cancel){border-radius:var(--swal2-cancel-button-border-radius);background:initial;background-color:var(--swal2-cancel-button-background-color);box-shadow:var(--swal2-cancel-button-box-shadow);color:var(--swal2-cancel-button-color);font-size:1em}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-cancel):hover{background-color:color-mix(in srgb, var(--swal2-cancel-button-background-color), var(--swal2-action-button-hover))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-cancel):active{background-color:color-mix(in srgb, var(--swal2-cancel-button-background-color), var(--swal2-action-button-active))}div:where(.swal2-container) button:where(.swal2-styled):focus-visible{outline:none;box-shadow:var(--swal2-action-button-focus-box-shadow)}div:where(.swal2-container) button:where(.swal2-styled)[disabled]:not(.swal2-loading){opacity:.4}div:where(.swal2-container) button:where(.swal2-styled)::-moz-focus-inner{border:0}div:where(.swal2-container) div:where(.swal2-footer){margin:1em 0 0;padding:1em 1em 0;border-top:1px solid var(--swal2-footer-border-color);background:var(--swal2-footer-background);color:var(--swal2-footer-color);font-size:1em;text-align:center;cursor:initial}div:where(.swal2-container) .swal2-timer-progress-bar-container{position:absolute;right:0;bottom:0;left:0;grid-column:auto !important;overflow:hidden;border-bottom-right-radius:var(--swal2-border-radius);border-bottom-left-radius:var(--swal2-border-radius)}div:where(.swal2-container) div:where(.swal2-timer-progress-bar){width:100%;height:.25em;background:var(--swal2-timer-progress-bar-background)}div:where(.swal2-container) img:where(.swal2-image){max-width:100%;margin:2em auto 1em;cursor:initial}div:where(.swal2-container) button:where(.swal2-close){position:var(--swal2-close-button-position);inset:var(--swal2-close-button-inset);z-index:2;align-items:center;justify-content:center;width:1.2em;height:1.2em;margin-top:0;margin-right:0;margin-bottom:-1.2em;padding:0;overflow:hidden;transition:var(--swal2-close-button-transition);border:none;border-radius:var(--swal2-border-radius);outline:var(--swal2-close-button-outline);background:rgba(0,0,0,0);color:var(--swal2-close-button-color);font-family:monospace;font-size:var(--swal2-close-button-font-size);cursor:pointer;justify-self:end}div:where(.swal2-container) button:where(.swal2-close):hover{transform:var(--swal2-close-button-hover-transform);background:rgba(0,0,0,0);color:#f27474}div:where(.swal2-container) button:where(.swal2-close):focus-visible{outline:none;box-shadow:var(--swal2-close-button-focus-box-shadow)}div:where(.swal2-container) button:where(.swal2-close)::-moz-focus-inner{border:0}div:where(.swal2-container) div:where(.swal2-html-container){z-index:1;justify-content:center;margin:0;padding:var(--swal2-html-container-padding);overflow:auto;color:inherit;font-size:1.125em;font-weight:normal;line-height:normal;text-align:center;overflow-wrap:break-word;word-break:break-word;cursor:initial}div:where(.swal2-container) input:where(.swal2-input),div:where(.swal2-container) input:where(.swal2-file),div:where(.swal2-container) textarea:where(.swal2-textarea),div:where(.swal2-container) select:where(.swal2-select),div:where(.swal2-container) div:where(.swal2-radio),div:where(.swal2-container) label:where(.swal2-checkbox){margin:1em 2em 3px}div:where(.swal2-container) input:where(.swal2-input),div:where(.swal2-container) input:where(.swal2-file),div:where(.swal2-container) textarea:where(.swal2-textarea){box-sizing:border-box;width:auto;transition:var(--swal2-input-transition);border:var(--swal2-input-border);border-radius:var(--swal2-input-border-radius);background:var(--swal2-input-background);box-shadow:var(--swal2-input-box-shadow);color:inherit;font-size:1.125em}div:where(.swal2-container) input:where(.swal2-input).swal2-inputerror,div:where(.swal2-container) input:where(.swal2-file).swal2-inputerror,div:where(.swal2-container) textarea:where(.swal2-textarea).swal2-inputerror{border-color:#f27474 !important;box-shadow:0 0 2px #f27474 !important}div:where(.swal2-container) input:where(.swal2-input):hover,div:where(.swal2-container) input:where(.swal2-file):hover,div:where(.swal2-container) textarea:where(.swal2-textarea):hover{box-shadow:var(--swal2-input-hover-box-shadow)}div:where(.swal2-container) input:where(.swal2-input):focus,div:where(.swal2-container) input:where(.swal2-file):focus,div:where(.swal2-container) textarea:where(.swal2-textarea):focus{border:var(--swal2-input-focus-border);outline:none;box-shadow:var(--swal2-input-focus-box-shadow)}div:where(.swal2-container) input:where(.swal2-input)::placeholder,div:where(.swal2-container) input:where(.swal2-file)::placeholder,div:where(.swal2-container) textarea:where(.swal2-textarea)::placeholder{color:#ccc}div:where(.swal2-container) .swal2-range{margin:1em 2em 3px;background:var(--swal2-background)}div:where(.swal2-container) .swal2-range input{width:80%}div:where(.swal2-container) .swal2-range output{width:20%;color:inherit;font-weight:600;text-align:center}div:where(.swal2-container) .swal2-range input,div:where(.swal2-container) .swal2-range output{height:2.625em;padding:0;font-size:1.125em;line-height:2.625em}div:where(.swal2-container) .swal2-input{height:2.625em;padding:0 .75em}div:where(.swal2-container) .swal2-file{width:75%;margin-right:auto;margin-left:auto;background:var(--swal2-input-background);font-size:1.125em}div:where(.swal2-container) .swal2-textarea{height:6.75em;padding:.75em}div:where(.swal2-container) .swal2-select{min-width:50%;max-width:100%;padding:.375em .625em;background:var(--swal2-input-background);color:inherit;font-size:1.125em}div:where(.swal2-container) .swal2-radio,div:where(.swal2-container) .swal2-checkbox{align-items:center;justify-content:center;background:var(--swal2-background);color:inherit}div:where(.swal2-container) .swal2-radio label,div:where(.swal2-container) .swal2-checkbox label{margin:0 .6em;font-size:1.125em}div:where(.swal2-container) .swal2-radio input,div:where(.swal2-container) .swal2-checkbox input{flex-shrink:0;margin:0 .4em}div:where(.swal2-container) label:where(.swal2-input-label){display:flex;justify-content:center;margin:1em auto 0}div:where(.swal2-container) div:where(.swal2-validation-message){align-items:center;justify-content:center;margin:1em 0 0;padding:.625em;overflow:hidden;background:var(--swal2-validation-message-background);color:var(--swal2-validation-message-color);font-size:1em;font-weight:300}div:where(.swal2-container) div:where(.swal2-validation-message)::before{content:\"!\";display:inline-block;width:1.5em;min-width:1.5em;height:1.5em;margin:0 .625em;border-radius:50%;background-color:#f27474;color:#fff;font-weight:600;line-height:1.5em;text-align:center}div:where(.swal2-container) .swal2-progress-steps{flex-wrap:wrap;align-items:center;max-width:100%;margin:1.25em auto;padding:0;background:rgba(0,0,0,0);font-weight:600}div:where(.swal2-container) .swal2-progress-steps li{display:inline-block;position:relative}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step{z-index:20;flex-shrink:0;width:2em;height:2em;border-radius:2em;background:#2778c4;color:#fff;line-height:2em;text-align:center}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step.swal2-active-progress-step{background:#2778c4}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step.swal2-active-progress-step~.swal2-progress-step{background:var(--swal2-progress-step-background);color:#fff}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step.swal2-active-progress-step~.swal2-progress-step-line{background:var(--swal2-progress-step-background)}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step-line{z-index:10;flex-shrink:0;width:2.5em;height:.4em;margin:0 -1px;background:#2778c4}div:where(.swal2-icon){position:relative;box-sizing:content-box;justify-content:center;width:5em;height:5em;margin:2.5em auto .6em;zoom:var(--swal2-icon-zoom);border:.25em solid rgba(0,0,0,0);border-radius:50%;border-color:#000;font-family:inherit;line-height:5em;cursor:default;user-select:none}div:where(.swal2-icon) .swal2-icon-content{display:flex;align-items:center;font-size:3.75em}div:where(.swal2-icon).swal2-error{border-color:#f27474;color:#f27474}div:where(.swal2-icon).swal2-error .swal2-x-mark{position:relative;flex-grow:1}div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line]{display:block;position:absolute;top:2.3125em;width:2.9375em;height:.3125em;border-radius:.125em;background-color:#f27474}div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line][class$=left]{left:1.0625em;transform:rotate(45deg)}div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line][class$=right]{right:1em;transform:rotate(-45deg)}@container swal2-popup style(--swal2-icon-animations:true){div:where(.swal2-icon).swal2-error.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-error.swal2-icon-show .swal2-x-mark{animation:swal2-animate-error-x-mark .5s}}div:where(.swal2-icon).swal2-warning{border-color:#f8bb86;color:#f8bb86}@container swal2-popup style(--swal2-icon-animations:true){div:where(.swal2-icon).swal2-warning.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-warning.swal2-icon-show .swal2-icon-content{animation:swal2-animate-i-mark .5s}}div:where(.swal2-icon).swal2-info{border-color:#3fc3ee;color:#3fc3ee}@container swal2-popup style(--swal2-icon-animations:true){div:where(.swal2-icon).swal2-info.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-info.swal2-icon-show .swal2-icon-content{animation:swal2-animate-i-mark .8s}}div:where(.swal2-icon).swal2-question{border-color:#87adbd;color:#87adbd}@container swal2-popup style(--swal2-icon-animations:true){div:where(.swal2-icon).swal2-question.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-question.swal2-icon-show .swal2-icon-content{animation:swal2-animate-question-mark .8s}}div:where(.swal2-icon).swal2-success{border-color:#a5dc86;color:#a5dc86}div:where(.swal2-icon).swal2-success [class^=swal2-success-circular-line]{position:absolute;width:3.75em;height:7.5em;border-radius:50%}div:where(.swal2-icon).swal2-success [class^=swal2-success-circular-line][class$=left]{top:-0.4375em;left:-2.0635em;transform:rotate(-45deg);transform-origin:3.75em 3.75em;border-radius:7.5em 0 0 7.5em}div:where(.swal2-icon).swal2-success [class^=swal2-success-circular-line][class$=right]{top:-0.6875em;left:1.875em;transform:rotate(-45deg);transform-origin:0 3.75em;border-radius:0 7.5em 7.5em 0}div:where(.swal2-icon).swal2-success .swal2-success-ring{position:absolute;z-index:2;top:-0.25em;left:-0.25em;box-sizing:content-box;width:100%;height:100%;border:.25em solid rgba(165,220,134,.3);border-radius:50%}div:where(.swal2-icon).swal2-success .swal2-success-fix{position:absolute;z-index:1;top:.5em;left:1.625em;width:.4375em;height:5.625em;transform:rotate(-45deg)}div:where(.swal2-icon).swal2-success [class^=swal2-success-line]{display:block;position:absolute;z-index:2;height:.3125em;border-radius:.125em;background-color:#a5dc86}div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=tip]{top:2.875em;left:.8125em;width:1.5625em;transform:rotate(45deg)}div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=long]{top:2.375em;right:.5em;width:2.9375em;transform:rotate(-45deg)}@container swal2-popup style(--swal2-icon-animations:true){div:where(.swal2-icon).swal2-success.swal2-icon-show .swal2-success-line-tip{animation:swal2-animate-success-line-tip .75s}div:where(.swal2-icon).swal2-success.swal2-icon-show .swal2-success-line-long{animation:swal2-animate-success-line-long .75s}div:where(.swal2-icon).swal2-success.swal2-icon-show .swal2-success-circular-line-right{animation:swal2-rotate-success-circular-line 4.25s ease-in}}[class^=swal2]{-webkit-tap-highlight-color:rgba(0,0,0,0)}.swal2-show{animation:var(--swal2-show-animation)}.swal2-hide{animation:var(--swal2-hide-animation)}.swal2-noanimation{transition:none}.swal2-scrollbar-measure{position:absolute;top:-9999px;width:50px;height:50px;overflow:scroll}.swal2-rtl .swal2-close{margin-right:initial;margin-left:0}.swal2-rtl .swal2-timer-progress-bar{right:0;left:auto}.swal2-toast{box-sizing:border-box;grid-column:1/4 !important;grid-row:1/4 !important;grid-template-columns:min-content auto min-content;padding:1em;overflow-y:hidden;border:var(--swal2-toast-border);background:var(--swal2-background);box-shadow:var(--swal2-toast-box-shadow);pointer-events:all}.swal2-toast>*{grid-column:2}.swal2-toast h2:where(.swal2-title){margin:.5em 1em;padding:0;font-size:1em;text-align:initial}.swal2-toast .swal2-loading{justify-content:center}.swal2-toast input:where(.swal2-input){height:2em;margin:.5em;font-size:1em}.swal2-toast .swal2-validation-message{font-size:1em}.swal2-toast div:where(.swal2-footer){margin:.5em 0 0;padding:.5em 0 0;font-size:.8em}.swal2-toast button:where(.swal2-close){grid-column:3/3;grid-row:1/99;align-self:center;width:.8em;height:.8em;margin:0;font-size:2em}.swal2-toast div:where(.swal2-html-container){margin:.5em 1em;padding:0;overflow:initial;font-size:1em;text-align:initial}.swal2-toast div:where(.swal2-html-container):empty{padding:0}.swal2-toast .swal2-loader{grid-column:1;grid-row:1/99;align-self:center;width:2em;height:2em;margin:.25em}.swal2-toast .swal2-icon{grid-column:1;grid-row:1/99;align-self:center;width:2em;min-width:2em;height:2em;margin:0 .5em 0 0}.swal2-toast .swal2-icon .swal2-icon-content{display:flex;align-items:center;font-size:1.8em;font-weight:bold}.swal2-toast .swal2-icon.swal2-success .swal2-success-ring{width:2em;height:2em}.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line]{top:.875em;width:1.375em}.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=left]{left:.3125em}.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=right]{right:.3125em}.swal2-toast div:where(.swal2-actions){justify-content:flex-start;height:auto;margin:0;margin-top:.5em;padding:0 .5em}.swal2-toast button:where(.swal2-styled){margin:.25em .5em;padding:.4em .6em;font-size:1em}.swal2-toast .swal2-success{border-color:#a5dc86}.swal2-toast .swal2-success [class^=swal2-success-circular-line]{position:absolute;width:1.6em;height:3em;border-radius:50%}.swal2-toast .swal2-success [class^=swal2-success-circular-line][class$=left]{top:-0.8em;left:-0.5em;transform:rotate(-45deg);transform-origin:2em 2em;border-radius:4em 0 0 4em}.swal2-toast .swal2-success [class^=swal2-success-circular-line][class$=right]{top:-0.25em;left:.9375em;transform-origin:0 1.5em;border-radius:0 4em 4em 0}.swal2-toast .swal2-success .swal2-success-ring{width:2em;height:2em}.swal2-toast .swal2-success .swal2-success-fix{top:0;left:.4375em;width:.4375em;height:2.6875em}.swal2-toast .swal2-success [class^=swal2-success-line]{height:.3125em}.swal2-toast .swal2-success [class^=swal2-success-line][class$=tip]{top:1.125em;left:.1875em;width:.75em}.swal2-toast .swal2-success [class^=swal2-success-line][class$=long]{top:.9375em;right:.1875em;width:1.375em}@container swal2-popup style(--swal2-icon-animations:true){.swal2-toast .swal2-success.swal2-icon-show .swal2-success-line-tip{animation:swal2-toast-animate-success-line-tip .75s}.swal2-toast .swal2-success.swal2-icon-show .swal2-success-line-long{animation:swal2-toast-animate-success-line-long .75s}}.swal2-toast.swal2-show{animation:var(--swal2-toast-show-animation)}.swal2-toast.swal2-hide{animation:var(--swal2-toast-hide-animation)}@keyframes swal2-show{0%{transform:translate3d(0, -50px, 0) scale(0.9);opacity:0}100%{transform:translate3d(0, 0, 0) scale(1);opacity:1}}@keyframes swal2-hide{0%{transform:translate3d(0, 0, 0) scale(1);opacity:1}100%{transform:translate3d(0, -50px, 0) scale(0.9);opacity:0}}@keyframes swal2-animate-success-line-tip{0%{top:1.1875em;left:.0625em;width:0}54%{top:1.0625em;left:.125em;width:0}70%{top:2.1875em;left:-0.375em;width:3.125em}84%{top:3em;left:1.3125em;width:1.0625em}100%{top:2.8125em;left:.8125em;width:1.5625em}}@keyframes swal2-animate-success-line-long{0%{top:3.375em;right:2.875em;width:0}65%{top:3.375em;right:2.875em;width:0}84%{top:2.1875em;right:0;width:3.4375em}100%{top:2.375em;right:.5em;width:2.9375em}}@keyframes swal2-rotate-success-circular-line{0%{transform:rotate(-45deg)}5%{transform:rotate(-45deg)}12%{transform:rotate(-405deg)}100%{transform:rotate(-405deg)}}@keyframes swal2-animate-error-x-mark{0%{margin-top:1.625em;transform:scale(0.4);opacity:0}50%{margin-top:1.625em;transform:scale(0.4);opacity:0}80%{margin-top:-0.375em;transform:scale(1.15)}100%{margin-top:0;transform:scale(1);opacity:1}}@keyframes swal2-animate-error-icon{0%{transform:rotateX(100deg);opacity:0}100%{transform:rotateX(0deg);opacity:1}}@keyframes swal2-rotate-loading{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}@keyframes swal2-animate-question-mark{0%{transform:rotateY(-360deg)}100%{transform:rotateY(0)}}@keyframes swal2-animate-i-mark{0%{transform:rotateZ(45deg);opacity:0}25%{transform:rotateZ(-25deg);opacity:.4}50%{transform:rotateZ(15deg);opacity:.8}75%{transform:rotateZ(-5deg);opacity:1}100%{transform:rotateX(0);opacity:1}}@keyframes swal2-toast-show{0%{transform:translateY(-0.625em) rotateZ(2deg)}33%{transform:translateY(0) rotateZ(-2deg)}66%{transform:translateY(0.3125em) rotateZ(2deg)}100%{transform:translateY(0) rotateZ(0deg)}}@keyframes swal2-toast-hide{100%{transform:rotateZ(1deg);opacity:0}}@keyframes swal2-toast-animate-success-line-tip{0%{top:.5625em;left:.0625em;width:0}54%{top:.125em;left:.125em;width:0}70%{top:.625em;left:-0.25em;width:1.625em}84%{top:1.0625em;left:.75em;width:.5em}100%{top:1.125em;left:.1875em;width:.75em}}@keyframes swal2-toast-animate-success-line-long{0%{top:1.625em;right:1.375em;width:0}65%{top:1.25em;right:.9375em;width:0}84%{top:.9375em;right:0;width:1.125em}100%{top:.9375em;right:.1875em;width:1.375em}}");
+"undefined"!=typeof document&&function(e,t){var n=e.createElement("style");if(e.getElementsByTagName("head")[0].appendChild(n),n.styleSheet)n.styleSheet.disabled||(n.styleSheet.cssText=t);else try{n.innerHTML=t}catch(e){n.innerText=t}}(document,":root{--swal2-outline: 0 0 0 3px rgba(100, 150, 200, 0.5);--swal2-container-padding: 0.625em;--swal2-backdrop: rgba(0, 0, 0, 0.4);--swal2-backdrop-transition: background-color 0.15s;--swal2-width: 32em;--swal2-padding: 0 0 1.25em;--swal2-border: none;--swal2-border-radius: 0.3125rem;--swal2-background: white;--swal2-color: #545454;--swal2-show-animation: swal2-show 0.3s;--swal2-hide-animation: swal2-hide 0.15s forwards;--swal2-icon-zoom: 1;--swal2-title-padding: 0.8em 1em 0;--swal2-html-container-padding: 1em 1.6em 0.3em;--swal2-input-border: 1px solid #d9d9d9;--swal2-input-border-radius: 0.1875em;--swal2-input-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06), 0 0 0 3px transparent;--swal2-input-background: transparent;--swal2-input-transition: border-color 0.2s, box-shadow 0.2s;--swal2-input-hover-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06), 0 0 0 3px transparent;--swal2-input-focus-border: 1px solid #b4dbed;--swal2-input-focus-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06), 0 0 0 3px rgba(100, 150, 200, 0.5);--swal2-progress-step-background: #add8e6;--swal2-validation-message-background: #f0f0f0;--swal2-validation-message-color: #666;--swal2-footer-border-color: #eee;--swal2-footer-background: transparent;--swal2-footer-color: inherit;--swal2-timer-progress-bar-background: rgba(0, 0, 0, 0.3);--swal2-close-button-position: initial;--swal2-close-button-inset: auto;--swal2-close-button-font-size: 2.5em;--swal2-close-button-color: #ccc;--swal2-close-button-transition: color 0.2s, box-shadow 0.2s;--swal2-close-button-outline: initial;--swal2-close-button-box-shadow: inset 0 0 0 3px transparent;--swal2-close-button-focus-box-shadow: inset var(--swal2-outline);--swal2-close-button-hover-transform: none;--swal2-actions-justify-content: center;--swal2-actions-width: auto;--swal2-actions-margin: 1.25em auto 0;--swal2-actions-padding: 0;--swal2-actions-border-radius: 0;--swal2-actions-background: transparent;--swal2-action-button-transition: background-color 0.2s, box-shadow 0.2s;--swal2-action-button-hover: black 10%;--swal2-action-button-active: black 10%;--swal2-confirm-button-box-shadow: none;--swal2-confirm-button-border-radius: 0.25em;--swal2-confirm-button-background-color: #7066e0;--swal2-confirm-button-color: #fff;--swal2-deny-button-box-shadow: none;--swal2-deny-button-border-radius: 0.25em;--swal2-deny-button-background-color: #dc3741;--swal2-deny-button-color: #fff;--swal2-cancel-button-box-shadow: none;--swal2-cancel-button-border-radius: 0.25em;--swal2-cancel-button-background-color: #6e7881;--swal2-cancel-button-color: #fff;--swal2-toast-show-animation: swal2-toast-show 0.5s;--swal2-toast-hide-animation: swal2-toast-hide 0.1s forwards;--swal2-toast-border: none;--swal2-toast-box-shadow: 0 0 1px hsl(0deg 0% 0% / 0.075), 0 1px 2px hsl(0deg 0% 0% / 0.075), 1px 2px 4px hsl(0deg 0% 0% / 0.075), 1px 3px 8px hsl(0deg 0% 0% / 0.075), 2px 4px 16px hsl(0deg 0% 0% / 0.075)}[data-swal2-theme=dark]{--swal2-dark-theme-black: #19191a;--swal2-dark-theme-white: #e1e1e1;--swal2-background: var(--swal2-dark-theme-black);--swal2-color: var(--swal2-dark-theme-white);--swal2-footer-border-color: #555;--swal2-input-background: color-mix(in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10%);--swal2-validation-message-background: color-mix( in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10% );--swal2-validation-message-color: var(--swal2-dark-theme-white);--swal2-timer-progress-bar-background: rgba(255, 255, 255, 0.7)}@media(prefers-color-scheme: dark){[data-swal2-theme=auto]{--swal2-dark-theme-black: #19191a;--swal2-dark-theme-white: #e1e1e1;--swal2-background: var(--swal2-dark-theme-black);--swal2-color: var(--swal2-dark-theme-white);--swal2-footer-border-color: #555;--swal2-input-background: color-mix(in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10%);--swal2-validation-message-background: color-mix( in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10% );--swal2-validation-message-color: var(--swal2-dark-theme-white);--swal2-timer-progress-bar-background: rgba(255, 255, 255, 0.7)}}body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown){overflow:hidden}body.swal2-height-auto{height:auto !important}body.swal2-no-backdrop .swal2-container{background-color:rgba(0,0,0,0) !important;pointer-events:none}body.swal2-no-backdrop .swal2-container .swal2-popup{pointer-events:auto}body.swal2-no-backdrop .swal2-container .swal2-modal{box-shadow:0 0 10px var(--swal2-backdrop)}body.swal2-toast-shown .swal2-container{box-sizing:border-box;width:360px;max-width:100%;background-color:rgba(0,0,0,0);pointer-events:none}body.swal2-toast-shown .swal2-container.swal2-top{inset:0 auto auto 50%;transform:translateX(-50%)}body.swal2-toast-shown .swal2-container.swal2-top-end,body.swal2-toast-shown .swal2-container.swal2-top-right{inset:0 0 auto auto}body.swal2-toast-shown .swal2-container.swal2-top-start,body.swal2-toast-shown .swal2-container.swal2-top-left{inset:0 auto auto 0}body.swal2-toast-shown .swal2-container.swal2-center-start,body.swal2-toast-shown .swal2-container.swal2-center-left{inset:50% auto auto 0;transform:translateY(-50%)}body.swal2-toast-shown .swal2-container.swal2-center{inset:50% auto auto 50%;transform:translate(-50%, -50%)}body.swal2-toast-shown .swal2-container.swal2-center-end,body.swal2-toast-shown .swal2-container.swal2-center-right{inset:50% 0 auto auto;transform:translateY(-50%)}body.swal2-toast-shown .swal2-container.swal2-bottom-start,body.swal2-toast-shown .swal2-container.swal2-bottom-left{inset:auto auto 0 0}body.swal2-toast-shown .swal2-container.swal2-bottom{inset:auto auto 0 50%;transform:translateX(-50%)}body.swal2-toast-shown .swal2-container.swal2-bottom-end,body.swal2-toast-shown .swal2-container.swal2-bottom-right{inset:auto 0 0 auto}@media print{body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown){overflow-y:scroll !important}body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown)>[aria-hidden=true]{display:none}body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown) .swal2-container{position:static !important}}div:where(.swal2-container){display:grid;position:fixed;z-index:1060;inset:0;box-sizing:border-box;grid-template-areas:\"top-start     top            top-end\" \"center-start  center         center-end\" \"bottom-start  bottom-center  bottom-end\";grid-template-rows:minmax(min-content, auto) minmax(min-content, auto) minmax(min-content, auto);height:100%;padding:var(--swal2-container-padding);overflow-x:hidden;transition:var(--swal2-backdrop-transition);-webkit-overflow-scrolling:touch}div:where(.swal2-container).swal2-backdrop-show,div:where(.swal2-container).swal2-noanimation{background:var(--swal2-backdrop)}div:where(.swal2-container).swal2-backdrop-hide{background:rgba(0,0,0,0) !important}div:where(.swal2-container).swal2-top-start,div:where(.swal2-container).swal2-center-start,div:where(.swal2-container).swal2-bottom-start{grid-template-columns:minmax(0, 1fr) auto auto}div:where(.swal2-container).swal2-top,div:where(.swal2-container).swal2-center,div:where(.swal2-container).swal2-bottom{grid-template-columns:auto minmax(0, 1fr) auto}div:where(.swal2-container).swal2-top-end,div:where(.swal2-container).swal2-center-end,div:where(.swal2-container).swal2-bottom-end{grid-template-columns:auto auto minmax(0, 1fr)}div:where(.swal2-container).swal2-top-start>.swal2-popup{align-self:start}div:where(.swal2-container).swal2-top>.swal2-popup{grid-column:2;place-self:start center}div:where(.swal2-container).swal2-top-end>.swal2-popup,div:where(.swal2-container).swal2-top-right>.swal2-popup{grid-column:3;place-self:start end}div:where(.swal2-container).swal2-center-start>.swal2-popup,div:where(.swal2-container).swal2-center-left>.swal2-popup{grid-row:2;align-self:center}div:where(.swal2-container).swal2-center>.swal2-popup{grid-column:2;grid-row:2;place-self:center center}div:where(.swal2-container).swal2-center-end>.swal2-popup,div:where(.swal2-container).swal2-center-right>.swal2-popup{grid-column:3;grid-row:2;place-self:center end}div:where(.swal2-container).swal2-bottom-start>.swal2-popup,div:where(.swal2-container).swal2-bottom-left>.swal2-popup{grid-column:1;grid-row:3;align-self:end}div:where(.swal2-container).swal2-bottom>.swal2-popup{grid-column:2;grid-row:3;place-self:end center}div:where(.swal2-container).swal2-bottom-end>.swal2-popup,div:where(.swal2-container).swal2-bottom-right>.swal2-popup{grid-column:3;grid-row:3;place-self:end end}div:where(.swal2-container).swal2-grow-row>.swal2-popup,div:where(.swal2-container).swal2-grow-fullscreen>.swal2-popup{grid-column:1/4;width:100%}div:where(.swal2-container).swal2-grow-column>.swal2-popup,div:where(.swal2-container).swal2-grow-fullscreen>.swal2-popup{grid-row:1/4;align-self:stretch}div:where(.swal2-container).swal2-no-transition{transition:none !important}div:where(.swal2-container)[popover]{width:auto;border:0}div:where(.swal2-container) div:where(.swal2-popup){display:none;position:relative;box-sizing:border-box;grid-template-columns:minmax(0, 100%);width:var(--swal2-width);max-width:100%;padding:var(--swal2-padding);border:var(--swal2-border);border-radius:var(--swal2-border-radius);background:var(--swal2-background);color:var(--swal2-color);font-family:inherit;font-size:1rem}div:where(.swal2-container) div:where(.swal2-popup):focus{outline:none}div:where(.swal2-container) div:where(.swal2-popup).swal2-loading{overflow-y:hidden}div:where(.swal2-container) div:where(.swal2-popup).swal2-draggable{cursor:grab}div:where(.swal2-container) div:where(.swal2-popup).swal2-draggable div:where(.swal2-icon){cursor:grab}div:where(.swal2-container) div:where(.swal2-popup).swal2-dragging{cursor:grabbing}div:where(.swal2-container) div:where(.swal2-popup).swal2-dragging div:where(.swal2-icon){cursor:grabbing}div:where(.swal2-container) h2:where(.swal2-title){position:relative;max-width:100%;margin:0;padding:var(--swal2-title-padding);color:inherit;font-size:1.875em;font-weight:600;text-align:center;text-transform:none;overflow-wrap:break-word;cursor:initial}div:where(.swal2-container) div:where(.swal2-actions){display:flex;z-index:1;box-sizing:border-box;flex-wrap:wrap;align-items:center;justify-content:var(--swal2-actions-justify-content);width:var(--swal2-actions-width);margin:var(--swal2-actions-margin);padding:var(--swal2-actions-padding);border-radius:var(--swal2-actions-border-radius);background:var(--swal2-actions-background)}div:where(.swal2-container) div:where(.swal2-loader){display:none;align-items:center;justify-content:center;width:2.2em;height:2.2em;margin:0 1.875em;animation:swal2-rotate-loading 1.5s linear 0s infinite normal;border-width:.25em;border-style:solid;border-radius:100%;border-color:#2778c4 rgba(0,0,0,0) #2778c4 rgba(0,0,0,0)}div:where(.swal2-container) button:where(.swal2-styled){margin:.3125em;padding:.625em 1.1em;transition:var(--swal2-action-button-transition);border:none;box-shadow:0 0 0 3px rgba(0,0,0,0);font-weight:500}div:where(.swal2-container) button:where(.swal2-styled):not([disabled]){cursor:pointer}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm){border-radius:var(--swal2-confirm-button-border-radius);background:initial;background-color:var(--swal2-confirm-button-background-color);box-shadow:var(--swal2-confirm-button-box-shadow);color:var(--swal2-confirm-button-color);font-size:1em}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm):hover{background-color:color-mix(in srgb, var(--swal2-confirm-button-background-color), var(--swal2-action-button-hover))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm):active{background-color:color-mix(in srgb, var(--swal2-confirm-button-background-color), var(--swal2-action-button-active))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny){border-radius:var(--swal2-deny-button-border-radius);background:initial;background-color:var(--swal2-deny-button-background-color);box-shadow:var(--swal2-deny-button-box-shadow);color:var(--swal2-deny-button-color);font-size:1em}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny):hover{background-color:color-mix(in srgb, var(--swal2-deny-button-background-color), var(--swal2-action-button-hover))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny):active{background-color:color-mix(in srgb, var(--swal2-deny-button-background-color), var(--swal2-action-button-active))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-cancel){border-radius:var(--swal2-cancel-button-border-radius);background:initial;background-color:var(--swal2-cancel-button-background-color);box-shadow:var(--swal2-cancel-button-box-shadow);color:var(--swal2-cancel-button-color);font-size:1em}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-cancel):hover{background-color:color-mix(in srgb, var(--swal2-cancel-button-background-color), var(--swal2-action-button-hover))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-cancel):active{background-color:color-mix(in srgb, var(--swal2-cancel-button-background-color), var(--swal2-action-button-active))}div:where(.swal2-container) button:where(.swal2-styled):focus-visible{outline:none;box-shadow:var(--swal2-action-button-focus-box-shadow)}div:where(.swal2-container) button:where(.swal2-styled)[disabled]:not(.swal2-loading){opacity:.4}div:where(.swal2-container) button:where(.swal2-styled)::-moz-focus-inner{border:0}div:where(.swal2-container) div:where(.swal2-footer){margin:1em 0 0;padding:1em 1em 0;border-top:1px solid var(--swal2-footer-border-color);background:var(--swal2-footer-background);color:var(--swal2-footer-color);font-size:1em;text-align:center;cursor:initial}div:where(.swal2-container) .swal2-timer-progress-bar-container{position:absolute;right:0;bottom:0;left:0;grid-column:auto !important;overflow:hidden;border-bottom-right-radius:var(--swal2-border-radius);border-bottom-left-radius:var(--swal2-border-radius)}div:where(.swal2-container) div:where(.swal2-timer-progress-bar){width:100%;height:.25em;background:var(--swal2-timer-progress-bar-background)}div:where(.swal2-container) img:where(.swal2-image){max-width:100%;margin:2em auto 1em;cursor:initial}div:where(.swal2-container) button:where(.swal2-close){position:var(--swal2-close-button-position);inset:var(--swal2-close-button-inset);z-index:2;align-items:center;justify-content:center;width:1.2em;height:1.2em;margin-top:0;margin-right:0;margin-bottom:-1.2em;padding:0;overflow:hidden;transition:var(--swal2-close-button-transition);border:none;border-radius:var(--swal2-border-radius);outline:var(--swal2-close-button-outline);background:rgba(0,0,0,0);color:var(--swal2-close-button-color);font-family:monospace;font-size:var(--swal2-close-button-font-size);cursor:pointer;justify-self:end}div:where(.swal2-container) button:where(.swal2-close):hover{transform:var(--swal2-close-button-hover-transform);background:rgba(0,0,0,0);color:#f27474}div:where(.swal2-container) button:where(.swal2-close):focus-visible{outline:none;box-shadow:var(--swal2-close-button-focus-box-shadow)}div:where(.swal2-container) button:where(.swal2-close)::-moz-focus-inner{border:0}div:where(.swal2-container) div:where(.swal2-html-container){z-index:1;justify-content:center;margin:0;padding:var(--swal2-html-container-padding);overflow:auto;color:inherit;font-size:1.125em;font-weight:normal;line-height:normal;text-align:center;overflow-wrap:break-word;word-break:break-word;cursor:initial}div:where(.swal2-container) input:where(.swal2-input),div:where(.swal2-container) input:where(.swal2-file),div:where(.swal2-container) textarea:where(.swal2-textarea),div:where(.swal2-container) select:where(.swal2-select),div:where(.swal2-container) div:where(.swal2-radio),div:where(.swal2-container) label:where(.swal2-checkbox){margin:1em 2em 3px}div:where(.swal2-container) input:where(.swal2-input),div:where(.swal2-container) input:where(.swal2-file),div:where(.swal2-container) textarea:where(.swal2-textarea){box-sizing:border-box;width:auto;transition:var(--swal2-input-transition);border:var(--swal2-input-border);border-radius:var(--swal2-input-border-radius);background:var(--swal2-input-background);box-shadow:var(--swal2-input-box-shadow);color:inherit;font-size:1.125em}div:where(.swal2-container) input:where(.swal2-input).swal2-inputerror,div:where(.swal2-container) input:where(.swal2-file).swal2-inputerror,div:where(.swal2-container) textarea:where(.swal2-textarea).swal2-inputerror{border-color:#f27474 !important;box-shadow:0 0 2px #f27474 !important}div:where(.swal2-container) input:where(.swal2-input):hover,div:where(.swal2-container) input:where(.swal2-file):hover,div:where(.swal2-container) textarea:where(.swal2-textarea):hover{box-shadow:var(--swal2-input-hover-box-shadow)}div:where(.swal2-container) input:where(.swal2-input):focus,div:where(.swal2-container) input:where(.swal2-file):focus,div:where(.swal2-container) textarea:where(.swal2-textarea):focus{border:var(--swal2-input-focus-border);outline:none;box-shadow:var(--swal2-input-focus-box-shadow)}div:where(.swal2-container) input:where(.swal2-input)::placeholder,div:where(.swal2-container) input:where(.swal2-file)::placeholder,div:where(.swal2-container) textarea:where(.swal2-textarea)::placeholder{color:#ccc}div:where(.swal2-container) .swal2-range{margin:1em 2em 3px;background:var(--swal2-background)}div:where(.swal2-container) .swal2-range input{width:80%}div:where(.swal2-container) .swal2-range output{width:20%;color:inherit;font-weight:600;text-align:center}div:where(.swal2-container) .swal2-range input,div:where(.swal2-container) .swal2-range output{height:2.625em;padding:0;font-size:1.125em;line-height:2.625em}div:where(.swal2-container) .swal2-input{height:2.625em;padding:0 .75em}div:where(.swal2-container) .swal2-file{width:75%;margin-right:auto;margin-left:auto;background:var(--swal2-input-background);font-size:1.125em}div:where(.swal2-container) .swal2-textarea{height:6.75em;padding:.75em}div:where(.swal2-container) .swal2-select{min-width:50%;max-width:100%;padding:.375em .625em;background:var(--swal2-input-background);color:inherit;font-size:1.125em}div:where(.swal2-container) .swal2-radio,div:where(.swal2-container) .swal2-checkbox{align-items:center;justify-content:center;background:var(--swal2-background);color:inherit}div:where(.swal2-container) .swal2-radio label,div:where(.swal2-container) .swal2-checkbox label{margin:0 .6em;font-size:1.125em}div:where(.swal2-container) .swal2-radio input,div:where(.swal2-container) .swal2-checkbox input{flex-shrink:0;margin:0 .4em}div:where(.swal2-container) label:where(.swal2-input-label){display:flex;justify-content:center;margin:1em auto 0}div:where(.swal2-container) div:where(.swal2-validation-message){align-items:center;justify-content:center;margin:1em 0 0;padding:.625em;overflow:hidden;background:var(--swal2-validation-message-background);color:var(--swal2-validation-message-color);font-size:1em;font-weight:300}div:where(.swal2-container) div:where(.swal2-validation-message)::before{content:\"!\";display:inline-block;width:1.5em;min-width:1.5em;height:1.5em;margin:0 .625em;border-radius:50%;background-color:#f27474;color:#fff;font-weight:600;line-height:1.5em;text-align:center}div:where(.swal2-container) .swal2-progress-steps{flex-wrap:wrap;align-items:center;max-width:100%;margin:1.25em auto;padding:0;background:rgba(0,0,0,0);font-weight:600}div:where(.swal2-container) .swal2-progress-steps li{display:inline-block;position:relative}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step{z-index:20;flex-shrink:0;width:2em;height:2em;border-radius:2em;background:#2778c4;color:#fff;line-height:2em;text-align:center}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step.swal2-active-progress-step{background:#2778c4}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step.swal2-active-progress-step~.swal2-progress-step{background:var(--swal2-progress-step-background);color:#fff}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step.swal2-active-progress-step~.swal2-progress-step-line{background:var(--swal2-progress-step-background)}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step-line{z-index:10;flex-shrink:0;width:2.5em;height:.4em;margin:0 -1px;background:#2778c4}div:where(.swal2-icon){position:relative;box-sizing:content-box;justify-content:center;width:5em;height:5em;margin:2.5em auto .6em;zoom:var(--swal2-icon-zoom);border:.25em solid rgba(0,0,0,0);border-radius:50%;border-color:#000;font-family:inherit;line-height:5em;cursor:default;user-select:none}div:where(.swal2-icon) .swal2-icon-content{display:flex;align-items:center;font-size:3.75em}div:where(.swal2-icon).swal2-error{border-color:#f27474;color:#f27474}div:where(.swal2-icon).swal2-error .swal2-x-mark{position:relative;flex-grow:1}div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line]{display:block;position:absolute;top:2.3125em;width:2.9375em;height:.3125em;border-radius:.125em;background-color:#f27474}div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line][class$=left]{left:1.0625em;transform:rotate(45deg)}div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line][class$=right]{right:1em;transform:rotate(-45deg)}div:where(.swal2-icon).swal2-error.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-error.swal2-icon-show .swal2-x-mark{animation:swal2-animate-error-x-mark .5s}div:where(.swal2-icon).swal2-warning{border-color:#f8bb86;color:#f8bb86}div:where(.swal2-icon).swal2-warning.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-warning.swal2-icon-show .swal2-icon-content{animation:swal2-animate-i-mark .5s}div:where(.swal2-icon).swal2-info{border-color:#3fc3ee;color:#3fc3ee}div:where(.swal2-icon).swal2-info.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-info.swal2-icon-show .swal2-icon-content{animation:swal2-animate-i-mark .8s}div:where(.swal2-icon).swal2-question{border-color:#87adbd;color:#87adbd}div:where(.swal2-icon).swal2-question.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-question.swal2-icon-show .swal2-icon-content{animation:swal2-animate-question-mark .8s}div:where(.swal2-icon).swal2-success{border-color:#a5dc86;color:#a5dc86}div:where(.swal2-icon).swal2-success [class^=swal2-success-circular-line]{position:absolute;width:3.75em;height:7.5em;border-radius:50%}div:where(.swal2-icon).swal2-success [class^=swal2-success-circular-line][class$=left]{top:-0.4375em;left:-2.0635em;transform:rotate(-45deg);transform-origin:3.75em 3.75em;border-radius:7.5em 0 0 7.5em}div:where(.swal2-icon).swal2-success [class^=swal2-success-circular-line][class$=right]{top:-0.6875em;left:1.875em;transform:rotate(-45deg);transform-origin:0 3.75em;border-radius:0 7.5em 7.5em 0}div:where(.swal2-icon).swal2-success .swal2-success-ring{position:absolute;z-index:2;top:-0.25em;left:-0.25em;box-sizing:content-box;width:100%;height:100%;border:.25em solid rgba(165,220,134,.3);border-radius:50%}div:where(.swal2-icon).swal2-success .swal2-success-fix{position:absolute;z-index:1;top:.5em;left:1.625em;width:.4375em;height:5.625em;transform:rotate(-45deg)}div:where(.swal2-icon).swal2-success [class^=swal2-success-line]{display:block;position:absolute;z-index:2;height:.3125em;border-radius:.125em;background-color:#a5dc86}div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=tip]{top:2.875em;left:.8125em;width:1.5625em;transform:rotate(45deg)}div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=long]{top:2.375em;right:.5em;width:2.9375em;transform:rotate(-45deg)}div:where(.swal2-icon).swal2-success.swal2-icon-show .swal2-success-line-tip{animation:swal2-animate-success-line-tip .75s}div:where(.swal2-icon).swal2-success.swal2-icon-show .swal2-success-line-long{animation:swal2-animate-success-line-long .75s}div:where(.swal2-icon).swal2-success.swal2-icon-show .swal2-success-circular-line-right{animation:swal2-rotate-success-circular-line 4.25s ease-in}[class^=swal2]{-webkit-tap-highlight-color:rgba(0,0,0,0)}.swal2-show{animation:var(--swal2-show-animation)}.swal2-hide{animation:var(--swal2-hide-animation)}.swal2-noanimation{transition:none}.swal2-scrollbar-measure{position:absolute;top:-9999px;width:50px;height:50px;overflow:scroll}.swal2-rtl .swal2-close{margin-right:initial;margin-left:0}.swal2-rtl .swal2-timer-progress-bar{right:0;left:auto}.swal2-toast{box-sizing:border-box;grid-column:1/4 !important;grid-row:1/4 !important;grid-template-columns:min-content auto min-content;padding:1em;overflow-y:hidden;border:var(--swal2-toast-border);background:var(--swal2-background);box-shadow:var(--swal2-toast-box-shadow);pointer-events:auto}.swal2-toast>*{grid-column:2}.swal2-toast h2:where(.swal2-title){margin:.5em 1em;padding:0;font-size:1em;text-align:initial}.swal2-toast .swal2-loading{justify-content:center}.swal2-toast input:where(.swal2-input){height:2em;margin:.5em;font-size:1em}.swal2-toast .swal2-validation-message{font-size:1em}.swal2-toast div:where(.swal2-footer){margin:.5em 0 0;padding:.5em 0 0;font-size:.8em}.swal2-toast button:where(.swal2-close){grid-column:3/3;grid-row:1/99;align-self:center;width:.8em;height:.8em;margin:0;font-size:2em}.swal2-toast div:where(.swal2-html-container){margin:.5em 1em;padding:0;overflow:initial;font-size:1em;text-align:initial}.swal2-toast div:where(.swal2-html-container):empty{padding:0}.swal2-toast .swal2-loader{grid-column:1;grid-row:1/99;align-self:center;width:2em;height:2em;margin:.25em}.swal2-toast .swal2-icon{grid-column:1;grid-row:1/99;align-self:center;width:2em;min-width:2em;height:2em;margin:0 .5em 0 0}.swal2-toast .swal2-icon .swal2-icon-content{display:flex;align-items:center;font-size:1.8em;font-weight:bold}.swal2-toast .swal2-icon.swal2-success .swal2-success-ring{width:2em;height:2em}.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line]{top:.875em;width:1.375em}.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=left]{left:.3125em}.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=right]{right:.3125em}.swal2-toast div:where(.swal2-actions){justify-content:flex-start;height:auto;margin:0;margin-top:.5em;padding:0 .5em}.swal2-toast button:where(.swal2-styled){margin:.25em .5em;padding:.4em .6em;font-size:1em}.swal2-toast .swal2-success{border-color:#a5dc86}.swal2-toast .swal2-success [class^=swal2-success-circular-line]{position:absolute;width:1.6em;height:3em;border-radius:50%}.swal2-toast .swal2-success [class^=swal2-success-circular-line][class$=left]{top:-0.8em;left:-0.5em;transform:rotate(-45deg);transform-origin:2em 2em;border-radius:4em 0 0 4em}.swal2-toast .swal2-success [class^=swal2-success-circular-line][class$=right]{top:-0.25em;left:.9375em;transform-origin:0 1.5em;border-radius:0 4em 4em 0}.swal2-toast .swal2-success .swal2-success-ring{width:2em;height:2em}.swal2-toast .swal2-success .swal2-success-fix{top:0;left:.4375em;width:.4375em;height:2.6875em}.swal2-toast .swal2-success [class^=swal2-success-line]{height:.3125em}.swal2-toast .swal2-success [class^=swal2-success-line][class$=tip]{top:1.125em;left:.1875em;width:.75em}.swal2-toast .swal2-success [class^=swal2-success-line][class$=long]{top:.9375em;right:.1875em;width:1.375em}.swal2-toast .swal2-success.swal2-icon-show .swal2-success-line-tip{animation:swal2-toast-animate-success-line-tip .75s}.swal2-toast .swal2-success.swal2-icon-show .swal2-success-line-long{animation:swal2-toast-animate-success-line-long .75s}.swal2-toast.swal2-show{animation:var(--swal2-toast-show-animation)}.swal2-toast.swal2-hide{animation:var(--swal2-toast-hide-animation)}@keyframes swal2-show{0%{transform:translate3d(0, -50px, 0) scale(0.9);opacity:0}100%{transform:translate3d(0, 0, 0) scale(1);opacity:1}}@keyframes swal2-hide{0%{transform:translate3d(0, 0, 0) scale(1);opacity:1}100%{transform:translate3d(0, -50px, 0) scale(0.9);opacity:0}}@keyframes swal2-animate-success-line-tip{0%{top:1.1875em;left:.0625em;width:0}54%{top:1.0625em;left:.125em;width:0}70%{top:2.1875em;left:-0.375em;width:3.125em}84%{top:3em;left:1.3125em;width:1.0625em}100%{top:2.8125em;left:.8125em;width:1.5625em}}@keyframes swal2-animate-success-line-long{0%{top:3.375em;right:2.875em;width:0}65%{top:3.375em;right:2.875em;width:0}84%{top:2.1875em;right:0;width:3.4375em}100%{top:2.375em;right:.5em;width:2.9375em}}@keyframes swal2-rotate-success-circular-line{0%{transform:rotate(-45deg)}5%{transform:rotate(-45deg)}12%{transform:rotate(-405deg)}100%{transform:rotate(-405deg)}}@keyframes swal2-animate-error-x-mark{0%{margin-top:1.625em;transform:scale(0.4);opacity:0}50%{margin-top:1.625em;transform:scale(0.4);opacity:0}80%{margin-top:-0.375em;transform:scale(1.15)}100%{margin-top:0;transform:scale(1);opacity:1}}@keyframes swal2-animate-error-icon{0%{transform:rotateX(100deg);opacity:0}100%{transform:rotateX(0deg);opacity:1}}@keyframes swal2-rotate-loading{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}@keyframes swal2-animate-question-mark{0%{transform:rotateY(-360deg)}100%{transform:rotateY(0)}}@keyframes swal2-animate-i-mark{0%{transform:rotateZ(45deg);opacity:0}25%{transform:rotateZ(-25deg);opacity:.4}50%{transform:rotateZ(15deg);opacity:.8}75%{transform:rotateZ(-5deg);opacity:1}100%{transform:rotateX(0);opacity:1}}@keyframes swal2-toast-show{0%{transform:translateY(-0.625em) rotateZ(2deg)}33%{transform:translateY(0) rotateZ(-2deg)}66%{transform:translateY(0.3125em) rotateZ(2deg)}100%{transform:translateY(0) rotateZ(0deg)}}@keyframes swal2-toast-hide{100%{transform:rotateZ(1deg);opacity:0}}@keyframes swal2-toast-animate-success-line-tip{0%{top:.5625em;left:.0625em;width:0}54%{top:.125em;left:.125em;width:0}70%{top:.625em;left:-0.25em;width:1.625em}84%{top:1.0625em;left:.75em;width:.5em}100%{top:1.125em;left:.1875em;width:.75em}}@keyframes swal2-toast-animate-success-line-long{0%{top:1.625em;right:1.375em;width:0}65%{top:1.25em;right:.9375em;width:0}84%{top:.9375em;right:0;width:1.125em}100%{top:.9375em;right:.1875em;width:1.375em}}");
 
 /***/ },
 
@@ -31325,7 +31421,7 @@ const getTicksLimit = (ticksLength, maxTicksLimit)=>Math.min(maxTicksLimit || ti
     return lineValue;
 }
  function garbageCollect(caches, length) {
-    (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(caches, (cache)=>{
+    ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(caches, (cache)=>{
         const gc = cache.gc;
         const gcLen = gc.length / 2;
         let i;
@@ -31533,7 +31629,7 @@ class Scale extends Element {
         this._dataLimitsCached = false;
     }
     beforeUpdate() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeUpdate, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeUpdate, [
             this
         ]);
     }
@@ -31604,12 +31700,12 @@ class Scale extends Element {
         this._alignToPixels = this.options.alignToPixels;
     }
     afterUpdate() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterUpdate, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterUpdate, [
             this
         ]);
     }
     beforeSetDimensions() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeSetDimensions, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeSetDimensions, [
             this
         ]);
     }
@@ -31629,7 +31725,7 @@ class Scale extends Element {
         this.paddingBottom = 0;
     }
     afterSetDimensions() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterSetDimensions, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterSetDimensions, [
             this
         ]);
     }
@@ -31656,7 +31752,7 @@ class Scale extends Element {
         this._callHooks('afterBuildTicks');
     }
     beforeTickToLabelConversion() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeTickToLabelConversion, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeTickToLabelConversion, [
             this
         ]);
     }
@@ -31673,12 +31769,12 @@ class Scale extends Element {
         }
     }
     afterTickToLabelConversion() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterTickToLabelConversion, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterTickToLabelConversion, [
             this
         ]);
     }
     beforeCalculateLabelRotation() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeCalculateLabelRotation, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeCalculateLabelRotation, [
             this
         ]);
     }
@@ -31709,13 +31805,13 @@ class Scale extends Element {
         this.labelRotation = labelRotation;
     }
     afterCalculateLabelRotation() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterCalculateLabelRotation, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterCalculateLabelRotation, [
             this
         ]);
     }
     afterAutoSkip() {}
     beforeFit() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeFit, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.beforeFit, [
             this
         ]);
     }
@@ -31811,7 +31907,7 @@ class Scale extends Element {
         }
     }
     afterFit() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterFit, [
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Q)(this.options.afterFit, [
             this
         ]);
     }
@@ -33370,7 +33466,7 @@ class Chart {
         return this;
     }
     clear() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.af)(this.canvas, this.ctx);
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.af)(this.canvas, this.ctx);
         return this;
     }
     stop() {
@@ -33442,7 +33538,7 @@ class Chart {
                 };
             }));
         }
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(items, (item)=>{
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(items, (item)=>{
             const scaleOptions = item.options;
             const id = scaleOptions.id;
             const axis = determineAxis(id, scaleOptions);
@@ -33537,7 +33633,7 @@ class Chart {
         return newControllers;
     }
  _resetElements() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(this.data.datasets, (dataset, datasetIndex)=>{
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(this.data.datasets, (dataset, datasetIndex)=>{
             this.getDatasetMeta(datasetIndex).controller.reset();
         }, this);
     }
@@ -33590,7 +33686,7 @@ class Chart {
         this.render();
     }
  _updateScales() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(this.scales, (scale)=>{
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(this.scales, (scale)=>{
             layouts.removeBox(this, scale);
         });
         this.ensureScalesHaveIDs();
@@ -33961,7 +34057,7 @@ class Chart {
         }
     }
  unbindEvents() {
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(this._listeners, (listener, type)=>{
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(this._listeners, (listener, type)=>{
             this.platform.removeEventListener(this, type, listener);
         });
         this._listeners = {};
@@ -36217,7 +36313,7 @@ class Legend extends Element {
                 line: 0
             };
         }
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.aB)(this.ctx, opts.textDirection);
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.aB)(this.ctx, opts.textDirection);
         const lineHeight = itemHeight + padding;
         this.legendItems.forEach((legendItem, i)=>{
             ctx.strokeStyle = legendItem.fontColor;
@@ -37084,7 +37180,7 @@ class Tooltip extends Element {
         if (options.itemSort) {
             tooltipItems = tooltipItems.sort((a, b)=>options.itemSort(a, b, data));
         }
-        (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(tooltipItems, (context)=>{
+        ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(tooltipItems, (context)=>{
             const scoped = overrideCallbacks(options.callbacks, context);
             labelColors.push(invokeCallbackWithFallback(scoped, 'labelColor', this, context));
             labelPointStyles.push(invokeCallbackWithFallback(scoped, 'labelPointStyle', this, context));
@@ -37321,7 +37417,7 @@ class Tooltip extends Element {
                 fillLineOfText(lines[j]);
                 bodyLineHeight = bodyFont.lineHeight;
             }
-            (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(bodyItem.after, fillLineOfText);
+            ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.F)(bodyItem.after, fillLineOfText);
         }
         xLinePadding = 0;
         bodyLineHeight = bodyFont.lineHeight;
@@ -38670,7 +38766,7 @@ class RadialLinearScale extends LinearScaleBase {
                 const padding = (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.E)(optsAtIndex.backdropPadding);
                 ctx.fillRect(-width / 2 - padding.left, -offset - tickFont.size / 2 - padding.top, width + padding.width, tickFont.size + padding.height);
             }
-            (0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Z)(ctx, tick.label, 0, -offset, tickFont, {
+            ;(0,_chunks_helpers_dataset_js__WEBPACK_IMPORTED_MODULE_0__.Z)(ctx, tick.label, 0, -offset, tickFont, {
                 color: optsAtIndex.color,
                 strokeColor: optsAtIndex.textStrokeColor,
                 strokeWidth: optsAtIndex.textStrokeWidth
@@ -42503,6 +42599,7 @@ __webpack_require__.r(__webpack_exports__);
     create: null,
     createOnBlur: false,
     createFilter: null,
+    clearAfterSelect: false,
     highlight: true,
     openOnFocus: true,
     shouldOpen: null,
@@ -42702,9 +42799,10 @@ function getSettings(input, settings_user) {
      *
      */
     var init_textbox = () => {
+        var _a, _b;
         const data_raw = input.getAttribute(attr_data);
         if (!data_raw) {
-            var value = input.value.trim() || '';
+            var value = (_b = (_a = input === null || input === void 0 ? void 0 : input.value) === null || _a === void 0 ? void 0 : _a.trim()) !== null && _b !== void 0 ? _b : '';
             if (!settings.allowEmptyOption && !value.length)
                 return;
             const values = value.split(settings.delimiter);
@@ -42748,7 +42846,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -42926,7 +43024,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -42992,7 +43090,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -43186,7 +43284,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -43237,8 +43335,10 @@ function plugin (userOptions) {
   const options = Object.assign({
     className: 'clear-button',
     title: 'Clear All',
+    role: 'button',
+    tabindex: 0,
     html: data => {
-      return `<div class="${data.className}" title="${data.title}">&#10799;</div>`;
+      return `<div class="${data.className}" title="${data.title}" role="${data.role}" tabindex="${data.tabindex}">&times;</div>`;
     }
   }, userOptions);
   self.on('initialize', () => {
@@ -43249,6 +43349,7 @@ function plugin (userOptions) {
       if (self.settings.mode === 'single' && self.settings.allowEmptyOption) {
         self.addItem('');
       }
+      self.refreshOptions(false);
       evt.preventDefault();
       evt.stopPropagation();
     });
@@ -43274,7 +43375,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -43509,7 +43610,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -43626,7 +43727,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -43781,6 +43882,7 @@ function plugin () {
   self.settings.shouldOpen = true; // make sure the input is shown even if there are no options to display in the dropdown
 
   self.hook('before', 'setup', () => {
+    var _self$input;
     self.focus_node = self.control;
     addClasses(self.control_input, 'dropdown-input');
     const div = getDom('<div class="dropdown-input-wrap">');
@@ -43791,6 +43893,15 @@ function plugin () {
     const placeholder = getDom('<input class="items-placeholder" tabindex="-1" />');
     placeholder.placeholder = self.settings.placeholder || '';
     self.control.append(placeholder);
+    /**
+     * TomSelect renders a custom control with a focusable <input class="items-placeholder">.
+     * The source <select>'s aria-label is not automatically propagated to that input,
+     * which triggers "Missing form label" accessibility warnings.
+     * This helper copies the label from the <select> onto the generated input.
+     */
+    const label = (_self$input = self.input) == null ? void 0 : _self$input.getAttribute('aria-label');
+    if (!label) return;
+    placeholder.setAttribute('aria-label', label);
   });
   self.on('initialize', () => {
     // set tabIndex on control to -1, otherwise [shift+tab] will put focus right back on control_input
@@ -43855,7 +43966,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -43944,7 +44055,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -43985,7 +44096,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -44032,7 +44143,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -44133,7 +44244,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -44151,14 +44262,6 @@ __webpack_require__.r(__webpack_exports__);
  *   1         -> '1'
  *
  */
-
-/**
- * Escapes a string for use within HTML.
- *
- */
-const escape_html = str => {
-  return (str + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-};
 
 /**
  * Prevent default
@@ -44224,26 +44327,29 @@ const isHtmlString = arg => {
  */
 
 function plugin (userOptions) {
+  const self = this;
   const options = Object.assign({
-    label: '&times;',
+    label: '×',
     title: 'Remove',
     className: 'remove',
-    append: true
+    tabindex: -1,
+    role: 'button',
+    html: data => {
+      var _data$tabindex;
+      const el = document.createElement('div');
+      el.className = data.className || '';
+      el.title = data.title || '';
+      el.setAttribute('role', data.role || 'button');
+      el.tabIndex = (_data$tabindex = data.tabindex) != null ? _data$tabindex : -1;
+      el.textContent = data.label || '';
+      return el;
+    }
   }, userOptions);
-
-  //options.className = 'remove-single';
-  var self = this;
-
-  // override the render method to add remove button to each item
-  if (!options.append) {
-    return;
-  }
-  var html = '<a href="javascript:void(0)" class="' + options.className + '" tabindex="-1" title="' + escape_html(options.title) + '">' + options.label + '</a>';
   self.hook('after', 'setupTemplates', () => {
     var orig_render_item = self.settings.render.item;
     self.settings.render.item = (data, escape) => {
       var item = getDom(orig_render_item.call(self, data, escape));
-      var close_button = getDom(html);
+      var close_button = getDom(options.html(options));
       item.appendChild(close_button);
       addEvent(close_button, 'mousedown', evt => {
         preventDefault(evt, true);
@@ -44282,7 +44388,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -44339,7 +44445,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.4.3
+* Tom Select v2.6.2
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -44423,7 +44529,7 @@ const castAsArray = arg => {
 };
 
 /**
- * Plugin: "restore_on_backspace" (Tom Select)
+ * Plugin: "virtual_scroll" (Tom Select)
  * Copyright (c) contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -44447,6 +44553,10 @@ function plugin () {
   var loading_more = false;
   var load_more_opt;
   var default_values = [];
+  var default_values_loaded = false;
+  var default_pagination;
+  var default_options = [];
+  var html_values = [];
   if (!self.settings.shouldLoadMore) {
     // return true if additional results should be loaded
     self.settings.shouldLoadMore = () => {
@@ -44478,7 +44588,7 @@ function plugin () {
 
   // can we load more results for given query?
   const canLoadMore = query => {
-    if (typeof self.settings.maxOptions === 'number' && dropdown_content.children.length >= self.settings.maxOptions) {
+    if (self.settings.maxOptions !== null && typeof self.settings.maxOptions === 'number' && dropdown_content.children.length >= self.settings.maxOptions) {
       return false;
     }
     if (query in pagination && pagination[query]) {
@@ -44538,7 +44648,11 @@ function plugin () {
   // wrap the load
   self.hook('instead', 'loadCallback', (options, optgroups) => {
     if (!loading_more) {
-      self.clearOptions(clearFilter);
+      // When searching (non-empty query), keep selected items and HTML default options,
+      // but remove preloaded remote options so they don't bleed into search results.
+      // For empty query, use clearFilter (keeps default_values + items).
+      const activeFilter = self.lastValue !== '' ? (_option, value) => self.items.indexOf(value) >= 0 || html_values.indexOf(value) >= 0 : clearFilter;
+      self.clearOptions(activeFilter);
     } else if (load_more_opt) {
       const first_option = options[0];
       if (first_option !== undefined) {
@@ -44546,7 +44660,27 @@ function plugin () {
       }
     }
     orig_loadCallback.call(self, options, optgroups);
+
+    // After the initial preload (empty query), snapshot default_values and option objects
+    // so they can be restored when the user clears their search.
+    if (!loading_more && !default_values_loaded) {
+      default_values_loaded = true;
+      if (self.lastValue === '') {
+        default_values = Object.keys(self.options);
+        default_pagination = pagination[''];
+        default_options = Object.values(self.options);
+      }
+    }
     loading_more = false;
+  });
+
+  // as the “loading_more” element will be removed from the dropdown,
+  // we activate the previous option if needed
+  // to avoid the dropdown being scrolled back to the first one
+  self.hook('before', 'refreshOptions', () => {
+    if (self.activeOption && "option" !== self.activeOption.getAttribute("role")) {
+      self.setActiveOption(self.activeOption.previousElementSibling);
+    }
   });
 
   // add templates to dropdown
@@ -44574,8 +44708,30 @@ function plugin () {
     }
   });
 
+  // Restore preloaded options and pagination when clearing search
+  const restoreDefaults = () => {
+    if (!default_values_loaded) {
+      return;
+    }
+    // Re-add preloaded option objects (clearOptions can only remove, not restore)
+    self.addOptions(default_options);
+    // Remove any search results that are not part of the preloaded defaults
+    self.clearOptions(clearFilter);
+    if (default_pagination) {
+      pagination[''] = default_pagination;
+    }
+  };
+  self.on('type', query => {
+    if (query === '') {
+      restoreDefaults();
+      self.refreshOptions(false);
+    }
+  });
+  self.on('dropdown_close', restoreDefaults);
+
   // add scroll listener and default templates
   self.on('initialize', () => {
+    html_values = Object.keys(self.options);
     default_values = Object.keys(self.options);
     dropdown_content = self.dropdown_content;
 
@@ -44717,6 +44873,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         this.isFocused = false;
         this.isInputHidden = false;
         this.isSetup = false;
+        this.isDropdownContentStale = true;
         this.ignoreFocus = false;
         this.ignoreHover = false;
         this.hasOptions = false;
@@ -44793,14 +44950,14 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (settings.copyClassesToDropdown) {
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(dropdown, classes);
         }
-        (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(dropdown_content, settings.dropdownContentClass);
+        ;(0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(dropdown_content, settings.dropdownContentClass);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.append)(dropdown, dropdown_content);
         (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.getDom)(settings.dropdownParent || wrapper).appendChild(dropdown);
         // default controlInput
         if ((0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.isHtmlString)(settings.controlInput)) {
             control_input = (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.getDom)(settings.controlInput);
             // set attributes
-            var attrs = ['autocorrect', 'autocapitalize', 'autocomplete', 'spellcheck'];
+            var attrs = ['autocorrect', 'autocapitalize', 'autocomplete', 'spellcheck', 'aria-label'];
             (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(attrs, (attr) => {
                 if (input.getAttribute(attr)) {
                     (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.setAttr)(control_input, { [attr]: input.getAttribute(attr) });
@@ -44863,6 +45020,8 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.setAttr)(dropdown_content, { 'aria-labelledby': label_id });
         }
         wrapper.style.width = input.style.width;
+        wrapper.style.minWidth = input.style.minWidth;
+        wrapper.style.maxWidth = input.style.maxWidth;
         if (self.plugins.names.length) {
             const classes_plugins = 'plugin-' + self.plugins.names.join(' plugin-');
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)([wrapper, dropdown], classes_plugins);
@@ -44882,7 +45041,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (settings.load && settings.loadThrottle) {
             settings.load = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.loadDebounce)(settings.load, settings.loadThrottle);
         }
-        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(dropdown, 'mousemove', () => {
+        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(dropdown, 'mousemove', () => {
             self.ignoreHover = false;
         });
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(dropdown, 'mouseenter', (e) => {
@@ -44947,10 +45106,19 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 self.positionDropdown();
             }
         };
+        const input_invalid = () => {
+            if (self.isValid) {
+                self.isValid = false;
+                self.isInvalid = true;
+                self.refreshState();
+            }
+        };
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(input, 'invalid', input_invalid);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(document, 'mousedown', doc_mousedown);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(window, 'scroll', win_scroll, passive_event);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(window, 'resize', win_scroll, passive_event);
         this._destroy = () => {
+            input.removeEventListener('invalid', input_invalid);
             document.removeEventListener('mousedown', doc_mousedown);
             window.removeEventListener('scroll', win_scroll);
             window.removeEventListener('resize', win_scroll);
@@ -44969,27 +45137,10 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         settings.items = [];
         delete settings.optgroups;
         delete settings.options;
-        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(input, 'invalid', () => {
-            if (self.isValid) {
-                self.isValid = false;
-                self.isInvalid = true;
-                self.refreshState();
-            }
-        });
-        self.updateOriginalInput();
         self.refreshItems();
         self.close(false);
         self.inputState();
         self.isSetup = true;
-        if (input.disabled) {
-            self.disable();
-        }
-        else if (input.readOnly) {
-            self.setReadOnly(true);
-        }
-        else {
-            self.enable(); //sets tabIndex
-        }
         self.on('change', this.onChange);
         (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(input, 'tomselected', 'ts-hidden-accessible');
         self.trigger('initialize');
@@ -45087,9 +45238,18 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      */
     sync(get_settings = true) {
         const self = this;
-        const settings = get_settings ? (0,_getSettings_js__WEBPACK_IMPORTED_MODULE_6__["default"])(self.input, { delimiter: self.settings.delimiter }) : self.settings;
+        const settings = get_settings ? (0,_getSettings_js__WEBPACK_IMPORTED_MODULE_6__["default"])(self.input, { delimiter: self.settings.delimiter, allowEmptyOption: self.settings.allowEmptyOption }) : self.settings;
         self.setupOptions(settings.options, settings.optgroups);
         self.setValue(settings.items || [], true); // silent prevents recursion
+        if (self.input.disabled) {
+            self.disable();
+        }
+        else if (self.input.readOnly) {
+            self.setReadOnly(true);
+        }
+        else {
+            self.enable(); //sets tabIndex
+        }
         self.lastQuery = null; // so updated options will be displayed in dropdown
     }
     /**
@@ -45122,7 +45282,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      * input / select element.
      */
     onChange() {
-        (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.triggerEvent)(this.input, 'input');
+        ;(0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.triggerEvent)(this.input, 'input');
         (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.triggerEvent)(this.input, 'change');
     }
     /**
@@ -45219,7 +45379,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                     if (next)
                         self.setActiveOption(next);
                 }
-                (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
+                ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                 return;
             // up: move selection up
             case _constants_js__WEBPACK_IMPORTED_MODULE_5__.KEY_UP:
@@ -45228,7 +45388,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                     if (prev)
                         self.setActiveOption(prev);
                 }
-                (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
+                ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                 return;
             // return: select active option
             case _constants_js__WEBPACK_IMPORTED_MODULE_5__.KEY_RETURN:
@@ -45262,7 +45422,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                         // if select isFull, then the dropdown won't be open and [tab] will work normally
                         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                     }
-                    if (self.settings.create && self.createItem()) {
+                    else if (self.settings.create && self.createItem()) {
                         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                     }
                 }
@@ -45386,15 +45546,21 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 if (self.settings.closeAfterSelect) {
                     self.close();
                 }
+                else if (self.settings.clearAfterSelect) {
+                    self.setTextboxValue();
+                }
             });
         }
         else {
             value = option.dataset.value;
             if (typeof value !== 'undefined') {
-                self.lastQuery = null;
+                self.isDropdownContentStale = self.settings.hideSelected;
                 self.addItem(value);
                 if (self.settings.closeAfterSelect) {
                     self.close();
+                }
+                else if (self.settings.clearAfterSelect) {
+                    self.setTextboxValue();
                 }
                 if (!self.settings.hideSelected && evt.type && /click/.test(evt.type)) {
                     self.setActiveOption(option);
@@ -45469,7 +45635,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
     loadCallback(options, optgroups) {
         const self = this;
         self.loading = Math.max(self.loading - 1, 0);
-        self.lastQuery = null;
+        self.isDropdownContentStale = true;
         self.clearActiveOption(); // when new results load, focus should be on first option
         self.setupOptions(options, optgroups);
         self.refreshOptions(self.isFocused && !self.isInputHidden);
@@ -45568,7 +45734,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                     self.setActiveItemClass(item);
                 }
             }
-            (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
+            ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
         }
         else if ((eventName === 'click' && (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.isKeyDown)(_constants_js__WEBPACK_IMPORTED_MODULE_5__.KEY_SHORTCUT, e)) || (eventName === 'keydown' && (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.isKeyDown)('shiftKey', e))) {
             if (item.classList.contains('active')) {
@@ -45617,7 +45783,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      *
      */
     clearActiveItems() {
-        (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.removeClasses)(this.activeItems, 'active');
+        ;(0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.removeClasses)(this.activeItems, 'active');
         this.activeItems = [];
     }
     /**
@@ -45734,15 +45900,19 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (self.isDisabled || self.isReadOnly)
             return;
         self.ignoreFocus = true;
-        if (self.control_input.offsetWidth) {
-            self.control_input.focus();
-        }
-        else {
-            self.focus_node.focus();
-        }
+        const focusTarget = this.control_input.offsetWidth ? this.control_input : this.focus_node;
+        focusTarget.focus();
         setTimeout(() => {
             self.ignoreFocus = false;
-            self.onFocus();
+            // Fix https://github.com/orchidjs/tom-select/issues/806
+            // Only proceed if this instance's element is still the active element. If Edge autofill
+            // (or anything else) has moved focus to a different element in the interim, calling
+            // onFocus() here would steal focus back and restart the cascade loop.
+            const root = focusTarget.getRootNode();
+            if (root.activeElement !== focusTarget) {
+                return;
+            }
+            this.onFocus();
         }, 0);
     }
     /**
@@ -45800,8 +45970,13 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             }
         }
         // perform search
-        if (query !== self.lastQuery) {
+        if (self.isDropdownContentStale || query !== self.lastQuery) {
             self.lastQuery = query;
+            // temp fix for https://github.com/orchidjs/tom-select/issues/987
+            // UI crashed when more than 30 same chars in a row, prevent search and return empt result
+            if (/(.)\1{15,}/.test(query)) {
+                query = '';
+            }
             result = self.sifter.search(query, Object.assign(options, { score: calculateScore }));
             self.currentResults = result;
         }
@@ -45812,7 +45987,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (self.settings.hideSelected) {
             result.items = result.items.filter((item) => {
                 let hashed = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.hash_key)(item.id);
-                return !(hashed && self.items.indexOf(hashed) !== -1);
+                return !(hashed !== null && self.items.indexOf(hashed) !== -1);
             });
         }
         return result;
@@ -45884,6 +46059,13 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 optgroup = optgroups[j];
                 let order = option.$order;
                 let self_optgroup = self.optgroups[optgroup];
+                if (self_optgroup === undefined && typeof self.settings.optionGroupRegister === 'function') {
+                    var regGroup;
+                    if (regGroup = self.settings.optionGroupRegister.apply(self, [optgroup])) {
+                        self.registerOptionGroup(regGroup);
+                    }
+                }
+                self_optgroup = self.optgroups[optgroup];
                 if (self_optgroup === undefined) {
                     optgroup = '';
                 }
@@ -45938,6 +46120,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         });
         dropdown_content.innerHTML = '';
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.append)(dropdown_content, html);
+        self.isDropdownContentStale = false;
         // highlight matching terms inline
         if (self.settings.highlight) {
             (0,_contrib_highlight_js__WEBPACK_IMPORTED_MODULE_4__.removeHighlight)(dropdown_content);
@@ -46032,12 +46215,13 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         }
         const key = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.hash_key)(data[self.settings.valueField]);
         if (key === null || self.options.hasOwnProperty(key)) {
+            self.updateOption(data[self.settings.valueField], data);
             return false;
         }
         data.$order = data.$order || ++self.order;
         data.$id = self.inputId + '-opt-' + data.$order;
         self.options[key] = data;
-        self.lastQuery = null;
+        self.isDropdownContentStale = true;
         if (user_created) {
             self.userOptions[key] = user_created;
             self.trigger('option_add', key, data);
@@ -46049,7 +46233,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      *
      */
     addOptions(data, user_created = false) {
-        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(data, (dat) => {
+        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(data, (dat) => {
             this.addOption(dat, user_created);
         });
     }
@@ -46153,8 +46337,8 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(item_new, 'active');
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.replaceNode)(item, item_new);
         }
-        // invalidate last query because we might have updated the sortField
-        self.lastQuery = null;
+        // we might have updated the sortField
+        self.isDropdownContentStale = true;
     }
     /**
      * Removes a single option.
@@ -46166,7 +46350,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         self.uncacheValue(value);
         delete self.userOptions[value];
         delete self.options[value];
-        self.lastQuery = null;
+        self.isDropdownContentStale = true;
         self.trigger('option_remove', value);
         self.removeItem(value, silent);
     }
@@ -46185,7 +46369,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             }
         });
         this.options = this.sifter.items = selected;
-        this.lastQuery = null;
+        this.isDropdownContentStale = true;
         this.trigger('option_clear');
     }
     /**
@@ -46317,6 +46501,10 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                         self.setActiveOption(next);
                     }
                 }
+                //remove input value when enabled
+                if (self.settings.clearAfterSelect) {
+                    self.setTextboxValue();
+                }
                 // refreshOptions after setActiveOption(),
                 // otherwise setActiveOption() will be called by refreshOptions() with the wrong value
                 if (!self.isPending && !self.settings.closeAfterSelect) {
@@ -46360,7 +46548,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.removeClasses)(item, 'active');
         }
         self.items.splice(i, 1);
-        self.lastQuery = null;
+        self.isDropdownContentStale = true;
         if (!self.settings.persist && self.userOptions.hasOwnProperty(value)) {
             self.removeOption(value, silent);
         }
@@ -46394,6 +46582,12 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         var output;
         input = input || self.inputValue();
         if (!self.canCreate(input)) {
+            const hash = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.hash_key)(input);
+            if (hash) {
+                if (this.options[input]) {
+                    self.addItem(input);
+                }
+            }
             callback();
             return false;
         }
@@ -46433,7 +46627,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      */
     refreshItems() {
         var self = this;
-        self.lastQuery = null;
+        self.isDropdownContentStale = true;
         if (self.isSetup) {
             self.addItems(self.items);
         }
@@ -46512,7 +46706,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 selected.push(option_el);
                 // marking empty option as selected can break validation
                 // fixes https://github.com/orchidjs/tom-select/issues/303
-                if (option_el != empty_option || has_selected > 0) {
+                if (option_el != empty_option || has_selected > 0 || self.settings.mode == 'multi') {
                     option_el.selected = true;
                 }
                 return option_el;
@@ -46655,7 +46849,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             if (direction > 0) {
                 caret++;
             }
-            (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(self.activeItems, (item) => rm_items.push(item));
+            ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(self.activeItems, (item) => rm_items.push(item));
         }
         else if ((self.isFocused || self.settings.mode === 'single') && self.items.length) {
             const items = self.controlChildren();
@@ -46673,7 +46867,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (!self.shouldDelete(rm_items, e)) {
             return false;
         }
-        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e, true);
+        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e, true);
         // perform removal
         if (typeof caret !== 'undefined') {
             self.setCaret(caret);
@@ -46692,7 +46886,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
     shouldDelete(items, evt) {
         const values = items.map(item => item.dataset.value);
         // allow the callback to abort
-        if (!values.length || (typeof this.settings.onDelete === 'function' && this.settings.onDelete(values, evt) === false)) {
+        if (!values.length || (typeof this.settings.onDelete === 'function' && this.settings.onDelete.call(this, values, evt) === false)) {
             return false;
         }
         return true;
@@ -46911,7 +47105,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      *
      */
     clearCache() {
-        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(this.options, (option) => {
+        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(this.options, (option) => {
             if (option.$div) {
                 option.$div.remove();
                 delete option.$div;
@@ -47392,17 +47586,17 @@ const replaceNode = (existing, replacement) => {
 /******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
+/******/ 	const __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		const cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
 /******/ 			return cachedModule.exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 		const module = __webpack_module_cache__[moduleId] = {
 /******/ 			id: moduleId,
 /******/ 			// no module.loaded needed
 /******/ 			exports: {}
@@ -47411,7 +47605,7 @@ const replaceNode = (existing, replacement) => {
 /******/ 		// Execute the module function
 /******/ 		if (!(moduleId in __webpack_modules__)) {
 /******/ 			delete __webpack_module_cache__[moduleId];
-/******/ 			var e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			const e = new Error("Cannot find module '" + moduleId + "'");
 /******/ 			e.code = 'MODULE_NOT_FOUND';
 /******/ 			throw e;
 /******/ 		}
@@ -47426,7 +47620,7 @@ const replaceNode = (existing, replacement) => {
 /******/ 	(() => {
 /******/ 		// getDefaultExport function for compatibility with non-harmony modules
 /******/ 		__webpack_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
+/******/ 			const getter = module && module.__esModule ?
 /******/ 				() => (module['default']) :
 /******/ 				() => (module);
 /******/ 			__webpack_require__.d(getter, { a: getter });
@@ -47436,11 +47630,26 @@ const replaceNode = (existing, replacement) => {
 /******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
+/******/ 		// define getter/value functions for harmony exports
 /******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 			if(Array.isArray(definition)) {
+/******/ 				var i = 0;
+/******/ 				while(i < definition.length) {
+/******/ 					var key = definition[i++];
+/******/ 					var binding = definition[i++];
+/******/ 					if(!__webpack_require__.o(exports, key)) {
+/******/ 						if(binding === 0) {
+/******/ 							Object.defineProperty(exports, key, { enumerable: true, value: definition[i++] });
+/******/ 						} else {
+/******/ 							Object.defineProperty(exports, key, { enumerable: true, get: binding });
+/******/ 						}
+/******/ 					} else if(binding === 0) { i++; }
+/******/ 				}
+/******/ 			} else {
+/******/ 				for(var key in definition) {
+/******/ 					if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 						Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 					}
 /******/ 				}
 /******/ 			}
 /******/ 		};
@@ -47448,14 +47657,14 @@ const replaceNode = (existing, replacement) => {
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.hasOwn(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
 /******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			if(Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
 /******/ 			Object.defineProperty(exports, '__esModule', { value: true });
@@ -47468,7 +47677,7 @@ const replaceNode = (existing, replacement) => {
 /******/ 	})();
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
+let __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
 (() => {
 "use strict";
