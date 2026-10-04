@@ -1,5 +1,4 @@
 /******/ (() => { // webpackBootstrap
-/******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
 /***/ "./assets/src/js/admin/init-tom-select.js"
@@ -8,6 +7,7 @@
   \************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   initElsTomSelect: () => (/* binding */ initElsTomSelect),
@@ -251,12 +251,324 @@ const initElsTomSelect = () => {
 
 /***/ },
 
+/***/ "./assets/src/js/admin/share/dropdown-pages.js"
+/*!*****************************************************!*\
+  !*** ./assets/src/js/admin/share/dropdown-pages.js ***!
+  \*****************************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   DropdownPages: () => (/* binding */ DropdownPages)
+/* harmony export */ });
+/* harmony import */ var lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lpAssetsJsPath/utils.js */ "./assets/src/js/utils.js");
+/* harmony import */ var lpAssetsJsPath_lpToastify_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lpAssetsJsPath/lpToastify.js */ "./assets/src/js/lpToastify.js");
+/**
+ * Dropdown Pages
+ *
+ * @since 4.2.5.1
+ * @version 1.0.0
+ */
+
+
+class DropdownPages {
+  static selectors = {
+    elDropdown: '.learn-press-dropdown-pages',
+    elSelect: 'select',
+    elListWrap: '.list-pages-wrapper',
+    elActions: '.quick-add-page-actions',
+    elForm: '.quick-add-page-inline',
+    elButtonQuickAdd: '.button-quick-add-page',
+    elInput: '.quick-add-page-inline input[type="text"]',
+    elButtonSubmit: '.quick-add-page-inline button',
+    elButtonCancel: '.quick-add-page-inline a'
+  };
+  constructor() {
+    this.elDropdowns = [];
+  }
+  init() {
+    this.elDropdowns = document.querySelectorAll(DropdownPages.selectors.elDropdown);
+    if (!this.elDropdowns.length) {
+      return;
+    }
+    this.events();
+  }
+  events() {
+    // Check and attach events only once
+    if (DropdownPages._loadedEvents) {
+      return;
+    }
+    DropdownPages._loadedEvents = this;
+
+    // Change events
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('change', [{
+      selector: DropdownPages.selectors.elDropdown,
+      class: this,
+      callBack: this.handleChangeSelect.name
+    }]);
+
+    // Click events
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('click', [{
+      selector: DropdownPages.selectors.elButtonSubmit,
+      class: this,
+      callBack: this.handleSubmit.name
+    }, {
+      selector: DropdownPages.selectors.elButtonCancel,
+      class: this,
+      callBack: this.handleCancel.name
+    }, {
+      selector: DropdownPages.selectors.elButtonQuickAdd,
+      class: this,
+      callBack: this.handleQuickAdd.name
+    }]);
+
+    // Keydown events
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('keydown', [{
+      selector: DropdownPages.selectors.elInput,
+      class: this,
+      callBack: this.handleInputEnter.name,
+      checkIsEventEnter: true
+    }, {
+      selector: DropdownPages.selectors.elInput,
+      class: this,
+      callBack: this.handleInputEscape.name
+    }]);
+  }
+  handleChangeSelect(args) {
+    const {
+      e
+    } = args;
+    const elSelect = e.target;
+    if (!elSelect.matches(DropdownPages.selectors.elSelect)) {
+      return;
+    }
+    const elDropdown = elSelect.closest(DropdownPages.selectors.elDropdown);
+    if (!elDropdown) {
+      return;
+    }
+    const elActions = elDropdown.querySelector(DropdownPages.selectors.elActions);
+    if (elActions) {
+      elActions.classList.add('hide-if-js');
+    }
+    if (parseInt(elSelect.value, 10)) {
+      if (elActions) {
+        const editLink = elActions.querySelector('a.edit-page');
+        const viewLink = elActions.querySelector('a.view-page');
+        if (editLink) {
+          editLink.href = `post.php?post=${elSelect.value}&action=edit`;
+        }
+        if (viewLink) {
+          viewLink.href = `${window.lpGlobalSettings.siteurl}?page_id=${elSelect.value}`;
+        }
+        elActions.classList.remove('hide-if-js');
+      }
+      elSelect.setAttribute('data-selected', elSelect.value);
+    }
+  }
+  openQuickAddForm(elDropdown) {
+    const elListWrap = elDropdown.querySelector(DropdownPages.selectors.elListWrap);
+    const elForm = elDropdown.querySelector(DropdownPages.selectors.elForm);
+    if (elListWrap) {
+      elListWrap.classList.add('hide-if-js');
+    }
+    if (elForm) {
+      elForm.classList.remove('hide-if-js');
+      const elInput = elForm.querySelector('input');
+      if (elInput) {
+        elInput.value = '';
+        elInput.focus();
+      }
+    }
+  }
+  handleSubmit(args) {
+    const {
+      e
+    } = args;
+    e.preventDefault();
+    const elButton = e.target.closest(DropdownPages.selectors.elButtonSubmit);
+    if (!elButton) {
+      return;
+    }
+    const elForm = elButton.closest(DropdownPages.selectors.elForm);
+    if (!elForm) {
+      return;
+    }
+    const elDropdown = elForm.closest(DropdownPages.selectors.elDropdown);
+    if (!elDropdown) {
+      return;
+    }
+    const elInput = elForm.querySelector('input');
+    const elListWrap = elDropdown.querySelector(DropdownPages.selectors.elListWrap);
+    const pageName = elInput ? elInput.value.trim() : '';
+    if (!pageName) {
+      alert('Please enter the name of page');
+      if (elInput) {
+        elInput.focus();
+      }
+      return;
+    }
+    elButton.disabled = true;
+    let fieldName = '';
+    const elFieldName = elDropdown.querySelector('select');
+    fieldName = elFieldName ? elFieldName.name : '';
+    if (!window.lpGlobalSettings || !window.lpGlobalSettings.ajax || !window.lpDataAdmin || !window.lpDataAdmin.nonce) {
+      elButton.disabled = false;
+      return;
+    }
+    const formData = new FormData();
+    formData.append('action', 'learnpress_create_page');
+    formData.append('page_name', pageName);
+    formData.append('field_name', fieldName);
+    formData.append('nonce', window.lpDataAdmin.nonce);
+    fetch(window.lpGlobalSettings.ajax, {
+      method: 'POST',
+      body: formData
+    }).then(response => response.json()).then(response => {
+      const {
+        message,
+        status,
+        data
+      } = response;
+      if (status === 'success') {
+        elForm.classList.add('hide-if-js');
+        lpAssetsJsPath_lpToastify_js__WEBPACK_IMPORTED_MODULE_1__.show(message, 'success');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        throw new Error(message);
+      }
+    }).catch(error => {
+      lpAssetsJsPath_lpToastify_js__WEBPACK_IMPORTED_MODULE_1__.show(error.message, 'error');
+    }).finally(() => {
+      elButton.disabled = false;
+      if (elListWrap) {
+        elListWrap.classList.remove('hide-if-js');
+      }
+    });
+  }
+  addNewPageToList(args) {
+    const {
+      ID,
+      name,
+      positions
+    } = args;
+    const option = document.createElement('option');
+    option.value = ID;
+    option.textContent = name;
+    const position = positions.indexOf(ID + '');
+    document.querySelectorAll(`${DropdownPages.selectors.elDropdown} ${DropdownPages.selectors.elSelect}`).forEach(select => {
+      const newOption = option.cloneNode(true);
+      if (position === 0) {
+        const options = select.querySelectorAll('option');
+        for (const opt of options) {
+          if (parseInt(opt.value, 10)) {
+            opt.before(newOption);
+            break;
+          }
+        }
+      } else if (position === positions.length - 1) {
+        select.appendChild(newOption);
+      } else {
+        const prevOption = select.querySelector(`option[value="${positions[position - 1]}"]`);
+        if (prevOption) {
+          prevOption.after(newOption);
+        } else {
+          select.appendChild(newOption);
+        }
+      }
+    });
+  }
+  handleCancel(args) {
+    const {
+      e
+    } = args;
+    e.preventDefault();
+    const elCancel = e.target.closest(DropdownPages.selectors.elButtonCancel);
+    if (!elCancel) {
+      return;
+    }
+    const elForm = elCancel.closest(DropdownPages.selectors.elForm);
+    if (!elForm) {
+      return;
+    }
+    const elDropdown = elForm.closest(DropdownPages.selectors.elDropdown);
+    if (!elDropdown) {
+      return;
+    }
+    const elSelect = elDropdown.querySelector(DropdownPages.selectors.elSelect);
+    const elListWrap = elDropdown.querySelector(DropdownPages.selectors.elListWrap);
+    const selected = elSelect ? elSelect.getAttribute('data-selected') : '';
+    elForm.classList.add('hide-if-js');
+    if (elSelect) {
+      elSelect.value = selected + '';
+      elSelect.removeAttribute('disabled');
+      elSelect.dispatchEvent(new Event('change', {
+        bubbles: true
+      }));
+    }
+    if (elListWrap) {
+      elListWrap.classList.remove('hide-if-js');
+    }
+  }
+  handleQuickAdd(args) {
+    const {
+      e
+    } = args;
+    const elButton = e.target.closest(DropdownPages.selectors.elButtonQuickAdd);
+    if (!elButton) {
+      return;
+    }
+    const elDropdown = elButton.closest(DropdownPages.selectors.elDropdown);
+    if (!elDropdown) {
+      return;
+    }
+    this.openQuickAddForm(elDropdown);
+  }
+  handleInputEnter(args) {
+    const {
+      e
+    } = args;
+    e.preventDefault();
+    const elInput = e.target;
+    const elForm = elInput.closest(DropdownPages.selectors.elForm);
+    if (!elForm) {
+      return;
+    }
+    const elButton = elForm.querySelector('button');
+    if (elButton) {
+      elButton.click();
+    }
+  }
+  handleInputEscape(args) {
+    const {
+      e
+    } = args;
+    if (e.key !== 'Escape') {
+      return;
+    }
+    const elInput = e.target;
+    const elForm = elInput.closest(DropdownPages.selectors.elForm);
+    if (!elForm) {
+      return;
+    }
+    const elCancel = elForm.querySelector('a');
+    if (elCancel) {
+      elCancel.click();
+    }
+  }
+}
+
+/***/ },
+
 /***/ "./assets/src/js/admin/utils-admin.js"
 /*!********************************************!*\
   !*** ./assets/src/js/admin/utils-admin.js ***!
   \********************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   AdminUtilsFunctions: () => (/* binding */ AdminUtilsFunctions),
@@ -379,6 +691,7 @@ const AdminUtilsFunctions = {
   \******************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -425,16 +738,72 @@ if (lp_rest_url) {
 
 /***/ },
 
+/***/ "./assets/src/js/lpToastify.js"
+/*!*************************************!*\
+  !*** ./assets/src/js/lpToastify.js ***!
+  \*************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   show: () => (/* binding */ show)
+/* harmony export */ });
+/* harmony import */ var toastify_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! toastify-js */ "./node_modules/toastify-js/src/toastify.js");
+/* harmony import */ var toastify_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(toastify_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var toastify_js_src_toastify_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! toastify-js/src/toastify.css */ "./node_modules/toastify-js/src/toastify.css");
+/**
+ * Utils functions
+ *
+ * @param url
+ * @param data
+ * @param functions
+ * @since 4.3.0
+ * @version 1.0.0
+ */
+
+
+const argsToastify = {
+  text: '',
+  gravity: lpData.toast.gravity,
+  // `top` or `bottom`
+  position: lpData.toast.position,
+  // `left`, `center` or `right`
+  className: `${lpData.toast.classPrefix}`,
+  close: lpData.toast.close == 1,
+  stopOnFocus: lpData.toast.stopOnFocus == 1,
+  duration: lpData.toast.duration
+};
+const show = (message, status = 'success', argsCustom) => {
+  let args = argsToastify;
+  if (argsCustom) {
+    args = {
+      ...args,
+      ...argsCustom
+    };
+  }
+  const toastify = new (toastify_js__WEBPACK_IMPORTED_MODULE_0___default())({
+    ...args,
+    text: message,
+    className: `${lpData.toast.classPrefix} ${status}`
+  });
+  toastify.showToast();
+};
+
+/***/ },
+
 /***/ "./assets/src/js/utils.js"
 /*!********************************!*\
   !*** ./assets/src/js/utils.js ***!
   \********************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   debounce: () => (/* binding */ debounce),
 /* harmony export */   eventHandlers: () => (/* binding */ eventHandlers),
+/* harmony export */   fullScreenView: () => (/* binding */ fullScreenView),
 /* harmony export */   getDataOfForm: () => (/* binding */ getDataOfForm),
 /* harmony export */   getFieldKeysOfForm: () => (/* binding */ getFieldKeysOfForm),
 /* harmony export */   listenElementCreated: () => (/* binding */ listenElementCreated),
@@ -448,7 +817,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
-/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse)
+/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
+/* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
 /**
  * Utils functions
@@ -457,14 +827,17 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.6
+ * @version 1.0.7
  */
 const lpClassName = {
   hidden: 'lp-hidden',
   loading: 'loading',
   elCollapse: 'lp-collapse',
   elSectionToggle: '.lp-section-toggle',
-  elTriggerToggle: '.lp-trigger-toggle'
+  elTriggerToggle: '.lp-trigger-toggle',
+  elBtnFullScreen: '.lp-btn-full-screen-view',
+  elFullScreen: 'lp-full-screen-view',
+  elBtnFullScreenClose: 'lp-full-screen-view__close'
 };
 const lpFetchAPI = (url, data = {}, functions = {}) => {
   if ('function' === typeof functions.before) {
@@ -784,6 +1157,1155 @@ const debounce = (func, wait = 500) => {
   };
 };
 
+/**
+ * Initialize lp-toggle-enable components.
+ *
+ * Finds all `.lp-toggle-enable` elements and wires up toggle behavior.
+ * Reads initial state from `data-enabled` attribute ("true"/"false").
+ * Calls `data-on-toggle` callback (if provided via options) on state change.
+ *
+ * HTML structure:
+ * <label class="lp-toggle-enable" data-enabled="true">
+ *   <input type="checkbox" class="lp-toggle-enable__input" />
+ *   <span class="lp-toggle-enable__track"></span>
+ * </label>
+ *
+ * @param {string}   selector CSS selector for toggle elements (default: '.lp-toggle-enable')
+ * @param {Function} onToggle Optional callback( el, isEnabled ) called on state change
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpToggleEnableInit = 0;
+const toggleEnable = (onToggle = null) => {
+  if (window.lpToggleEnableInit) {
+    return;
+  }
+  window.lpToggleEnableInit = 1;
+  const selector = '.lp-toggle-enable';
+  const updateUI = (toggle, isEnabled) => {
+    toggle.classList.toggle('is-enabled', isEnabled);
+    const input = toggle.querySelector('.lp-toggle-enable__input');
+    if (input) {
+      input.checked = isEnabled;
+      input.value = isEnabled ? '1' : '0';
+    }
+  };
+
+  // Delegate click handling via eventHandlers.
+  eventHandlers('click', [{
+    selector,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const toggle = target.closest(selector);
+      if (!toggle || toggle.classList.contains('is-disabled')) {
+        return;
+      }
+      e.preventDefault();
+      const isEnabled = !toggle.classList.contains('is-enabled');
+      updateUI(toggle, isEnabled);
+      if ('function' === typeof onToggle) {
+        onToggle(toggle, isEnabled);
+      }
+    }
+  }]);
+};
+
+/**
+ * Initialize custom fullscreen view buttons.
+ *
+ * Delegates clicks on `.lp-btn-full-screen-view` buttons to
+ * `lpToggleFullscreenView`. Reads the `data-target` attribute to find the
+ * target element. Falls back to the button's parent element when
+ * `data-target` is not provided.
+ *
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpFullScreenViewInit = 0;
+const fullScreenView = () => {
+  if (window.lpFullScreenViewInit) {
+    return;
+  }
+  window.lpFullScreenViewInit = 1;
+  let lastScrollY = 0;
+  const lpToggleFullscreenView = (elTarget, elBtnFullScreen = null) => {
+    const isFullscreen = elTarget.classList.contains(lpClassName.elFullScreen);
+    if (isFullscreen) {
+      elTarget.classList.remove(lpClassName.elFullScreen);
+      document.documentElement.classList.remove('lp-full-screen-active');
+      window.scrollTo(0, lastScrollY);
+    } else {
+      lastScrollY = window.scrollY;
+      elTarget.classList.add(lpClassName.elFullScreen);
+      document.documentElement.classList.add('lp-full-screen-active');
+    }
+    if (!isFullscreen) {
+      if (!elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`)) {
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = lpClassName.elBtnFullScreenClose;
+        closeButton.setAttribute('aria-label', 'Close');
+        closeButton.innerHTML = lpData.i18n.closeButtonFullScreen || 'Close &times;';
+        closeButton.addEventListener('click', e => {
+          e.preventDefault();
+          lpToggleFullscreenView(elTarget);
+        });
+        elTarget.appendChild(closeButton);
+      }
+    } else {
+      const closeButton = elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`);
+      if (closeButton) {
+        closeButton.remove();
+      }
+    }
+  };
+  eventHandlers('click', [{
+    selector: lpClassName.elBtnFullScreen,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const elBtnFullScreen = target.closest(lpClassName.elBtnFullScreen);
+      if (!elBtnFullScreen) {
+        console.log('No full screen button found');
+        return;
+      }
+      e.preventDefault();
+      let elTarget = null;
+      const targetSelector = elBtnFullScreen.dataset.targetFullscreen;
+      console.log(targetSelector);
+      if (targetSelector) {
+        elTarget = document.querySelector(targetSelector);
+      }
+      if (!elTarget) {
+        console.log('No target element found');
+        return;
+      }
+      lpToggleFullscreenView(elTarget, elBtnFullScreen);
+    }
+  }]);
+};
+
+/***/ },
+
+/***/ "./node_modules/css-loader/dist/cjs.js!./node_modules/toastify-js/src/toastify.css"
+/*!*****************************************************************************************!*\
+  !*** ./node_modules/css-loader/dist/cjs.js!./node_modules/toastify-js/src/toastify.css ***!
+  \*****************************************************************************************/
+(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../css-loader/dist/runtime/sourceMaps.js */ "./node_modules/css-loader/dist/runtime/sourceMaps.js");
+/* harmony import */ var _css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js");
+/* harmony import */ var _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `/*!
+ * Toastify js 1.12.0
+ * https://github.com/apvarun/toastify-js
+ * @license MIT licensed
+ *
+ * Copyright (C) 2018 Varun A P
+ */
+
+.toastify {
+    padding: 12px 20px;
+    color: #ffffff;
+    display: inline-block;
+    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.12), 0 10px 36px -4px rgba(77, 96, 232, 0.3);
+    background: -webkit-linear-gradient(315deg, #73a5ff, #5477f5);
+    background: linear-gradient(135deg, #73a5ff, #5477f5);
+    position: fixed;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+    border-radius: 2px;
+    cursor: pointer;
+    text-decoration: none;
+    max-width: calc(50% - 20px);
+    z-index: 2147483647;
+}
+
+.toastify.on {
+    opacity: 1;
+}
+
+.toast-close {
+    background: transparent;
+    border: 0;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1em;
+    opacity: 0.4;
+    padding: 0 5px;
+}
+
+.toastify-right {
+    right: 15px;
+}
+
+.toastify-left {
+    left: 15px;
+}
+
+.toastify-top {
+    top: -150px;
+}
+
+.toastify-bottom {
+    bottom: -150px;
+}
+
+.toastify-rounded {
+    border-radius: 25px;
+}
+
+.toastify-avatar {
+    width: 1.5em;
+    height: 1.5em;
+    margin: -7px 5px;
+    border-radius: 2px;
+}
+
+.toastify-center {
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    max-width: fit-content;
+    max-width: -moz-fit-content;
+}
+
+@media only screen and (max-width: 360px) {
+    .toastify-right, .toastify-left {
+        margin-left: auto;
+        margin-right: auto;
+        left: 0;
+        right: 0;
+        max-width: fit-content;
+    }
+}
+`, "",{"version":3,"sources":["webpack://./node_modules/toastify-js/src/toastify.css"],"names":[],"mappings":"AAAA;;;;;;EAME;;AAEF;IACI,kBAAkB;IAClB,cAAc;IACd,qBAAqB;IACrB,uFAAuF;IACvF,6DAA6D;IAC7D,qDAAqD;IACrD,eAAe;IACf,UAAU;IACV,wDAAwD;IACxD,kBAAkB;IAClB,eAAe;IACf,qBAAqB;IACrB,2BAA2B;IAC3B,mBAAmB;AACvB;;AAEA;IACI,UAAU;AACd;;AAEA;IACI,uBAAuB;IACvB,SAAS;IACT,YAAY;IACZ,eAAe;IACf,oBAAoB;IACpB,cAAc;IACd,YAAY;IACZ,cAAc;AAClB;;AAEA;IACI,WAAW;AACf;;AAEA;IACI,UAAU;AACd;;AAEA;IACI,WAAW;AACf;;AAEA;IACI,cAAc;AAClB;;AAEA;IACI,mBAAmB;AACvB;;AAEA;IACI,YAAY;IACZ,aAAa;IACb,gBAAgB;IAChB,kBAAkB;AACtB;;AAEA;IACI,iBAAiB;IACjB,kBAAkB;IAClB,OAAO;IACP,QAAQ;IACR,sBAAsB;IACtB,2BAA2B;AAC/B;;AAEA;IACI;QACI,iBAAiB;QACjB,kBAAkB;QAClB,OAAO;QACP,QAAQ;QACR,sBAAsB;IAC1B;AACJ","sourcesContent":["/*!\n * Toastify js 1.12.0\n * https://github.com/apvarun/toastify-js\n * @license MIT licensed\n *\n * Copyright (C) 2018 Varun A P\n */\n\n.toastify {\n    padding: 12px 20px;\n    color: #ffffff;\n    display: inline-block;\n    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.12), 0 10px 36px -4px rgba(77, 96, 232, 0.3);\n    background: -webkit-linear-gradient(315deg, #73a5ff, #5477f5);\n    background: linear-gradient(135deg, #73a5ff, #5477f5);\n    position: fixed;\n    opacity: 0;\n    transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);\n    border-radius: 2px;\n    cursor: pointer;\n    text-decoration: none;\n    max-width: calc(50% - 20px);\n    z-index: 2147483647;\n}\n\n.toastify.on {\n    opacity: 1;\n}\n\n.toast-close {\n    background: transparent;\n    border: 0;\n    color: white;\n    cursor: pointer;\n    font-family: inherit;\n    font-size: 1em;\n    opacity: 0.4;\n    padding: 0 5px;\n}\n\n.toastify-right {\n    right: 15px;\n}\n\n.toastify-left {\n    left: 15px;\n}\n\n.toastify-top {\n    top: -150px;\n}\n\n.toastify-bottom {\n    bottom: -150px;\n}\n\n.toastify-rounded {\n    border-radius: 25px;\n}\n\n.toastify-avatar {\n    width: 1.5em;\n    height: 1.5em;\n    margin: -7px 5px;\n    border-radius: 2px;\n}\n\n.toastify-center {\n    margin-left: auto;\n    margin-right: auto;\n    left: 0;\n    right: 0;\n    max-width: fit-content;\n    max-width: -moz-fit-content;\n}\n\n@media only screen and (max-width: 360px) {\n    .toastify-right, .toastify-left {\n        margin-left: auto;\n        margin-right: auto;\n        left: 0;\n        right: 0;\n        max-width: fit-content;\n    }\n}\n"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ },
+
+/***/ "./node_modules/css-loader/dist/runtime/api.js"
+/*!*****************************************************!*\
+  !*** ./node_modules/css-loader/dist/runtime/api.js ***!
+  \*****************************************************/
+(module) {
+
+"use strict";
+
+
+/*
+  MIT License http://www.opensource.org/licenses/mit-license.php
+  Author Tobias Koppers @sokra
+*/
+module.exports = function (cssWithMappingToString) {
+  var list = [];
+
+  // return the list of modules as css string
+  list.toString = function toString() {
+    return this.map(function (item) {
+      var content = "";
+      var needLayer = typeof item[5] !== "undefined";
+      if (item[4]) {
+        content += "@supports (".concat(item[4], ") {");
+      }
+      if (item[2]) {
+        content += "@media ".concat(item[2], " {");
+      }
+      if (needLayer) {
+        content += "@layer".concat(item[5].length > 0 ? " ".concat(item[5]) : "", " {");
+      }
+      content += cssWithMappingToString(item);
+      if (needLayer) {
+        content += "}";
+      }
+      if (item[2]) {
+        content += "}";
+      }
+      if (item[4]) {
+        content += "}";
+      }
+      return content;
+    }).join("");
+  };
+
+  // import a list of modules into the list
+  list.i = function i(modules, media, dedupe, supports, layer) {
+    if (typeof modules === "string") {
+      modules = [[null, modules, undefined]];
+    }
+    var alreadyImportedModules = {};
+    if (dedupe) {
+      for (var k = 0; k < this.length; k++) {
+        var id = this[k][0];
+        if (id != null) {
+          alreadyImportedModules[id] = true;
+        }
+      }
+    }
+    for (var _k = 0; _k < modules.length; _k++) {
+      var item = [].concat(modules[_k]);
+      if (dedupe && alreadyImportedModules[item[0]]) {
+        continue;
+      }
+      if (typeof layer !== "undefined") {
+        if (typeof item[5] === "undefined") {
+          item[5] = layer;
+        } else {
+          item[1] = "@layer".concat(item[5].length > 0 ? " ".concat(item[5]) : "", " {").concat(item[1], "}");
+          item[5] = layer;
+        }
+      }
+      if (media) {
+        if (!item[2]) {
+          item[2] = media;
+        } else {
+          item[1] = "@media ".concat(item[2], " {").concat(item[1], "}");
+          item[2] = media;
+        }
+      }
+      if (supports) {
+        if (!item[4]) {
+          item[4] = "".concat(supports);
+        } else {
+          item[1] = "@supports (".concat(item[4], ") {").concat(item[1], "}");
+          item[4] = supports;
+        }
+      }
+      list.push(item);
+    }
+  };
+  return list;
+};
+
+/***/ },
+
+/***/ "./node_modules/css-loader/dist/runtime/sourceMaps.js"
+/*!************************************************************!*\
+  !*** ./node_modules/css-loader/dist/runtime/sourceMaps.js ***!
+  \************************************************************/
+(module) {
+
+"use strict";
+
+
+module.exports = function (item) {
+  var content = item[1];
+  var cssMapping = item[3];
+  if (!cssMapping) {
+    return content;
+  }
+  if (typeof btoa === "function") {
+    var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(cssMapping))));
+    var data = "sourceMappingURL=data:application/json;charset=utf-8;base64,".concat(base64);
+    var sourceMapping = "/*# ".concat(data, " */");
+    return [content].concat([sourceMapping]).join("\n");
+  }
+  return [content].join("\n");
+};
+
+/***/ },
+
+/***/ "./node_modules/toastify-js/src/toastify.css"
+/*!***************************************************!*\
+  !*** ./node_modules/toastify-js/src/toastify.css ***!
+  \***************************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! !../../style-loader/dist/runtime/injectStylesIntoStyleTag.js */ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js");
+/* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !../../style-loader/dist/runtime/styleDomAPI.js */ "./node_modules/style-loader/dist/runtime/styleDomAPI.js");
+/* harmony import */ var _style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../style-loader/dist/runtime/insertBySelector.js */ "./node_modules/style-loader/dist/runtime/insertBySelector.js");
+/* harmony import */ var _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../style-loader/dist/runtime/setAttributesWithoutAttributes.js */ "./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js");
+/* harmony import */ var _style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! !../../style-loader/dist/runtime/insertStyleElement.js */ "./node_modules/style-loader/dist/runtime/insertStyleElement.js");
+/* harmony import */ var _style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! !../../style-loader/dist/runtime/styleTagTransform.js */ "./node_modules/style-loader/dist/runtime/styleTagTransform.js");
+/* harmony import */ var _style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js!./toastify.css */ "./node_modules/css-loader/dist/cjs.js!./node_modules/toastify-js/src/toastify.css");
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var options = {};
+
+options.styleTagTransform = (_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default());
+options.setAttributes = (_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default());
+
+      options.insert = _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default().bind(null, "head");
+    
+options.domAPI = (_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default());
+options.insertStyleElement = (_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default());
+
+var update = _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__["default"], options);
+
+
+
+
+       /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__["default"] && _css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__["default"].locals ? _css_loader_dist_cjs_js_toastify_css__WEBPACK_IMPORTED_MODULE_6__["default"].locals : undefined);
+
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js"
+/*!****************************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js ***!
+  \****************************************************************************/
+(module) {
+
+"use strict";
+
+
+var stylesInDOM = [];
+function getIndexByIdentifier(identifier) {
+  var result = -1;
+  for (var i = 0; i < stylesInDOM.length; i++) {
+    if (stylesInDOM[i].identifier === identifier) {
+      result = i;
+      break;
+    }
+  }
+  return result;
+}
+function modulesToDom(list, options) {
+  var idCountMap = {};
+  var identifiers = [];
+  for (var i = 0; i < list.length; i++) {
+    var item = list[i];
+    var id = options.base ? item[0] + options.base : item[0];
+    var count = idCountMap[id] || 0;
+    var identifier = "".concat(id, " ").concat(count);
+    idCountMap[id] = count + 1;
+    var indexByIdentifier = getIndexByIdentifier(identifier);
+    var obj = {
+      css: item[1],
+      media: item[2],
+      sourceMap: item[3],
+      supports: item[4],
+      layer: item[5]
+    };
+    if (indexByIdentifier !== -1) {
+      stylesInDOM[indexByIdentifier].references++;
+      stylesInDOM[indexByIdentifier].updater(obj);
+    } else {
+      var updater = addElementStyle(obj, options);
+      options.byIndex = i;
+      stylesInDOM.splice(i, 0, {
+        identifier: identifier,
+        updater: updater,
+        references: 1
+      });
+    }
+    identifiers.push(identifier);
+  }
+  return identifiers;
+}
+function addElementStyle(obj, options) {
+  var api = options.domAPI(options);
+  api.update(obj);
+  var updater = function updater(newObj) {
+    if (newObj) {
+      if (newObj.css === obj.css && newObj.media === obj.media && newObj.sourceMap === obj.sourceMap && newObj.supports === obj.supports && newObj.layer === obj.layer) {
+        return;
+      }
+      api.update(obj = newObj);
+    } else {
+      api.remove();
+    }
+  };
+  return updater;
+}
+module.exports = function (list, options) {
+  options = options || {};
+  list = list || [];
+  var lastIdentifiers = modulesToDom(list, options);
+  return function update(newList) {
+    newList = newList || [];
+    for (var i = 0; i < lastIdentifiers.length; i++) {
+      var identifier = lastIdentifiers[i];
+      var index = getIndexByIdentifier(identifier);
+      stylesInDOM[index].references--;
+    }
+    var newLastIdentifiers = modulesToDom(newList, options);
+    for (var _i = 0; _i < lastIdentifiers.length; _i++) {
+      var _identifier = lastIdentifiers[_i];
+      var _index = getIndexByIdentifier(_identifier);
+      if (stylesInDOM[_index].references === 0) {
+        stylesInDOM[_index].updater();
+        stylesInDOM.splice(_index, 1);
+      }
+    }
+    lastIdentifiers = newLastIdentifiers;
+  };
+};
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/insertBySelector.js"
+/*!********************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/insertBySelector.js ***!
+  \********************************************************************/
+(module) {
+
+"use strict";
+
+
+var memo = {};
+
+/* istanbul ignore next  */
+function getTarget(target) {
+  if (typeof memo[target] === "undefined") {
+    var styleTarget = document.querySelector(target);
+
+    // Special case to return head of iframe instead of iframe itself
+    if (window.HTMLIFrameElement && styleTarget instanceof window.HTMLIFrameElement) {
+      try {
+        // This will throw an exception if access to iframe is blocked
+        // due to cross-origin restrictions
+        styleTarget = styleTarget.contentDocument.head;
+      } catch (e) {
+        // istanbul ignore next
+        styleTarget = null;
+      }
+    }
+    memo[target] = styleTarget;
+  }
+  return memo[target];
+}
+
+/* istanbul ignore next  */
+function insertBySelector(insert, style) {
+  var target = getTarget(insert);
+  if (!target) {
+    throw new Error("Couldn't find a style target. This probably means that the value for the 'insert' parameter is invalid.");
+  }
+  target.appendChild(style);
+}
+module.exports = insertBySelector;
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/insertStyleElement.js"
+/*!**********************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/insertStyleElement.js ***!
+  \**********************************************************************/
+(module) {
+
+"use strict";
+
+
+/* istanbul ignore next  */
+function insertStyleElement(options) {
+  var element = document.createElement("style");
+  options.setAttributes(element, options.attributes);
+  options.insert(element, options.options);
+  return element;
+}
+module.exports = insertStyleElement;
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js"
+/*!**********************************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js ***!
+  \**********************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
+
+"use strict";
+
+
+/* istanbul ignore next  */
+function setAttributesWithoutAttributes(styleElement) {
+  var nonce =  true ? __webpack_require__.nc : 0;
+  if (nonce) {
+    styleElement.setAttribute("nonce", nonce);
+  }
+}
+module.exports = setAttributesWithoutAttributes;
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/styleDomAPI.js"
+/*!***************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/styleDomAPI.js ***!
+  \***************************************************************/
+(module) {
+
+"use strict";
+
+
+/* istanbul ignore next  */
+function apply(styleElement, options, obj) {
+  var css = "";
+  if (obj.supports) {
+    css += "@supports (".concat(obj.supports, ") {");
+  }
+  if (obj.media) {
+    css += "@media ".concat(obj.media, " {");
+  }
+  var needLayer = typeof obj.layer !== "undefined";
+  if (needLayer) {
+    css += "@layer".concat(obj.layer.length > 0 ? " ".concat(obj.layer) : "", " {");
+  }
+  css += obj.css;
+  if (needLayer) {
+    css += "}";
+  }
+  if (obj.media) {
+    css += "}";
+  }
+  if (obj.supports) {
+    css += "}";
+  }
+  var sourceMap = obj.sourceMap;
+  if (sourceMap && typeof btoa !== "undefined") {
+    css += "\n/*# sourceMappingURL=data:application/json;base64,".concat(btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))), " */");
+  }
+
+  // For old IE
+  /* istanbul ignore if  */
+  options.styleTagTransform(css, styleElement, options.options);
+}
+function removeStyleElement(styleElement) {
+  // istanbul ignore if
+  if (styleElement.parentNode === null) {
+    return false;
+  }
+  styleElement.parentNode.removeChild(styleElement);
+}
+
+/* istanbul ignore next  */
+function domAPI(options) {
+  if (typeof document === "undefined") {
+    return {
+      update: function update() {},
+      remove: function remove() {}
+    };
+  }
+  var styleElement = options.insertStyleElement(options);
+  return {
+    update: function update(obj) {
+      apply(styleElement, options, obj);
+    },
+    remove: function remove() {
+      removeStyleElement(styleElement);
+    }
+  };
+}
+module.exports = domAPI;
+
+/***/ },
+
+/***/ "./node_modules/style-loader/dist/runtime/styleTagTransform.js"
+/*!*********************************************************************!*\
+  !*** ./node_modules/style-loader/dist/runtime/styleTagTransform.js ***!
+  \*********************************************************************/
+(module) {
+
+"use strict";
+
+
+/* istanbul ignore next  */
+function styleTagTransform(css, styleElement) {
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = css;
+  } else {
+    while (styleElement.firstChild) {
+      styleElement.removeChild(styleElement.firstChild);
+    }
+    styleElement.appendChild(document.createTextNode(css));
+  }
+}
+module.exports = styleTagTransform;
+
+/***/ },
+
+/***/ "./node_modules/toastify-js/src/toastify.js"
+/*!**************************************************!*\
+  !*** ./node_modules/toastify-js/src/toastify.js ***!
+  \**************************************************/
+(module) {
+
+/*!
+ * Toastify js 1.12.0
+ * https://github.com/apvarun/toastify-js
+ * @license MIT licensed
+ *
+ * Copyright (C) 2018 Varun A P
+ */
+(function(root, factory) {
+  if ( true && module.exports) {
+    module.exports = factory();
+  } else {
+    root.Toastify = factory();
+  }
+})(this, function(global) {
+  // Object initialization
+  var Toastify = function(options) {
+      // Returning a new init object
+      return new Toastify.lib.init(options);
+    },
+    // Library version
+    version = "1.12.0";
+
+  // Set the default global options
+  Toastify.defaults = {
+    oldestFirst: true,
+    text: "Toastify is awesome!",
+    node: undefined,
+    duration: 3000,
+    selector: undefined,
+    callback: function () {
+    },
+    destination: undefined,
+    newWindow: false,
+    close: false,
+    gravity: "toastify-top",
+    positionLeft: false,
+    position: '',
+    backgroundColor: '',
+    avatar: "",
+    className: "",
+    stopOnFocus: true,
+    onClick: function () {
+    },
+    offset: {x: 0, y: 0},
+    escapeMarkup: true,
+    ariaLive: 'polite',
+    style: {background: ''}
+  };
+
+  // Defining the prototype of the object
+  Toastify.lib = Toastify.prototype = {
+    toastify: version,
+
+    constructor: Toastify,
+
+    // Initializing the object with required parameters
+    init: function(options) {
+      // Verifying and validating the input object
+      if (!options) {
+        options = {};
+      }
+
+      // Creating the options object
+      this.options = {};
+
+      this.toastElement = null;
+
+      // Validating the options
+      this.options.text = options.text || Toastify.defaults.text; // Display message
+      this.options.node = options.node || Toastify.defaults.node;  // Display content as node
+      this.options.duration = options.duration === 0 ? 0 : options.duration || Toastify.defaults.duration; // Display duration
+      this.options.selector = options.selector || Toastify.defaults.selector; // Parent selector
+      this.options.callback = options.callback || Toastify.defaults.callback; // Callback after display
+      this.options.destination = options.destination || Toastify.defaults.destination; // On-click destination
+      this.options.newWindow = options.newWindow || Toastify.defaults.newWindow; // Open destination in new window
+      this.options.close = options.close || Toastify.defaults.close; // Show toast close icon
+      this.options.gravity = options.gravity === "bottom" ? "toastify-bottom" : Toastify.defaults.gravity; // toast position - top or bottom
+      this.options.positionLeft = options.positionLeft || Toastify.defaults.positionLeft; // toast position - left or right
+      this.options.position = options.position || Toastify.defaults.position; // toast position - left or right
+      this.options.backgroundColor = options.backgroundColor || Toastify.defaults.backgroundColor; // toast background color
+      this.options.avatar = options.avatar || Toastify.defaults.avatar; // img element src - url or a path
+      this.options.className = options.className || Toastify.defaults.className; // additional class names for the toast
+      this.options.stopOnFocus = options.stopOnFocus === undefined ? Toastify.defaults.stopOnFocus : options.stopOnFocus; // stop timeout on focus
+      this.options.onClick = options.onClick || Toastify.defaults.onClick; // Callback after click
+      this.options.offset = options.offset || Toastify.defaults.offset; // toast offset
+      this.options.escapeMarkup = options.escapeMarkup !== undefined ? options.escapeMarkup : Toastify.defaults.escapeMarkup;
+      this.options.ariaLive = options.ariaLive || Toastify.defaults.ariaLive;
+      this.options.style = options.style || Toastify.defaults.style;
+      if(options.backgroundColor) {
+        this.options.style.background = options.backgroundColor;
+      }
+
+      // Returning the current object for chaining functions
+      return this;
+    },
+
+    // Building the DOM element
+    buildToast: function() {
+      // Validating if the options are defined
+      if (!this.options) {
+        throw "Toastify is not initialized";
+      }
+
+      // Creating the DOM object
+      var divElement = document.createElement("div");
+      divElement.className = "toastify on " + this.options.className;
+
+      // Positioning toast to left or right or center
+      if (!!this.options.position) {
+        divElement.className += " toastify-" + this.options.position;
+      } else {
+        // To be depreciated in further versions
+        if (this.options.positionLeft === true) {
+          divElement.className += " toastify-left";
+          console.warn('Property `positionLeft` will be depreciated in further versions. Please use `position` instead.')
+        } else {
+          // Default position
+          divElement.className += " toastify-right";
+        }
+      }
+
+      // Assigning gravity of element
+      divElement.className += " " + this.options.gravity;
+
+      if (this.options.backgroundColor) {
+        // This is being deprecated in favor of using the style HTML DOM property
+        console.warn('DEPRECATION NOTICE: "backgroundColor" is being deprecated. Please use the "style.background" property.');
+      }
+
+      // Loop through our style object and apply styles to divElement
+      for (var property in this.options.style) {
+        divElement.style[property] = this.options.style[property];
+      }
+
+      // Announce the toast to screen readers
+      if (this.options.ariaLive) {
+        divElement.setAttribute('aria-live', this.options.ariaLive)
+      }
+
+      // Adding the toast message/node
+      if (this.options.node && this.options.node.nodeType === Node.ELEMENT_NODE) {
+        // If we have a valid node, we insert it
+        divElement.appendChild(this.options.node)
+      } else {
+        if (this.options.escapeMarkup) {
+          divElement.innerText = this.options.text;
+        } else {
+          divElement.innerHTML = this.options.text;
+        }
+
+        if (this.options.avatar !== "") {
+          var avatarElement = document.createElement("img");
+          avatarElement.src = this.options.avatar;
+
+          avatarElement.className = "toastify-avatar";
+
+          if (this.options.position == "left" || this.options.positionLeft === true) {
+            // Adding close icon on the left of content
+            divElement.appendChild(avatarElement);
+          } else {
+            // Adding close icon on the right of content
+            divElement.insertAdjacentElement("afterbegin", avatarElement);
+          }
+        }
+      }
+
+      // Adding a close icon to the toast
+      if (this.options.close === true) {
+        // Create a span for close element
+        var closeElement = document.createElement("button");
+        closeElement.type = "button";
+        closeElement.setAttribute("aria-label", "Close");
+        closeElement.className = "toast-close";
+        closeElement.innerHTML = "&#10006;";
+
+        // Triggering the removal of toast from DOM on close click
+        closeElement.addEventListener(
+          "click",
+          function(event) {
+            event.stopPropagation();
+            this.removeElement(this.toastElement);
+            window.clearTimeout(this.toastElement.timeOutValue);
+          }.bind(this)
+        );
+
+        //Calculating screen width
+        var width = window.innerWidth > 0 ? window.innerWidth : screen.width;
+
+        // Adding the close icon to the toast element
+        // Display on the right if screen width is less than or equal to 360px
+        if ((this.options.position == "left" || this.options.positionLeft === true) && width > 360) {
+          // Adding close icon on the left of content
+          divElement.insertAdjacentElement("afterbegin", closeElement);
+        } else {
+          // Adding close icon on the right of content
+          divElement.appendChild(closeElement);
+        }
+      }
+
+      // Clear timeout while toast is focused
+      if (this.options.stopOnFocus && this.options.duration > 0) {
+        var self = this;
+        // stop countdown
+        divElement.addEventListener(
+          "mouseover",
+          function(event) {
+            window.clearTimeout(divElement.timeOutValue);
+          }
+        )
+        // add back the timeout
+        divElement.addEventListener(
+          "mouseleave",
+          function() {
+            divElement.timeOutValue = window.setTimeout(
+              function() {
+                // Remove the toast from DOM
+                self.removeElement(divElement);
+              },
+              self.options.duration
+            )
+          }
+        )
+      }
+
+      // Adding an on-click destination path
+      if (typeof this.options.destination !== "undefined") {
+        divElement.addEventListener(
+          "click",
+          function(event) {
+            event.stopPropagation();
+            if (this.options.newWindow === true) {
+              window.open(this.options.destination, "_blank");
+            } else {
+              window.location = this.options.destination;
+            }
+          }.bind(this)
+        );
+      }
+
+      if (typeof this.options.onClick === "function" && typeof this.options.destination === "undefined") {
+        divElement.addEventListener(
+          "click",
+          function(event) {
+            event.stopPropagation();
+            this.options.onClick();
+          }.bind(this)
+        );
+      }
+
+      // Adding offset
+      if(typeof this.options.offset === "object") {
+
+        var x = getAxisOffsetAValue("x", this.options);
+        var y = getAxisOffsetAValue("y", this.options);
+
+        var xOffset = this.options.position == "left" ? x : "-" + x;
+        var yOffset = this.options.gravity == "toastify-top" ? y : "-" + y;
+
+        divElement.style.transform = "translate(" + xOffset + "," + yOffset + ")";
+
+      }
+
+      // Returning the generated element
+      return divElement;
+    },
+
+    // Displaying the toast
+    showToast: function() {
+      // Creating the DOM object for the toast
+      this.toastElement = this.buildToast();
+
+      // Getting the root element to with the toast needs to be added
+      var rootElement;
+      if (typeof this.options.selector === "string") {
+        rootElement = document.getElementById(this.options.selector);
+      } else if (this.options.selector instanceof HTMLElement || (typeof ShadowRoot !== 'undefined' && this.options.selector instanceof ShadowRoot)) {
+        rootElement = this.options.selector;
+      } else {
+        rootElement = document.body;
+      }
+
+      // Validating if root element is present in DOM
+      if (!rootElement) {
+        throw "Root element is not defined";
+      }
+
+      // Adding the DOM element
+      var elementToInsert = Toastify.defaults.oldestFirst ? rootElement.firstChild : rootElement.lastChild;
+      rootElement.insertBefore(this.toastElement, elementToInsert);
+
+      // Repositioning the toasts in case multiple toasts are present
+      Toastify.reposition();
+
+      if (this.options.duration > 0) {
+        this.toastElement.timeOutValue = window.setTimeout(
+          function() {
+            // Remove the toast from DOM
+            this.removeElement(this.toastElement);
+          }.bind(this),
+          this.options.duration
+        ); // Binding `this` for function invocation
+      }
+
+      // Supporting function chaining
+      return this;
+    },
+
+    hideToast: function() {
+      if (this.toastElement.timeOutValue) {
+        clearTimeout(this.toastElement.timeOutValue);
+      }
+      this.removeElement(this.toastElement);
+    },
+
+    // Removing the element from the DOM
+    removeElement: function(toastElement) {
+      // Hiding the element
+      // toastElement.classList.remove("on");
+      toastElement.className = toastElement.className.replace(" on", "");
+
+      // Removing the element from DOM after transition end
+      window.setTimeout(
+        function() {
+          // remove options node if any
+          if (this.options.node && this.options.node.parentNode) {
+            this.options.node.parentNode.removeChild(this.options.node);
+          }
+
+          // Remove the element from the DOM, only when the parent node was not removed before.
+          if (toastElement.parentNode) {
+            toastElement.parentNode.removeChild(toastElement);
+          }
+
+          // Calling the callback function
+          this.options.callback.call(toastElement);
+
+          // Repositioning the toasts again
+          Toastify.reposition();
+        }.bind(this),
+        400
+      ); // Binding `this` for function invocation
+    },
+  };
+
+  // Positioning the toasts on the DOM
+  Toastify.reposition = function() {
+
+    // Top margins with gravity
+    var topLeftOffsetSize = {
+      top: 15,
+      bottom: 15,
+    };
+    var topRightOffsetSize = {
+      top: 15,
+      bottom: 15,
+    };
+    var offsetSize = {
+      top: 15,
+      bottom: 15,
+    };
+
+    // Get all toast messages on the DOM
+    var allToasts = document.getElementsByClassName("toastify");
+
+    var classUsed;
+
+    // Modifying the position of each toast element
+    for (var i = 0; i < allToasts.length; i++) {
+      // Getting the applied gravity
+      if (containsClass(allToasts[i], "toastify-top") === true) {
+        classUsed = "toastify-top";
+      } else {
+        classUsed = "toastify-bottom";
+      }
+
+      var height = allToasts[i].offsetHeight;
+      classUsed = classUsed.substr(9, classUsed.length-1)
+      // Spacing between toasts
+      var offset = 15;
+
+      var width = window.innerWidth > 0 ? window.innerWidth : screen.width;
+
+      // Show toast in center if screen with less than or equal to 360px
+      if (width <= 360) {
+        // Setting the position
+        allToasts[i].style[classUsed] = offsetSize[classUsed] + "px";
+
+        offsetSize[classUsed] += height + offset;
+      } else {
+        if (containsClass(allToasts[i], "toastify-left") === true) {
+          // Setting the position
+          allToasts[i].style[classUsed] = topLeftOffsetSize[classUsed] + "px";
+
+          topLeftOffsetSize[classUsed] += height + offset;
+        } else {
+          // Setting the position
+          allToasts[i].style[classUsed] = topRightOffsetSize[classUsed] + "px";
+
+          topRightOffsetSize[classUsed] += height + offset;
+        }
+      }
+    }
+
+    // Supporting function chaining
+    return this;
+  };
+
+  // Helper function to get offset.
+  function getAxisOffsetAValue(axis, options) {
+
+    if(options.offset[axis]) {
+      if(isNaN(options.offset[axis])) {
+        return options.offset[axis];
+      }
+      else {
+        return options.offset[axis] + 'px';
+      }
+    }
+
+    return '0px';
+
+  }
+
+  function containsClass(elem, yourClass) {
+    if (!elem || typeof yourClass !== "string") {
+      return false;
+    } else if (
+      elem.className &&
+      elem.className
+        .trim()
+        .split(/\s+/gi)
+        .indexOf(yourClass) > -1
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // Setting up the prototype for the init object
+  Toastify.lib.init.prototype = Toastify.lib;
+
+  // Returning the Toastify function to be assigned to the window object/module
+  return Toastify;
+});
+
+
 /***/ },
 
 /***/ "./node_modules/@orchidjs/sifter/dist/esm/sifter.js"
@@ -792,6 +2314,7 @@ const debounce = (func, wait = 500) => {
   \**********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Sifter: () => (/* binding */ Sifter),
@@ -1119,6 +2642,7 @@ class Sifter {
   \*********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 
 //# sourceMappingURL=types.js.map
@@ -1131,6 +2655,7 @@ __webpack_require__.r(__webpack_exports__);
   \*********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   cmp: () => (/* binding */ cmp),
@@ -1243,6 +2768,7 @@ const cmp = (a, b) => {
   \*******************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   _asciifold: () => (/* binding */ _asciifold),
@@ -1646,6 +3172,7 @@ const getPattern = (str) => {
   \*******************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   arrayToPattern: () => (/* binding */ arrayToPattern),
@@ -1731,6 +3258,7 @@ const unicodeLength = (str) => {
   \*********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   allSubstrings: () => (/* binding */ allSubstrings)
@@ -1765,6 +3293,7 @@ const allSubstrings = (input) => {
   \*******************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   IS_MAC: () => (/* binding */ IS_MAC),
@@ -1802,6 +3331,7 @@ const KEY_SHORTCUT = IS_MAC ? 'metaKey' : 'ctrlKey'; // ctrl key or apple key fo
   \***************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   highlight: () => (/* binding */ highlight),
@@ -1881,6 +3411,7 @@ const removeHighlight = (el) => {
   \****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ MicroEvent)
@@ -1955,6 +3486,7 @@ class MicroEvent {
   \*****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ MicroPlugin)
@@ -2077,6 +3609,7 @@ function MicroPlugin(Interface) {
   \******************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -2092,7 +3625,6 @@ __webpack_require__.r(__webpack_exports__);
     create: null,
     createOnBlur: false,
     createFilter: null,
-    clearAfterSelect: false,
     highlight: true,
     openOnFocus: true,
     shouldOpen: null,
@@ -2173,6 +3705,7 @@ __webpack_require__.r(__webpack_exports__);
   \*********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ getSettings)
@@ -2291,10 +3824,9 @@ function getSettings(input, settings_user) {
      *
      */
     var init_textbox = () => {
-        var _a, _b;
         const data_raw = input.getAttribute(attr_data);
         if (!data_raw) {
-            var value = (_b = (_a = input === null || input === void 0 ? void 0 : input.value) === null || _a === void 0 ? void 0 : _a.trim()) !== null && _b !== void 0 ? _b : '';
+            var value = input.value.trim() || '';
             if (!settings.allowEmptyOption && !value.length)
                 return;
             const values = value.split(settings.delimiter);
@@ -2332,12 +3864,13 @@ function getSettings(input, settings_user) {
   \***************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -2509,12 +4042,13 @@ function plugin () {
   \****************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -2574,12 +4108,13 @@ function plugin () {
   \*****************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -2767,12 +4302,13 @@ function plugin (userOptions) {
   \*************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -2823,10 +4359,8 @@ function plugin (userOptions) {
   const options = Object.assign({
     className: 'clear-button',
     title: 'Clear All',
-    role: 'button',
-    tabindex: 0,
     html: data => {
-      return `<div class="${data.className}" title="${data.title}" role="${data.role}" tabindex="${data.tabindex}">&times;</div>`;
+      return `<div class="${data.className}" title="${data.title}">&#10799;</div>`;
     }
   }, userOptions);
   self.on('initialize', () => {
@@ -2837,7 +4371,6 @@ function plugin (userOptions) {
       if (self.settings.mode === 'single' && self.settings.allowEmptyOption) {
         self.addItem('');
       }
-      self.refreshOptions(false);
       evt.preventDefault();
       evt.stopPropagation();
     });
@@ -2857,12 +4390,13 @@ function plugin (userOptions) {
   \**********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3091,12 +4625,13 @@ function plugin () {
   \****************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3207,12 +4742,13 @@ function plugin (userOptions) {
   \***************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3367,7 +4903,6 @@ function plugin () {
   self.settings.shouldOpen = true; // make sure the input is shown even if there are no options to display in the dropdown
 
   self.hook('before', 'setup', () => {
-    var _self$input;
     self.focus_node = self.control;
     addClasses(self.control_input, 'dropdown-input');
     const div = getDom('<div class="dropdown-input-wrap">');
@@ -3378,15 +4913,6 @@ function plugin () {
     const placeholder = getDom('<input class="items-placeholder" tabindex="-1" />');
     placeholder.placeholder = self.settings.placeholder || '';
     self.control.append(placeholder);
-    /**
-     * TomSelect renders a custom control with a focusable <input class="items-placeholder">.
-     * The source <select>'s aria-label is not automatically propagated to that input,
-     * which triggers "Missing form label" accessibility warnings.
-     * This helper copies the label from the <select> onto the generated input.
-     */
-    const label = (_self$input = self.input) == null ? void 0 : _self$input.getAttribute('aria-label');
-    if (!label) return;
-    placeholder.setAttribute('aria-label', label);
   });
   self.on('initialize', () => {
     // set tabIndex on control to -1, otherwise [shift+tab] will put focus right back on control_input
@@ -3445,12 +4971,13 @@ function plugin () {
   \***************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3533,12 +5060,13 @@ function plugin () {
   \****************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3573,12 +5101,13 @@ function plugin () {
   \********************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3619,12 +5148,13 @@ function plugin () {
   \*****************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3719,12 +5249,13 @@ function plugin () {
   \**************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3742,6 +5273,14 @@ __webpack_require__.r(__webpack_exports__);
  *   1         -> '1'
  *
  */
+
+/**
+ * Escapes a string for use within HTML.
+ *
+ */
+const escape_html = str => {
+  return (str + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+};
 
 /**
  * Prevent default
@@ -3807,29 +5346,26 @@ const isHtmlString = arg => {
  */
 
 function plugin (userOptions) {
-  const self = this;
   const options = Object.assign({
-    label: '×',
+    label: '&times;',
     title: 'Remove',
     className: 'remove',
-    tabindex: -1,
-    role: 'button',
-    html: data => {
-      var _data$tabindex;
-      const el = document.createElement('div');
-      el.className = data.className || '';
-      el.title = data.title || '';
-      el.setAttribute('role', data.role || 'button');
-      el.tabIndex = (_data$tabindex = data.tabindex) != null ? _data$tabindex : -1;
-      el.textContent = data.label || '';
-      return el;
-    }
+    append: true
   }, userOptions);
+
+  //options.className = 'remove-single';
+  var self = this;
+
+  // override the render method to add remove button to each item
+  if (!options.append) {
+    return;
+  }
+  var html = '<a href="javascript:void(0)" class="' + options.className + '" tabindex="-1" title="' + escape_html(options.title) + '">' + options.label + '</a>';
   self.hook('after', 'setupTemplates', () => {
     var orig_render_item = self.settings.render.item;
     self.settings.render.item = (data, escape) => {
       var item = getDom(orig_render_item.call(self, data, escape));
-      var close_button = getDom(options.html(options));
+      var close_button = getDom(html);
       item.appendChild(close_button);
       addEvent(close_button, 'mousedown', evt => {
         preventDefault(evt, true);
@@ -3862,12 +5398,13 @@ function plugin (userOptions) {
   \*********************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -3918,12 +5455,13 @@ function plugin (userOptions) {
   \***************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ plugin)
 /* harmony export */ });
 /**
-* Tom Select v2.6.2
+* Tom Select v2.4.3
 * Licensed under the Apache License, Version 2.0 (the "License");
 */
 
@@ -4007,7 +5545,7 @@ const castAsArray = arg => {
 };
 
 /**
- * Plugin: "virtual_scroll" (Tom Select)
+ * Plugin: "restore_on_backspace" (Tom Select)
  * Copyright (c) contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -4031,10 +5569,6 @@ function plugin () {
   var loading_more = false;
   var load_more_opt;
   var default_values = [];
-  var default_values_loaded = false;
-  var default_pagination;
-  var default_options = [];
-  var html_values = [];
   if (!self.settings.shouldLoadMore) {
     // return true if additional results should be loaded
     self.settings.shouldLoadMore = () => {
@@ -4066,7 +5600,7 @@ function plugin () {
 
   // can we load more results for given query?
   const canLoadMore = query => {
-    if (self.settings.maxOptions !== null && typeof self.settings.maxOptions === 'number' && dropdown_content.children.length >= self.settings.maxOptions) {
+    if (typeof self.settings.maxOptions === 'number' && dropdown_content.children.length >= self.settings.maxOptions) {
       return false;
     }
     if (query in pagination && pagination[query]) {
@@ -4126,11 +5660,7 @@ function plugin () {
   // wrap the load
   self.hook('instead', 'loadCallback', (options, optgroups) => {
     if (!loading_more) {
-      // When searching (non-empty query), keep selected items and HTML default options,
-      // but remove preloaded remote options so they don't bleed into search results.
-      // For empty query, use clearFilter (keeps default_values + items).
-      const activeFilter = self.lastValue !== '' ? (_option, value) => self.items.indexOf(value) >= 0 || html_values.indexOf(value) >= 0 : clearFilter;
-      self.clearOptions(activeFilter);
+      self.clearOptions(clearFilter);
     } else if (load_more_opt) {
       const first_option = options[0];
       if (first_option !== undefined) {
@@ -4138,27 +5668,7 @@ function plugin () {
       }
     }
     orig_loadCallback.call(self, options, optgroups);
-
-    // After the initial preload (empty query), snapshot default_values and option objects
-    // so they can be restored when the user clears their search.
-    if (!loading_more && !default_values_loaded) {
-      default_values_loaded = true;
-      if (self.lastValue === '') {
-        default_values = Object.keys(self.options);
-        default_pagination = pagination[''];
-        default_options = Object.values(self.options);
-      }
-    }
     loading_more = false;
-  });
-
-  // as the “loading_more” element will be removed from the dropdown,
-  // we activate the previous option if needed
-  // to avoid the dropdown being scrolled back to the first one
-  self.hook('before', 'refreshOptions', () => {
-    if (self.activeOption && "option" !== self.activeOption.getAttribute("role")) {
-      self.setActiveOption(self.activeOption.previousElementSibling);
-    }
   });
 
   // add templates to dropdown
@@ -4186,30 +5696,8 @@ function plugin () {
     }
   });
 
-  // Restore preloaded options and pagination when clearing search
-  const restoreDefaults = () => {
-    if (!default_values_loaded) {
-      return;
-    }
-    // Re-add preloaded option objects (clearOptions can only remove, not restore)
-    self.addOptions(default_options);
-    // Remove any search results that are not part of the preloaded defaults
-    self.clearOptions(clearFilter);
-    if (default_pagination) {
-      pagination[''] = default_pagination;
-    }
-  };
-  self.on('type', query => {
-    if (query === '') {
-      restoreDefaults();
-      self.refreshOptions(false);
-    }
-  });
-  self.on('dropdown_close', restoreDefaults);
-
   // add scroll listener and default templates
   self.on('initialize', () => {
-    html_values = Object.keys(self.options);
     default_values = Object.keys(self.options);
     dropdown_content = self.dropdown_content;
 
@@ -4254,6 +5742,7 @@ function plugin () {
   \*****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -4313,6 +5802,7 @@ _tom_select_js__WEBPACK_IMPORTED_MODULE_0__["default"].define('virtual_scroll', 
   \********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ TomSelect)
@@ -4349,7 +5839,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         this.isFocused = false;
         this.isInputHidden = false;
         this.isSetup = false;
-        this.isDropdownContentStale = true;
         this.ignoreFocus = false;
         this.ignoreHover = false;
         this.hasOptions = false;
@@ -4426,14 +5915,14 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (settings.copyClassesToDropdown) {
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(dropdown, classes);
         }
-        ;(0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(dropdown_content, settings.dropdownContentClass);
+        (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(dropdown_content, settings.dropdownContentClass);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.append)(dropdown, dropdown_content);
         (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.getDom)(settings.dropdownParent || wrapper).appendChild(dropdown);
         // default controlInput
         if ((0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.isHtmlString)(settings.controlInput)) {
             control_input = (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.getDom)(settings.controlInput);
             // set attributes
-            var attrs = ['autocorrect', 'autocapitalize', 'autocomplete', 'spellcheck', 'aria-label'];
+            var attrs = ['autocorrect', 'autocapitalize', 'autocomplete', 'spellcheck'];
             (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(attrs, (attr) => {
                 if (input.getAttribute(attr)) {
                     (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.setAttr)(control_input, { [attr]: input.getAttribute(attr) });
@@ -4496,8 +5985,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.setAttr)(dropdown_content, { 'aria-labelledby': label_id });
         }
         wrapper.style.width = input.style.width;
-        wrapper.style.minWidth = input.style.minWidth;
-        wrapper.style.maxWidth = input.style.maxWidth;
         if (self.plugins.names.length) {
             const classes_plugins = 'plugin-' + self.plugins.names.join(' plugin-');
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)([wrapper, dropdown], classes_plugins);
@@ -4517,7 +6004,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (settings.load && settings.loadThrottle) {
             settings.load = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.loadDebounce)(settings.load, settings.loadThrottle);
         }
-        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(dropdown, 'mousemove', () => {
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(dropdown, 'mousemove', () => {
             self.ignoreHover = false;
         });
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(dropdown, 'mouseenter', (e) => {
@@ -4582,19 +6069,10 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 self.positionDropdown();
             }
         };
-        const input_invalid = () => {
-            if (self.isValid) {
-                self.isValid = false;
-                self.isInvalid = true;
-                self.refreshState();
-            }
-        };
-        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(input, 'invalid', input_invalid);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(document, 'mousedown', doc_mousedown);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(window, 'scroll', win_scroll, passive_event);
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(window, 'resize', win_scroll, passive_event);
         this._destroy = () => {
-            input.removeEventListener('invalid', input_invalid);
             document.removeEventListener('mousedown', doc_mousedown);
             window.removeEventListener('scroll', win_scroll);
             window.removeEventListener('resize', win_scroll);
@@ -4613,10 +6091,27 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         settings.items = [];
         delete settings.optgroups;
         delete settings.options;
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.addEvent)(input, 'invalid', () => {
+            if (self.isValid) {
+                self.isValid = false;
+                self.isInvalid = true;
+                self.refreshState();
+            }
+        });
+        self.updateOriginalInput();
         self.refreshItems();
         self.close(false);
         self.inputState();
         self.isSetup = true;
+        if (input.disabled) {
+            self.disable();
+        }
+        else if (input.readOnly) {
+            self.setReadOnly(true);
+        }
+        else {
+            self.enable(); //sets tabIndex
+        }
         self.on('change', this.onChange);
         (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(input, 'tomselected', 'ts-hidden-accessible');
         self.trigger('initialize');
@@ -4714,18 +6209,9 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      */
     sync(get_settings = true) {
         const self = this;
-        const settings = get_settings ? (0,_getSettings_js__WEBPACK_IMPORTED_MODULE_6__["default"])(self.input, { delimiter: self.settings.delimiter, allowEmptyOption: self.settings.allowEmptyOption }) : self.settings;
+        const settings = get_settings ? (0,_getSettings_js__WEBPACK_IMPORTED_MODULE_6__["default"])(self.input, { delimiter: self.settings.delimiter }) : self.settings;
         self.setupOptions(settings.options, settings.optgroups);
         self.setValue(settings.items || [], true); // silent prevents recursion
-        if (self.input.disabled) {
-            self.disable();
-        }
-        else if (self.input.readOnly) {
-            self.setReadOnly(true);
-        }
-        else {
-            self.enable(); //sets tabIndex
-        }
         self.lastQuery = null; // so updated options will be displayed in dropdown
     }
     /**
@@ -4758,7 +6244,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      * input / select element.
      */
     onChange() {
-        ;(0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.triggerEvent)(this.input, 'input');
+        (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.triggerEvent)(this.input, 'input');
         (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.triggerEvent)(this.input, 'change');
     }
     /**
@@ -4855,7 +6341,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                     if (next)
                         self.setActiveOption(next);
                 }
-                ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
+                (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                 return;
             // up: move selection up
             case _constants_js__WEBPACK_IMPORTED_MODULE_5__.KEY_UP:
@@ -4864,7 +6350,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                     if (prev)
                         self.setActiveOption(prev);
                 }
-                ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
+                (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                 return;
             // return: select active option
             case _constants_js__WEBPACK_IMPORTED_MODULE_5__.KEY_RETURN:
@@ -4898,7 +6384,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                         // if select isFull, then the dropdown won't be open and [tab] will work normally
                         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                     }
-                    else if (self.settings.create && self.createItem()) {
+                    if (self.settings.create && self.createItem()) {
                         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
                     }
                 }
@@ -5022,21 +6508,15 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 if (self.settings.closeAfterSelect) {
                     self.close();
                 }
-                else if (self.settings.clearAfterSelect) {
-                    self.setTextboxValue();
-                }
             });
         }
         else {
             value = option.dataset.value;
             if (typeof value !== 'undefined') {
-                self.isDropdownContentStale = self.settings.hideSelected;
+                self.lastQuery = null;
                 self.addItem(value);
                 if (self.settings.closeAfterSelect) {
                     self.close();
-                }
-                else if (self.settings.clearAfterSelect) {
-                    self.setTextboxValue();
                 }
                 if (!self.settings.hideSelected && evt.type && /click/.test(evt.type)) {
                     self.setActiveOption(option);
@@ -5111,7 +6591,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
     loadCallback(options, optgroups) {
         const self = this;
         self.loading = Math.max(self.loading - 1, 0);
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         self.clearActiveOption(); // when new results load, focus should be on first option
         self.setupOptions(options, optgroups);
         self.refreshOptions(self.isFocused && !self.isInputHidden);
@@ -5210,7 +6690,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                     self.setActiveItemClass(item);
                 }
             }
-            ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
+            (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e);
         }
         else if ((eventName === 'click' && (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.isKeyDown)(_constants_js__WEBPACK_IMPORTED_MODULE_5__.KEY_SHORTCUT, e)) || (eventName === 'keydown' && (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.isKeyDown)('shiftKey', e))) {
             if (item.classList.contains('active')) {
@@ -5259,7 +6739,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      *
      */
     clearActiveItems() {
-        ;(0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.removeClasses)(this.activeItems, 'active');
+        (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.removeClasses)(this.activeItems, 'active');
         this.activeItems = [];
     }
     /**
@@ -5376,19 +6856,15 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (self.isDisabled || self.isReadOnly)
             return;
         self.ignoreFocus = true;
-        const focusTarget = this.control_input.offsetWidth ? this.control_input : this.focus_node;
-        focusTarget.focus();
+        if (self.control_input.offsetWidth) {
+            self.control_input.focus();
+        }
+        else {
+            self.focus_node.focus();
+        }
         setTimeout(() => {
             self.ignoreFocus = false;
-            // Fix https://github.com/orchidjs/tom-select/issues/806
-            // Only proceed if this instance's element is still the active element. If Edge autofill
-            // (or anything else) has moved focus to a different element in the interim, calling
-            // onFocus() here would steal focus back and restart the cascade loop.
-            const root = focusTarget.getRootNode();
-            if (root.activeElement !== focusTarget) {
-                return;
-            }
-            this.onFocus();
+            self.onFocus();
         }, 0);
     }
     /**
@@ -5446,13 +6922,8 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             }
         }
         // perform search
-        if (self.isDropdownContentStale || query !== self.lastQuery) {
+        if (query !== self.lastQuery) {
             self.lastQuery = query;
-            // temp fix for https://github.com/orchidjs/tom-select/issues/987
-            // UI crashed when more than 30 same chars in a row, prevent search and return empt result
-            if (/(.)\1{15,}/.test(query)) {
-                query = '';
-            }
             result = self.sifter.search(query, Object.assign(options, { score: calculateScore }));
             self.currentResults = result;
         }
@@ -5463,7 +6934,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (self.settings.hideSelected) {
             result.items = result.items.filter((item) => {
                 let hashed = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.hash_key)(item.id);
-                return !(hashed !== null && self.items.indexOf(hashed) !== -1);
+                return !(hashed && self.items.indexOf(hashed) !== -1);
             });
         }
         return result;
@@ -5535,13 +7006,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 optgroup = optgroups[j];
                 let order = option.$order;
                 let self_optgroup = self.optgroups[optgroup];
-                if (self_optgroup === undefined && typeof self.settings.optionGroupRegister === 'function') {
-                    var regGroup;
-                    if (regGroup = self.settings.optionGroupRegister.apply(self, [optgroup])) {
-                        self.registerOptionGroup(regGroup);
-                    }
-                }
-                self_optgroup = self.optgroups[optgroup];
                 if (self_optgroup === undefined) {
                     optgroup = '';
                 }
@@ -5596,7 +7060,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         });
         dropdown_content.innerHTML = '';
         (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.append)(dropdown_content, html);
-        self.isDropdownContentStale = false;
         // highlight matching terms inline
         if (self.settings.highlight) {
             (0,_contrib_highlight_js__WEBPACK_IMPORTED_MODULE_4__.removeHighlight)(dropdown_content);
@@ -5691,13 +7154,12 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         }
         const key = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.hash_key)(data[self.settings.valueField]);
         if (key === null || self.options.hasOwnProperty(key)) {
-            self.updateOption(data[self.settings.valueField], data);
             return false;
         }
         data.$order = data.$order || ++self.order;
         data.$id = self.inputId + '-opt-' + data.$order;
         self.options[key] = data;
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         if (user_created) {
             self.userOptions[key] = user_created;
             self.trigger('option_add', key, data);
@@ -5709,7 +7171,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      *
      */
     addOptions(data, user_created = false) {
-        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(data, (dat) => {
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(data, (dat) => {
             this.addOption(dat, user_created);
         });
     }
@@ -5813,8 +7275,8 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.addClasses)(item_new, 'active');
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.replaceNode)(item, item_new);
         }
-        // we might have updated the sortField
-        self.isDropdownContentStale = true;
+        // invalidate last query because we might have updated the sortField
+        self.lastQuery = null;
     }
     /**
      * Removes a single option.
@@ -5826,7 +7288,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         self.uncacheValue(value);
         delete self.userOptions[value];
         delete self.options[value];
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         self.trigger('option_remove', value);
         self.removeItem(value, silent);
     }
@@ -5845,7 +7307,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             }
         });
         this.options = this.sifter.items = selected;
-        this.isDropdownContentStale = true;
+        this.lastQuery = null;
         this.trigger('option_clear');
     }
     /**
@@ -5977,10 +7439,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                         self.setActiveOption(next);
                     }
                 }
-                //remove input value when enabled
-                if (self.settings.clearAfterSelect) {
-                    self.setTextboxValue();
-                }
                 // refreshOptions after setActiveOption(),
                 // otherwise setActiveOption() will be called by refreshOptions() with the wrong value
                 if (!self.isPending && !self.settings.closeAfterSelect) {
@@ -6024,7 +7482,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             (0,_vanilla_js__WEBPACK_IMPORTED_MODULE_8__.removeClasses)(item, 'active');
         }
         self.items.splice(i, 1);
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         if (!self.settings.persist && self.userOptions.hasOwnProperty(value)) {
             self.removeOption(value, silent);
         }
@@ -6058,12 +7516,6 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         var output;
         input = input || self.inputValue();
         if (!self.canCreate(input)) {
-            const hash = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.hash_key)(input);
-            if (hash) {
-                if (this.options[input]) {
-                    self.addItem(input);
-                }
-            }
             callback();
             return false;
         }
@@ -6103,7 +7555,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      */
     refreshItems() {
         var self = this;
-        self.isDropdownContentStale = true;
+        self.lastQuery = null;
         if (self.isSetup) {
             self.addItems(self.items);
         }
@@ -6182,7 +7634,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
                 selected.push(option_el);
                 // marking empty option as selected can break validation
                 // fixes https://github.com/orchidjs/tom-select/issues/303
-                if (option_el != empty_option || has_selected > 0 || self.settings.mode == 'multi') {
+                if (option_el != empty_option || has_selected > 0) {
                     option_el.selected = true;
                 }
                 return option_el;
@@ -6325,7 +7777,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
             if (direction > 0) {
                 caret++;
             }
-            ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(self.activeItems, (item) => rm_items.push(item));
+            (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(self.activeItems, (item) => rm_items.push(item));
         }
         else if ((self.isFocused || self.settings.mode === 'single') && self.items.length) {
             const items = self.controlChildren();
@@ -6343,7 +7795,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
         if (!self.shouldDelete(rm_items, e)) {
             return false;
         }
-        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e, true);
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.preventDefault)(e, true);
         // perform removal
         if (typeof caret !== 'undefined') {
             self.setCaret(caret);
@@ -6362,7 +7814,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
     shouldDelete(items, evt) {
         const values = items.map(item => item.dataset.value);
         // allow the callback to abort
-        if (!values.length || (typeof this.settings.onDelete === 'function' && this.settings.onDelete.call(this, values, evt) === false)) {
+        if (!values.length || (typeof this.settings.onDelete === 'function' && this.settings.onDelete(values, evt) === false)) {
             return false;
         }
         return true;
@@ -6581,7 +8033,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
      *
      */
     clearCache() {
-        ;(0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(this.options, (option) => {
+        (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.iterate)(this.options, (option) => {
             if (option.$div) {
                 option.$div.remove();
                 delete option.$div;
@@ -6642,6 +8094,7 @@ class TomSelect extends (0,_contrib_microplugin_js__WEBPACK_IMPORTED_MODULE_1__[
   \***************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   addEvent: () => (/* binding */ addEvent),
@@ -6863,6 +8316,7 @@ const iterate = (object, callback) => {
   \*****************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   addClasses: () => (/* binding */ addClasses),
@@ -7060,18 +8514,18 @@ const replaceNode = (existing, replacement) => {
 /******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
-/******/ 	const __webpack_module_cache__ = {};
+/******/ 	var __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
-/******/ 		const cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
 /******/ 			return cachedModule.exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
-/******/ 		const module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			id: moduleId,
 /******/ 			// no module.loaded needed
 /******/ 			exports: {}
 /******/ 		};
@@ -7079,39 +8533,36 @@ const replaceNode = (existing, replacement) => {
 /******/ 		// Execute the module function
 /******/ 		if (!(moduleId in __webpack_modules__)) {
 /******/ 			delete __webpack_module_cache__[moduleId];
-/******/ 			const e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			var e = new Error("Cannot find module '" + moduleId + "'");
 /******/ 			e.code = 'MODULE_NOT_FOUND';
 /******/ 			throw e;
 /******/ 		}
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
-/******/ 		// define getter/value functions for harmony exports
+/******/ 		// define getter functions for harmony exports
 /******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			if(Array.isArray(definition)) {
-/******/ 				var i = 0;
-/******/ 				while(i < definition.length) {
-/******/ 					var key = definition[i++];
-/******/ 					var binding = definition[i++];
-/******/ 					if(!__webpack_require__.o(exports, key)) {
-/******/ 						if(binding === 0) {
-/******/ 							Object.defineProperty(exports, key, { enumerable: true, value: definition[i++] });
-/******/ 						} else {
-/******/ 							Object.defineProperty(exports, key, { enumerable: true, get: binding });
-/******/ 						}
-/******/ 					} else if(binding === 0) { i++; }
-/******/ 				}
-/******/ 			} else {
-/******/ 				for(var key in definition) {
-/******/ 					if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 						Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 					}
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
 /******/ 		};
@@ -7119,30 +8570,38 @@ const replaceNode = (existing, replacement) => {
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.hasOwn(obj, prop))
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
 /******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(Symbol.toStringTag) {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
 /******/ 			Object.defineProperty(exports, '__esModule', { value: true });
 /******/ 		};
 /******/ 	})();
 /******/ 	
+/******/ 	/* webpack/runtime/nonce */
+/******/ 	(() => {
+/******/ 		__webpack_require__.nc = undefined;
+/******/ 	})();
+/******/ 	
 /************************************************************************/
-let __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
+var __webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
 (() => {
+"use strict";
 /*!**************************************!*\
   !*** ./assets/src/js/admin/admin.js ***!
   \**************************************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _init_tom_select_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./init-tom-select.js */ "./assets/src/js/admin/init-tom-select.js");
 /* harmony import */ var _utils_admin_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils-admin.js */ "./assets/src/js/admin/utils-admin.js");
+/* harmony import */ var _share_dropdown_pages_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./share/dropdown-pages.js */ "./assets/src/js/admin/share/dropdown-pages.js");
+
 
 
 (function ($) {
@@ -7260,7 +8719,8 @@ __webpack_require__.r(__webpack_exports__);
   const onReady = function onReady() {
     lpMetaboxFileInput();
     //updateDb();
-    $('.learn-press-dropdown-pages').LP('DropdownPages');
+    const dropdownPages = new _share_dropdown_pages_js__WEBPACK_IMPORTED_MODULE_2__.DropdownPages();
+    dropdownPages.init();
     //$( '.learn-press-advertisement-slider' ).LP( 'Advertisement', 'a', 's' ).appendTo( $( '#wpbody-content' ) );
     //$( '.learn-press-toggle-item-preview' ).on( 'change', updateItemPreview );
     $('.learn-press-tip').LP('QuickTip'); //$('.learn-press-tabs').LP('AdminTab');

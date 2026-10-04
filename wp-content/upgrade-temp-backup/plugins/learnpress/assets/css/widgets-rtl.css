@@ -2,42 +2,12 @@
 /**
  * Mixin
  */
-@-webkit-keyframes rotating4 {
-  from {
-    -webkit-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
-    transform: rotate(0deg);
-  }
-  to {
-    -webkit-transform: rotate(-360deg);
-    -o-transform: rotate(-360deg);
-    transform: rotate(-360deg);
-  }
-}
 @keyframes rotating4 {
   from {
-    -ms-transform: rotate(0deg);
-    -moz-transform: rotate(0deg);
-    -webkit-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
     transform: rotate(0deg);
   }
   to {
-    -ms-transform: rotate(-360deg);
-    -moz-transform: rotate(-360deg);
-    -webkit-transform: rotate(-360deg);
-    -o-transform: rotate(-360deg);
     transform: rotate(-360deg);
-  }
-}
-@-webkit-keyframes animation4 {
-  from {
-    right: -40%;
-    width: 40%;
-  }
-  to {
-    right: 100%;
-    width: 10%;
   }
 }
 @keyframes animation4 {
@@ -60,7 +30,7 @@
 
 @font-face {
   font-family: "lp-icon";
-  src: url("../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=42") format("woff2");
+  src: url("../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=76") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -1161,32 +1131,20 @@
 @keyframes lp-rotating {
   from {
     -webkit-transform: rotate(0deg);
-    -moz-transform: rotate(0deg);
-    -ms-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
     transform: rotate(0deg);
   }
   to {
     -webkit-transform: rotate(-360deg);
-    -moz-transform: rotate(-360deg);
-    -ms-transform: rotate(-360deg);
-    -o-transform: rotate(-360deg);
     transform: rotate(-360deg);
   }
 }
 @-webkit-keyframes lp-rotating {
   from {
     -webkit-transform: rotate(0deg);
-    -moz-transform: rotate(0deg);
-    -ms-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
     transform: rotate(0deg);
   }
   to {
     -webkit-transform: rotate(-360deg);
-    -moz-transform: rotate(-360deg);
-    -ms-transform: rotate(-360deg);
-    -o-transform: rotate(-360deg);
     transform: rotate(-360deg);
   }
 }
@@ -1331,8 +1289,6 @@
   position: relative;
   height: 6px;
   background: #ccc;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
   border-radius: 5px;
 }
 .learnpress.widget_course_progress .lp-course-progress.learn-press-progress .progress-bg .progress-active,
@@ -1343,8 +1299,6 @@
   height: 100%;
   margin-right: -100%;
   background: var(--lp-primary-color);
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
   border-radius: 5px;
 }
 .learnpress.widget_course_progress .lp-course-progress.learn-press-progress .lp-passing-conditional,

@@ -18,42 +18,12 @@
 /**
  * Mixin
  */
-@-webkit-keyframes rotating4 {
-  from {
-    -webkit-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
-    transform: rotate(0deg);
-  }
-  to {
-    -webkit-transform: rotate(360deg);
-    -o-transform: rotate(360deg);
-    transform: rotate(360deg);
-  }
-}
 @keyframes rotating4 {
   from {
-    -ms-transform: rotate(0deg);
-    -moz-transform: rotate(0deg);
-    -webkit-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
     transform: rotate(0deg);
   }
   to {
-    -ms-transform: rotate(360deg);
-    -moz-transform: rotate(360deg);
-    -webkit-transform: rotate(360deg);
-    -o-transform: rotate(360deg);
     transform: rotate(360deg);
-  }
-}
-@-webkit-keyframes animation4 {
-  from {
-    left: -40%;
-    width: 40%;
-  }
-  to {
-    left: 100%;
-    width: 10%;
   }
 }
 @keyframes animation4 {
@@ -92,8 +62,6 @@ button {
 .learnpress-page input[type=number],
 .learnpress-page input[type=password], .learnpress-page textarea {
   border-color: var(--lp-border-color, #E2E0DB);
-  -webkit-border-radius: var(--lp-border-radius, 5px);
-  -moz-border-radius: var(--lp-border-radius, 5px);
   border-radius: var(--lp-border-radius, 5px);
 }
 .learnpress-page input[type=text]:focus,
@@ -113,13 +81,8 @@ button {
   font-weight: 400;
   text-align: center;
   text-transform: capitalize;
-  -webkit-border-radius: var(--lp-border-radius, 5px);
-  -moz-border-radius: var(--lp-border-radius, 5px);
   border-radius: var(--lp-border-radius, 5px);
   -webkit-transition: all 0.25s;
-  -moz-transition: all 0.25s;
-  -ms-transition: all 0.25s;
-  -o-transition: all 0.25s;
   transition: all 0.25s;
 }
 .learnpress-page .lp-button.large, .learnpress-page #lp-button.large {
@@ -138,8 +101,6 @@ button {
 .learnpress-page .lp-button.btn-ajax-on .icon, .learnpress-page #lp-button.btn-ajax-on .icon {
   display: inline-block;
   margin-right: 5px;
-  -webkit-animation: lp-rotating 1s linear infinite;
-  -moz-animation: lp-rotating 1s linear infinite;
   animation: lp-rotating 1s linear infinite;
 }
 .learnpress-page .lp-button:focus, .learnpress-page #lp-button:focus {
@@ -161,9 +122,6 @@ input, button, select, textarea {
 }*/
 a {
   -webkit-transition: 0.3s;
-  -moz-transition: 0.3s;
-  -ms-transition: 0.3s;
-  -o-transition: 0.3s;
   transition: 0.3s;
   text-decoration: none;
 }

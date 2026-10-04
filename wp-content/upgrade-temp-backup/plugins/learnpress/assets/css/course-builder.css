@@ -13,42 +13,12 @@ body {
 /**
  * Mixin
  */
-@-webkit-keyframes rotating4 {
-  from {
-    -webkit-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
-    transform: rotate(0deg);
-  }
-  to {
-    -webkit-transform: rotate(360deg);
-    -o-transform: rotate(360deg);
-    transform: rotate(360deg);
-  }
-}
 @keyframes rotating4 {
   from {
-    -ms-transform: rotate(0deg);
-    -moz-transform: rotate(0deg);
-    -webkit-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
     transform: rotate(0deg);
   }
   to {
-    -ms-transform: rotate(360deg);
-    -moz-transform: rotate(360deg);
-    -webkit-transform: rotate(360deg);
-    -o-transform: rotate(360deg);
     transform: rotate(360deg);
-  }
-}
-@-webkit-keyframes animation4 {
-  from {
-    left: -40%;
-    width: 40%;
-  }
-  to {
-    left: 100%;
-    width: 10%;
   }
 }
 @keyframes animation4 {
@@ -87,8 +57,6 @@ button {
 .learnpress-page input[type=number],
 .learnpress-page input[type=password], .learnpress-page textarea {
   border-color: var(--lp-border-color, #E2E0DB);
-  -webkit-border-radius: var(--lp-border-radius, 5px);
-  -moz-border-radius: var(--lp-border-radius, 5px);
   border-radius: var(--lp-border-radius, 5px);
 }
 .learnpress-page input[type=text]:focus,
@@ -108,13 +76,8 @@ button {
   font-weight: 400;
   text-align: center;
   text-transform: capitalize;
-  -webkit-border-radius: var(--lp-border-radius, 5px);
-  -moz-border-radius: var(--lp-border-radius, 5px);
   border-radius: var(--lp-border-radius, 5px);
   -webkit-transition: all 0.25s;
-  -moz-transition: all 0.25s;
-  -ms-transition: all 0.25s;
-  -o-transition: all 0.25s;
   transition: all 0.25s;
 }
 .learnpress-page .lp-button.large, .learnpress-page #lp-button.large {
@@ -133,8 +96,6 @@ button {
 .learnpress-page .lp-button.btn-ajax-on .icon, .learnpress-page #lp-button.btn-ajax-on .icon {
   display: inline-block;
   margin-right: 5px;
-  -webkit-animation: lp-rotating 1s linear infinite;
-  -moz-animation: lp-rotating 1s linear infinite;
   animation: lp-rotating 1s linear infinite;
 }
 .learnpress-page .lp-button:focus, .learnpress-page #lp-button:focus {
@@ -156,9 +117,6 @@ input, button, select, textarea {
 }*/
 a {
   -webkit-transition: 0.3s;
-  -moz-transition: 0.3s;
-  -ms-transition: 0.3s;
-  -o-transition: 0.3s;
   transition: 0.3s;
   text-decoration: none;
 }
@@ -222,7 +180,6 @@ p:last-child {
 
 .learn-press-message {
   position: relative;
-  margin: 24px auto;
   padding: 10px 20px;
   border-radius: var(--lp-border-radius, 5px);
   background-color: #E5F7FF;
@@ -297,32 +254,20 @@ p:last-child {
 @keyframes lp-rotating {
   from {
     -webkit-transform: rotate(0deg);
-    -moz-transform: rotate(0deg);
-    -ms-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
     transform: rotate(0deg);
   }
   to {
     -webkit-transform: rotate(360deg);
-    -moz-transform: rotate(360deg);
-    -ms-transform: rotate(360deg);
-    -o-transform: rotate(360deg);
     transform: rotate(360deg);
   }
 }
 @-webkit-keyframes lp-rotating {
   from {
     -webkit-transform: rotate(0deg);
-    -moz-transform: rotate(0deg);
-    -ms-transform: rotate(0deg);
-    -o-transform: rotate(0deg);
     transform: rotate(0deg);
   }
   to {
     -webkit-transform: rotate(360deg);
-    -moz-transform: rotate(360deg);
-    -ms-transform: rotate(360deg);
-    -o-transform: rotate(360deg);
     transform: rotate(360deg);
   }
 }
@@ -360,34 +305,43 @@ p:last-child {
   }
 }
 .lp-btn-ai-style {
+  margin: 10px;
+}
+
+.lp-btn-ai-style, .lp-btn-generate-with-ai {
+  padding: 8px 10px;
   background: #f6f7f7;
+  font-weight: 500;
   border: 1px solid #2271b1;
   color: #2271b1;
+  line-height: 1;
   text-decoration: none;
   text-shadow: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  min-height: 30px;
-  padding: 0 10px;
-  cursor: pointer;
-  -webkit-appearance: none;
-  border-radius: 3px;
+  min-height: 32px;
+  appearance: none;
+  border-radius: 2px;
   white-space: nowrap;
-  box-sizing: border-box;
+  cursor: pointer;
 }
-.lp-btn-ai-style:active {
+.lp-btn-ai-style:active, .lp-btn-generate-with-ai:active {
   box-shadow: none;
   color: #fff;
 }
-.lp-btn-ai-style:hover {
+.lp-btn-ai-style:hover, .lp-btn-generate-with-ai:hover {
   background: #6B46E9 !important;
   color: #fff !important;
 }
 
-.lp-btn-generate-course-with-ai, .lp-btn-warning-enable-ai {
-  position: absolute;
-  margin: 10px 0 0 10px !important;
+#post-body-content .lp-btn-ai-style {
+  padding: 12px;
+}
+#post-body-content #wp-content-media-buttons .lp-btn-ai-style {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .create-course-modal {
@@ -1532,6 +1486,21 @@ html {
   border-color: none;
   box-shadow: unset;
   outline: unset;
+}
+.lp-course-builder-canvas select,
+.lp-course-builder-canvas input,
+.lp-course-builder-canvas textarea,
+.lp-toast select,
+.lp-toast input,
+.lp-toast textarea,
+.swal2-container select,
+.swal2-container input,
+.swal2-container textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1a1a1a;
+  background: #fff;
 }
 
 #lp-course-builder {
@@ -6522,7 +6491,6 @@ div:where(.swal2-container).swal2-center > .swal2-popup {
 .lp-course-builder-content__section .cb-course-edit-categories__checkbox input[type=checkbox] {
   appearance: none;
   -webkit-appearance: none;
-  -moz-appearance: none;
   width: 20px;
   height: 20px;
   border: 2px solid #d0d5dd;
@@ -7243,7 +7211,6 @@ div:where(.swal2-container).swal2-center > .swal2-popup {
 .lp-course-builder-content__section .cb-course-edit-categories__checkbox input[type=checkbox] {
   appearance: none;
   -webkit-appearance: none;
-  -moz-appearance: none;
   width: 20px;
   height: 20px;
   border: 2px solid #d0d5dd;
@@ -8635,7 +8602,6 @@ div:where(.swal2-container).swal2-center > .swal2-popup {
 .lp-cb-tab-content .cb-section__course-edit .cb-course-edit-categories__checkbox input[type=checkbox] {
   appearance: none;
   -webkit-appearance: none;
-  -moz-appearance: none;
   width: 20px;
   height: 20px;
   border: 2px solid #d0d5dd;
@@ -9356,7 +9322,6 @@ div:where(.swal2-container).swal2-center > .swal2-popup {
 .lp-cb-tab-content .cb-section__course-edit .cb-course-edit-categories__checkbox input[type=checkbox] {
   appearance: none;
   -webkit-appearance: none;
-  -moz-appearance: none;
   width: 20px;
   height: 20px;
   border: 2px solid #d0d5dd;
@@ -13339,7 +13304,6 @@ li.children-visible > label > .lp-cat-toggle {
 .cb-section__quiz-edit .cb-course-edit-categories__checkbox input[type=checkbox] {
   appearance: none;
   -webkit-appearance: none;
-  -moz-appearance: none;
   width: 20px;
   height: 20px;
   border: 2px solid #d0d5dd;
@@ -14060,7 +14024,6 @@ li.children-visible > label > .lp-cat-toggle {
 .cb-section__quiz-edit .cb-course-edit-categories__checkbox input[type=checkbox] {
   appearance: none;
   -webkit-appearance: none;
-  -moz-appearance: none;
   width: 20px;
   height: 20px;
   border: 2px solid #d0d5dd;
@@ -17170,6 +17133,153 @@ body.lp-popup-open {
 		}
 	}
 }*/
+/**
+* Style for table LearnPress
+*/
+.lp-table-wrap {
+  border-radius: 5px;
+  width: 100%;
+  border: 1px solid var(--lp-border-color, #E2E0DB);
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table.lp-list-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0;
+  min-width: 768px;
+}
+table.lp-list-table td {
+  padding: 0;
+}
+table.lp-list-table .learn-press-pagination {
+  text-align: left;
+}
+table.lp-list-table thead {
+  background-color: var(--lp-white-grey, #F7F7FB);
+  border: none;
+}
+table.lp-list-table thead tr {
+  border-bottom: 1px solid var(--lp-border-color, #E2E0DB);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+}
+table.lp-list-table thead tr:hover {
+  background: #eff6ff;
+}
+table.lp-list-table thead th {
+  background: none;
+  border: none;
+  font-size: 1em;
+  padding: 10px 20px;
+  text-align: left;
+}
+table.lp-list-table thead th td {
+  border: none;
+  padding: 0;
+}
+table.lp-list-table tbody {
+  font-size: 14px;
+}
+table.lp-list-table tbody tr {
+  border: none;
+  border-bottom: 1px solid var(--lp-white-grey, #F7F7FB);
+}
+table.lp-list-table tbody tr:hover {
+  background: #eff6ff !important;
+}
+table.lp-list-table tbody tr:nth-child(odd) {
+  background: #f6f7f7;
+}
+table.lp-list-table tbody tr:nth-child(even) {
+  background: #fff;
+}
+table.lp-list-table tbody tr td {
+  border: none;
+  padding: 10px 20px;
+  text-align: left;
+}
+table.lp-list-table tbody tr td a {
+  text-decoration: none;
+}
+table.lp-list-table tfoot tr {
+  border: none;
+}
+table.lp-list-table tfoot tr td, table.lp-list-table tfoot tr th {
+  border: none;
+}
+table.lp-list-table tfoot tr td > div, table.lp-list-table tfoot tr th > div {
+  padding: 20px;
+}
+table.lp-list-table tfoot .pagination {
+  border: none;
+  padding: 0;
+}
+table.lp-list-table.order-table-details tbody tr:last-child {
+  --lp-white-grey: var(--lp-border-color, #E2E0DB);
+}
+table.lp-list-table.order-table-details tfoot {
+  border-top: 1px solid var(--lp-border-color, #E2E0DB);
+}
+table.lp-list-table.order-table-details tfoot tr td, table.lp-list-table.order-table-details tfoot tr th {
+  padding: 10px 20px;
+  background-color: transparent;
+}
+table.lp-list-table.order-table-details tfoot tr:not(:last-child) td, table.lp-list-table.order-table-details tfoot tr:not(:last-child) th {
+  padding-bottom: 0;
+}
+
+.lp_profile_course_progress__nav {
+  margin-top: 1rem;
+}
+
+#profile-content-order-details .lp-table-wrap {
+  margin-bottom: 1rem;
+}
+
+/**
+* Style for the Form Filter list
+* @since 4.4.5
+* @version 1.0.0
+*/
+.lp-form-filter {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.lp-form-filter__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+.lp-form-filter__fields > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.lp-form-filter .filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.lp-form-filter .filter-field label {
+  text-align: left;
+}
+.lp-form-filter button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.lp-form-filter__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 @keyframes rotation {
   0% {
     transform: rotate(0deg);
