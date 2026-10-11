@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  * @package LearnPress\Services
  * @change from LP_Manager_Addons class old
  * @since 4.2.1
- * @version 1.0.1
+ * @version 1.0.2
  */
 class AddonService {
 	use Singleton;
@@ -48,6 +48,7 @@ class AddonService {
 	 * @var string Link active site.
 	 */
 	private $link_active_site = 'https://updates.thimpress.com/thim-addon-market/active-site';
+	public $link_extend_site  = 'https://thimpress.com/extend-license/?purchase_code={purchase_code}';
 	/**
 	 * @var string Link download plugin from org.
 	 */
@@ -110,7 +111,7 @@ class AddonService {
 				if ( ! is_wp_error( $response )
 					&& 200 === wp_remote_retrieve_response_code( $response ) ) {
 					$data = LP_Helper::json_decode( wp_remote_retrieve_body( $response ) );
-					$lp_cache->set_cache( $key_cache, $data, 5 * MINUTE_IN_SECONDS );
+					$lp_cache->set_cache( $key_cache, $data, 2 * MINUTE_IN_SECONDS );
 				} else {
 					throw new Exception( $response->get_error_message() );
 				}
@@ -166,6 +167,8 @@ class AddonService {
 	 *
 	 * @return object
 	 * @throws Exception
+	 * @since 4.4.9
+	 * @version 1.0.0
 	 */
 	public function get_addons_purchased( object $addons ): object {
 		$addons_purchase = LP_Settings::get_option( $this->key_purchase_addons, [] );
@@ -177,29 +180,31 @@ class AddonService {
 		$key_cache    = 'addons_purchased_info';
 		$addons_cache = $lp_cache->get_cache( $key_cache );
 		if ( false !== $addons_cache ) {
-			return json_decode( wp_json_encode( $addons_cache ) );
+			$data = json_decode( wp_json_encode( $addons_cache ) );
+		} else {
+			$args = [
+				'method'     => 'POST',
+				'body'       => [
+					'addons_purchase' => $addons_purchase,
+				],
+				'timeout'    => 30,
+				'user-agent' => site_url(),
+			];
+
+			$result = wp_remote_post( $this->link_addons_purchased, $args );
+			if ( is_wp_error( $result ) ) {
+				throw new Exception( $result->get_error_message() );
+			}
+
+			$data_str = wp_remote_retrieve_body( $result );
+			if ( preg_match( '/^Error.*/', $data_str ) ) {
+				throw new Exception( $data_str );
+			}
+
+			$data = LP_Helper::json_decode( $data_str );
+
+			$lp_cache->set_cache( $key_cache, $data, 12 * HOUR_IN_SECONDS );
 		}
-
-		$args = [
-			'method'     => 'POST',
-			'body'       => [
-				'addons_purchase' => $addons_purchase,
-			],
-			'timeout'    => 30,
-			'user-agent' => site_url(),
-		];
-
-		$result = wp_remote_post( $this->link_addons_purchased, $args );
-		if ( is_wp_error( $result ) ) {
-			throw new Exception( $result->get_error_message() );
-		}
-
-		$data_str = wp_remote_retrieve_body( $result );
-		if ( preg_match( '/^Error.*/', $data_str ) ) {
-			throw new Exception( $data_str );
-		}
-
-		$data = LP_Helper::json_decode( $data_str );
 
 		foreach ( $addons as $key => $addon ) {
 			if ( isset( $data->{$key} ) ) {
@@ -207,13 +212,11 @@ class AddonService {
 			}
 		}
 
-		$lp_cache->set_cache( $key_cache, $addons );
-
 		return $addons;
 	}
 
 	/**
-	 * Validate a purchase code with the add-ons service before storing it.
+	 * Get purchase info for an add-on from the ThimPress service and persist the code locally.
 	 *
 	 * @param string $addon_slug    Add-on slug.
 	 * @param string $purchase_code Purchase code.
@@ -221,7 +224,7 @@ class AddonService {
 	 * @return object Purchase information returned by the service.
 	 * @throws Exception When the code cannot be validated.
 	 */
-	public function validate_and_save_purchase_code( string $addon_slug, string $purchase_code ): object {
+	public function get_addon_purchase_info( string $addon_slug, string $purchase_code ): object {
 		$purchase_code = trim( $purchase_code );
 
 		if ( empty( $addon_slug ) || empty( $purchase_code ) ) {
@@ -256,11 +259,11 @@ class AddonService {
 			throw new Exception( __( 'Purchase code is invalid!', 'learnpress' ) );
 		}
 
-		$key_purchase                = LP_Settings::get_option( $this->key_purchase_addons, array() );
+		/*$key_purchase                = LP_Settings::get_option( $this->key_purchase_addons, array() );
 		$key_purchase[ $addon_slug ] = $purchase_code;
 		LP_Settings::update_option( $this->key_purchase_addons, $key_purchase );
 
-		$this->clear_addons_purchased_cache();
+		$this->clear_addons_purchased_cache();*/
 
 		return $data->{$addon_slug};
 	}
@@ -325,7 +328,6 @@ class AddonService {
 		if ( 0 == $addon['is_free'] ) {
 			$key_purchase                   = LP_Settings::get_option( $this->key_purchase_addons, [] );
 			$key_purchase[ $addon['slug'] ] = $purchase_code;
-			LP_Settings::update_option( $this->key_purchase_addons, $key_purchase );
 
 			$args['body']['purchase_code'] = $purchase_code;
 		}
@@ -486,6 +488,7 @@ class AddonService {
 		$key_purchases                = LP_Settings::get_option( $this->key_purchase_addons, [] );
 		$key_purchases[ $addon_slug ] = $purchase_code;
 		LP_Settings::update_option( $this->key_purchase_addons, $key_purchases );
+		$this->clear_addons_purchased_cache();
 	}
 
 	/**

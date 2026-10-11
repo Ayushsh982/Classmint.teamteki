@@ -216,7 +216,7 @@ const searchUserOnListPost = () => {
         }
       },
       setting: {
-        placeholder: 'Choose user'
+        placeholder: lpData.i18n.select_user
       }
     };
     const dataStructJson = JSON.stringify(dataStruct);

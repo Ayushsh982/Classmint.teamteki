@@ -605,8 +605,13 @@ class LPThemes {
     container: '.learn-press-themes',
     elListThemes: '.lp-themes-grid',
     filter: '.lp-themes-filter__item',
+    filterToggle: '.lp-themes-filter__toggle',
     count: '.lp-themes-filter__count',
     search: '.lp-themes-search__input',
+    searchContainer: '.lp-themes-search',
+    searchButton: '.lp-themes-search__btn',
+    searchClear: '.lp-themes-search__btn-clear',
+    searchClose: '.lp-themes-search__close',
     card: '.lp-theme-card',
     title: '.lp-theme-card__title',
     description: '.lp-theme-card__description'
@@ -641,6 +646,101 @@ class LPThemes {
       callBack: this.filterThemes.name,
       class: this
     }]);
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('click', [{
+      selector: LPThemes.selectors.searchButton,
+      callBack: this.openSearch.name,
+      class: this
+    }, {
+      selector: LPThemes.selectors.searchClear,
+      callBack: this.clearSearch.name,
+      class: this
+    }, {
+      selector: LPThemes.selectors.searchClose,
+      callBack: this.closeSearch.name,
+      class: this
+    }, {
+      selector: LPThemes.selectors.filterToggle,
+      callBack: this.toggleFilterMenu.name,
+      class: this
+    }]);
+    document.addEventListener('click', event => {
+      const toolbar = this.container?.querySelector('.lp-themes-toolbar');
+      if (toolbar?.classList.contains('is-filter-open') && !toolbar.contains(event.target)) {
+        this.toggleFilterMenu(false);
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if ('Escape' === event.key) {
+        this.closeSearch();
+        this.toggleFilterMenu(false);
+      }
+    });
+  }
+
+  /** Toggle the tablet and mobile category menu. */
+  toggleFilterMenu(open) {
+    const toolbar = this.container.querySelector('.lp-themes-toolbar');
+    const button = this.container.querySelector(LPThemes.selectors.filterToggle);
+    if (!toolbar || !button) {
+      return;
+    }
+    const shouldOpen = typeof open === 'boolean' ? open : !toolbar.classList.contains('is-filter-open');
+    toolbar.classList.toggle('is-filter-open', shouldOpen);
+    button.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+  }
+
+  /** Open the compact search field. */
+  openSearch() {
+    const search = this.container.querySelector(LPThemes.selectors.searchContainer);
+    if (!search) {
+      return;
+    }
+    this.toggleFilterMenu(false);
+    search.classList.add('is-open');
+    search.querySelector(LPThemes.selectors.searchButton)?.setAttribute('aria-expanded', 'true');
+    this.updateSearchClearBtnState();
+    search.querySelector(LPThemes.selectors.search)?.focus();
+  }
+
+  /** Close the compact search field. */
+  closeSearch() {
+    if (!this.container) {
+      return;
+    }
+    const search = this.container.querySelector(LPThemes.selectors.searchContainer);
+    if (!search) {
+      return;
+    }
+    if (!search.classList.contains('is-open')) {
+      return;
+    }
+    search.classList.remove('is-open');
+    search.querySelector(LPThemes.selectors.searchButton)?.setAttribute('aria-expanded', 'false');
+    this.updateSearchClearBtnState();
+    search.querySelector(LPThemes.selectors.searchButton)?.focus();
+  }
+
+  /** Clear the search input field and re-filter themes. */
+  clearSearch(args) {
+    if (args?.e) {
+      args.e.preventDefault();
+    }
+    const search = this.container?.querySelector(LPThemes.selectors.search);
+    if (search) {
+      search.value = '';
+      this.updateSearchClearBtnState();
+      this.filterThemes();
+      search.focus();
+    }
+  }
+
+  /** Update disabled state of clear search button. */
+  updateSearchClearBtnState() {
+    const search = this.container?.querySelector(LPThemes.selectors.search);
+    const clearBtn = this.container?.querySelector(LPThemes.selectors.searchClear);
+    if (clearBtn && search) {
+      clearBtn.disabled = !search.value.trim();
+    }
   }
 
   /**
@@ -682,6 +782,7 @@ class LPThemes {
       return;
     }
     e.preventDefault();
+    this.toggleFilterMenu(false);
     container.querySelectorAll(LPThemes.selectors.filter).forEach(item => {
       const isActive = item === filter;
       item.classList.toggle('active', isActive);
@@ -696,6 +797,7 @@ class LPThemes {
   filterThemes() {
     const container = this.container;
     const search = container.querySelector(LPThemes.selectors.search);
+    this.updateSearchClearBtnState();
     const query = search ? search.value.trim().toLowerCase() : '';
     const searchTerms = query.split(/\s+/).filter(Boolean);
     const active = container.querySelector(`${LPThemes.selectors.filter}.active`);

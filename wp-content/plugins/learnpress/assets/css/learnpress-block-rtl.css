@@ -85,7 +85,7 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  color: rgba(0, 0, 0, 0.2) !important;
+  color: rgba(0, 0, 0, 0) !important;
 }
 .lp-button.loading:before {
   position: absolute;
@@ -96,7 +96,6 @@
   font-family: "lp-icon";
   content: "\f110";
   animation: lp-rotating 1s linear infinite;
-  line-height: 1;
   font-variant: normal;
   text-transform: none;
   -webkit-font-smoothing: antialiased;
@@ -109,7 +108,7 @@
   display: flex;
   align-items: center;
   margin: 0 !important;
-  padding: 10px 20px;
+  padding: 10px;
   border-radius: var(--lp-border-radius, 5px);
   background-color: #E5F7FF;
   color: #007AFF;
@@ -782,7 +781,6 @@ input[name=course-faqs-box-ratio]:checked + .course-faqs-box .course-faqs-box__t
   font-family: "lp-icon";
   content: "\f110";
   animation: lp-rotating 1s linear infinite;
-  line-height: 1;
   font-variant: normal;
   text-transform: none;
   -webkit-font-smoothing: antialiased;
@@ -1012,7 +1010,6 @@ input[name=course-faqs-box-ratio]:checked + .course-faqs-box .course-faqs-box__t
   font-family: "lp-icon";
   content: "\f110";
   animation: lp-rotating 1s linear infinite;
-  line-height: 1;
   font-variant: normal;
   text-transform: none;
   -webkit-font-smoothing: antialiased;
@@ -1642,7 +1639,6 @@ Breadcrumb
   font-family: "lp-icon";
   content: "\f110";
   animation: lp-rotating 1s linear infinite;
-  line-height: 1;
   font-variant: normal;
   text-transform: none;
   -webkit-font-smoothing: antialiased;

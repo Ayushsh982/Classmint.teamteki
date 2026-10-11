@@ -4199,7 +4199,7 @@ const searchUserOnListPost = () => {
         }
       },
       setting: {
-        placeholder: 'Choose user'
+        placeholder: lpData.i18n.select_user
       }
     };
     const dataStructJson = JSON.stringify(dataStruct);
@@ -9569,19 +9569,23 @@ class BuilderTabLesson {
       },
       lesson_id: lessonId,
       lesson_settings: true,
-      _lp_preview: enablePreview ? 'yes' : ''
+      _lp_preview: enablePreview ? 'yes' : '',
+      return_html: 'yes'
     };
     const callBack = {
       success: response => {
         const {
           status,
-          message
+          message,
+          data
         } = response;
         lpAssetsJsPath_lpToastify_js__WEBPACK_IMPORTED_MODULE_1__.show(message, status);
         if (status === 'error') {
           // Revert on error
           icon.classList.toggle('lp-icon-eye');
           icon.classList.toggle('lp-icon-eye-slash');
+        } else if (data?.list_item_html) {
+          this.replaceItemHtml(elLessonItem, data.list_item_html);
         }
       },
       error: error => {
@@ -9600,11 +9604,11 @@ class BuilderTabLesson {
     if (!elLesson || !html) {
       return;
     }
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    const newEl = tmp.firstElementChild;
-    if (newEl) {
-      elLesson.replaceWith(newEl);
+    const nextLesson = elLesson.nextElementSibling;
+    elLesson.insertAdjacentHTML('afterend', html.trim());
+    const newLesson = elLesson.nextElementSibling;
+    if (newLesson && newLesson !== nextLesson) {
+      elLesson.remove();
     }
   }
 }
@@ -10036,11 +10040,11 @@ class BuilderPopup {
           currentItem = newListItem;
         }
       } else if (data?.list_item_html && !currentItem.classList.contains('section-item')) {
-        const template = document.createElement('template');
-        template.innerHTML = data.list_item_html.trim();
-        const newListItem = template.content.firstElementChild;
-        if (newListItem) {
-          currentItem.replaceWith(newListItem);
+        const nextListItem = currentItem.nextElementSibling;
+        currentItem.insertAdjacentHTML('afterend', data.list_item_html.trim());
+        const newListItem = currentItem.nextElementSibling;
+        if (newListItem && newListItem !== nextListItem) {
+          currentItem.remove();
           currentItem = newListItem;
         }
       } else {
@@ -10146,7 +10150,7 @@ class BuilderPopup {
           // If it's just a generic button to open a popup, it might not be the actual item container.
           // However, some UI lists use the trigger button as the container. We rely on the DOM structure.
           // We can assume `.section-item` and `.lp-lesson-item` and `.cb-list-item` are containers.
-          if (item.classList.contains('section-item') || item.classList.contains(`lp-${type}-item`) || item.classList.contains('list-item') || item.classList.contains('cb-list-item') || item.tagName === 'LI') {
+          if (item.classList.contains('section-item') || item.classList.contains(`lp-${type}-item`) || item.classList.contains('list-item') || item.classList.contains('cb-list-item') || item.tagName === 'LI' || item.tagName === 'TR') {
             foundItems.add(item);
           } else {
             // If it's a wrapper, like a div in Content Bank
@@ -10175,13 +10179,16 @@ class BuilderPopup {
     if (!listContainer) {
       return null;
     }
-    const template = document.createElement('template');
-    template.innerHTML = listItemHtml.trim();
-    const newListItem = template.content.firstElementChild;
-    if (!newListItem) {
+    const emptyRow = listContainer.querySelector('.cb-list-empty-row');
+    const firstListItem = listContainer.firstElementChild;
+    listContainer.insertAdjacentHTML('afterbegin', listItemHtml.trim());
+    const newListItem = listContainer.firstElementChild;
+    if (!newListItem || newListItem === firstListItem) {
       return null;
     }
-    listContainer.prepend(newListItem);
+    if (emptyRow) {
+      emptyRow.remove();
+    }
     const highlightClassByType = {
       lesson: 'highlight-new-lesson',
       quiz: 'highlight-new-quiz',
@@ -10203,25 +10210,15 @@ class BuilderPopup {
   }
 
   /**
-   * Find list container for type; create one if tab currently shows empty message.
+   * Find the table body for the requested list type.
    */
   findListContainer(type) {
     const listSelectorByType = {
-      lesson: '.cb-list-lesson',
-      quiz: '.cb-list-quiz',
-      question: '.cb-list-question'
+      lesson: '.cb-list-lesson tbody',
+      quiz: '.cb-list-quiz tbody',
+      question: '.cb-list-question tbody'
     };
-    const tabSelectorByType = {
-      lesson: '.courses-builder__lesson-tab',
-      quiz: '.courses-builder__quiz-tab',
-      question: '.courses-builder__question-tab'
-    };
-    const listClassByType = {
-      lesson: 'cb-list-lesson',
-      quiz: 'cb-list-quiz',
-      question: 'cb-list-question'
-    };
-    const listSelector = listSelectorByType[type] || `.cb-list-${type}, [data-builder-list="${type}"]`;
+    const listSelector = listSelectorByType[type] || `[data-builder-list="${type}"]`;
     if (!listSelector) {
       return null;
     }
@@ -10229,19 +10226,7 @@ class BuilderPopup {
     if (existingList) {
       return existingList;
     }
-    const tabContainer = document.querySelector(tabSelectorByType[type] || `.courses-builder__${type}-tab, [data-builder-tab="${type}"]`);
-    const listClass = listClassByType[type] || `cb-list-${type}`;
-    if (!tabContainer || !listClass) {
-      return null;
-    }
-    const emptyMessage = tabContainer.querySelector('.learn-press-message');
-    if (emptyMessage) {
-      emptyMessage.remove();
-    }
-    const listContainer = document.createElement('ul');
-    listContainer.className = listClass;
-    tabContainer.appendChild(listContainer);
-    return listContainer;
+    return null;
   }
 
   /**
@@ -12704,11 +12689,11 @@ class BuilderTabQuestion {
     if (!elQuestion || !html) {
       return;
     }
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    const newEl = tmp.firstElementChild;
-    if (newEl) {
-      elQuestion.replaceWith(newEl);
+    const nextQuestion = elQuestion.nextElementSibling;
+    elQuestion.insertAdjacentHTML('afterend', html.trim());
+    const newQuestion = elQuestion.nextElementSibling;
+    if (newQuestion && newQuestion !== nextQuestion) {
+      elQuestion.remove();
     }
   }
 }
@@ -15486,11 +15471,11 @@ class BuilderTabQuiz {
     if (!elQuiz || !html) {
       return;
     }
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    const newEl = tmp.firstElementChild;
-    if (newEl) {
-      elQuiz.replaceWith(newEl);
+    const nextQuiz = elQuiz.nextElementSibling;
+    elQuiz.insertAdjacentHTML('afterend', html.trim());
+    const newQuiz = elQuiz.nextElementSibling;
+    if (newQuiz && newQuiz !== nextQuiz) {
+      elQuiz.remove();
     }
   }
 }
