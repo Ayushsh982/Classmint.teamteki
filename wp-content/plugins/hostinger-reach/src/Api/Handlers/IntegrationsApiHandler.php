@@ -74,6 +74,28 @@ class IntegrationsApiHandler extends ApiHandler {
         );
     }
 
+    public function get_status_handler(): WP_REST_Response {
+        $integrations_data = $this->get_integrations_data();
+        $woocommerce_data  = $integrations_data['woocommerce'] ?? array();
+
+        return $this->handle_response(
+            array(
+                'response' => array(
+                    'code' => 200,
+                ),
+                'body'     => wp_json_encode(
+                    array(
+                        'woocommerce' => array(
+                            'is_plugin_active'      => $woocommerce_data['is_plugin_active'],
+                            'is_integration_active' => $woocommerce_data['is_active'],
+                            'is_installable'        => $woocommerce_data['is_installable'],
+                        ),
+                    )
+                ),
+            )
+        );
+    }
+
     public function post_integrations_handler( WP_REST_Request $request ): WP_REST_Response {
         $is_active         = $request->get_param( Integration::INTEGRATION_IS_ACTIVE );
         $integration       = $request->get_param( 'integration' );
@@ -192,7 +214,7 @@ class IntegrationsApiHandler extends ApiHandler {
                 array(
                     'is_plugin_active'                      => $is_plugin_active,
                     Integration::INTEGRATION_IMPORT_ENABLED => $import_enabled,
-                    Integration::INTEGRATION_IS_ACTIVE      => $is_hostinger_reach || $is_elementor || $is_active,
+                    Integration::INTEGRATION_IS_ACTIVE      => $is_hostinger_reach || ( $is_elementor && $is_plugin_active ) || $is_active,
                     'can_deactivate'                        => ! $is_hostinger_reach && ! $is_elementor,
                     'is_go_to_plugin_visible'               => ! $is_hostinger_reach,
                     'import_status'                         => $this->import_manager->get_status( $integration_name ),

@@ -52,6 +52,18 @@ class ApiHandler {
         return wp_remote_get( $url, $request_args );
     }
 
+    public function delete( string $endpoint, array $params = array(), array $headers = array(), int $timeout = 120 ): mixed {
+        $url          = $this->get_api_basename() . $endpoint;
+        $request_args = array(
+            'method'  => 'DELETE',
+            'timeout' => $timeout,
+            'headers' => array_merge( $this->get_default_headers(), $headers ),
+            'body'    => $params,
+        );
+
+        return wp_remote_post( $url, $request_args );
+    }
+
     public function post( string $endpoint, array $params = array(), array $headers = array(), int $timeout = 120 ): mixed {
         $url          = $this->get_api_basename() . $endpoint;
         $request_args = array(
@@ -83,5 +95,17 @@ class ApiHandler {
         $body = wp_remote_retrieve_body( $response );
         $wp_response->set_data( json_decode( $body ? $body : '', true ) );
         return $wp_response;
+    }
+
+    public function handle_image_response( array $response ): WP_REST_Response {
+        $body         = wp_remote_retrieve_body( $response );
+        $content_type = wp_remote_retrieve_header( $response, 'content-type' );
+
+        if ( ! empty( $content_type ) && ! headers_sent() ) {
+            header( 'Content-Type: ' . $content_type );
+        }
+
+        echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Raw binary image passthrough; cannot be escaped.
+        exit;
     }
 }

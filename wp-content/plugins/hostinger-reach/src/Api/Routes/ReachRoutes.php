@@ -103,11 +103,38 @@ class ReachRoutes extends Routes {
 
         register_rest_route(
             HOSTINGER_REACH_PLUGIN_REST_API_BASE,
+            'connect',
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( $this->handler, 'post_connect_handler' ),
+                'permission_callback' => array( $this, 'permission_check' ),
+            )
+        );
+
+        register_rest_route(
+            HOSTINGER_REACH_PLUGIN_REST_API_BASE,
             'generate-auth-url',
             array(
                 'methods'             => 'POST',
                 'callback'            => array( $this->handler, 'post_generate_auth_url' ),
                 'permission_callback' => array( $this, 'permission_check' ),
+            )
+        );
+
+        register_rest_route(
+            HOSTINGER_REACH_PLUGIN_REST_API_BASE,
+            'connection-success',
+            array(
+                array(
+                    'methods'             => 'GET',
+                    'callback'            => array( $this->handler, 'get_connection_success_handler' ),
+                    'permission_callback' => array( $this, 'permission_check' ),
+                ),
+                array(
+                    'methods'             => 'DELETE',
+                    'callback'            => array( $this->handler, 'delete_connection_success_handler' ),
+                    'permission_callback' => array( $this, 'permission_check' ),
+                ),
             )
         );
 
@@ -146,6 +173,32 @@ class ReachRoutes extends Routes {
                     ),
                 ),
 
+            )
+        );
+
+        register_rest_route(
+            HOSTINGER_REACH_PLUGIN_REST_API_BASE,
+            'builder-forms',
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( $this->handler, 'get_forms_handler' ),
+                'permission_callback' => array( $this, 'permission_check' ),
+            )
+        );
+
+        register_rest_route(
+            HOSTINGER_REACH_PLUGIN_REST_API_BASE,
+            'builder-form-preview/(?P<id>[a-zA-Z0-9\-]+)',
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( $this->handler, 'get_form_preview_handler' ),
+                'permission_callback' => array( $this, 'permission_check' ),
+                'args'                => array(
+                    'id' => array(
+                        'required' => true,
+                        'type'     => 'string',
+                    ),
+                ),
             )
         );
     }

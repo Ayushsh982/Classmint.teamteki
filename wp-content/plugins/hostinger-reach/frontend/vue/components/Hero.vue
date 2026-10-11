@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { HNotificationRow } from '@hostinger/hcomponents';
 import { computed } from 'vue';
 
 import reachBackgroundImage from '@/assets/images/backgrounds/reach-welcome-background.png';
+import reachBackgroundImageMobile from '@/assets/images/backgrounds/reach-welcome-background-mobile.png';
 import reachLogo from '@/assets/images/icons/reach-logo.svg';
+import UpdateBanner from '@/components/UpdateBanner.vue';
 import { useReachUrls } from '@/composables/useReachUrls';
 import { translate } from '@/utils/translate';
 
@@ -14,16 +15,15 @@ const reachDashboardUrl = computed(() => `https://${reachBaseDomain.value}`);
 interface Props {
 	isConnectedToAnotherSite?: boolean;
 	isButtonLoading?: boolean;
-	isTemporary?: boolean;
-	isNotActive?: boolean;
 	domain: string;
 	onGetStarted: () => void;
+	onManualApiKeyClick?: () => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
 	isConnectedToAnotherSite: false,
 	isButtonLoading: false,
-	isNotActive: false
+	onManualApiKeyClick: () => {}
 });
 </script>
 
@@ -47,10 +47,18 @@ const props = withDefaults(defineProps<Props>(), {
 			</div>
 		</header>
 
+		<UpdateBanner />
+
 		<HCard border-radius="20px" padding="0" border-color="neutral--200">
 			<div class="hero__image">
 				<img
 					:src="reachBackgroundImage"
+					:alt="translate('hostinger_reach_hero_background_alt')"
+					role="img"
+					style="display: none"
+				/>
+				<img
+					:src="reachBackgroundImageMobile"
 					:alt="translate('hostinger_reach_hero_background_alt')"
 					class="hero__background"
 					role="img"
@@ -69,34 +77,24 @@ const props = withDefaults(defineProps<Props>(), {
 					<HText id="hero-description" as="p" variant="body-2 h-mb-24">
 						{{ translate('hostinger_reach_welcome_view_description') }}
 					</HText>
-					<HButton
-						v-if="!isConnectedToAnotherSite && !isTemporary && !isNotActive"
-						color="primary"
-						size="small"
-						:is-loading="props.isButtonLoading"
-						aria-describedby="hero-description"
-						aria-label="Get started with email marketing"
-						@click="onGetStarted"
-					>
-						{{ translate('hostinger_reach_welcome_view_start_button') }}
-					</HButton>
+					<template v-if="!isConnectedToAnotherSite">
+						<div class="hero__actions">
+							<HButton
+								color="primary"
+								size="small"
+								:is-loading="props.isButtonLoading"
+								aria-describedby="hero-description"
+								:aria-label="translate('hostinger_reach_welcome_view_start_button')"
+								@click="onGetStarted"
+							>
+								{{ translate('hostinger_reach_welcome_view_start_button') }}
+							</HButton>
+							<HButton variant="text" color="neutral" size="small" @click="onManualApiKeyClick">
+								{{ translate('hostinger_reach_api_key_modal_link') }}
+							</HButton>
+						</div>
+					</template>
 				</div>
-			</div>
-			<div v-if="!isButtonLoading && (isTemporary || isNotActive)" class="hero__info">
-				<HNotificationRow
-					variant="warning"
-					:description="
-						isTemporary
-							? translate('hostinger_reach_welcome_view_description_temporary')
-							: translate('hostinger_reach_welcome_view_description_not_active')
-					"
-					:primary-action-text="
-						isTemporary
-							? translate('hostinger_reach_welcome_view_temporary_button')
-							: translate('hostinger_reach_welcome_view_not_active_button')
-					"
-					@primary-action-click="onGetStarted"
-				/>
 			</div>
 			<div class="hero__footer" role="contentinfo" aria-label="Site information">
 				<HIcon class="h-mr-8" name="ic-globe-16" color="neutral--300" aria-hidden="true" />
@@ -173,7 +171,7 @@ const props = withDefaults(defineProps<Props>(), {
 		background-repeat: no-repeat;
 
 		@media (max-width: 768px) {
-			padding: 20px;
+			padding: 24px 24px 0;
 			background: none;
 			border-radius: 0;
 		}
@@ -185,7 +183,7 @@ const props = withDefaults(defineProps<Props>(), {
 		justify-content: center;
 		position: relative;
 		overflow: hidden;
-		margin-bottom: 20px;
+		margin-bottom: 0;
 		border-bottom: 1px solid var(--neutral--50);
 
 		@media (min-width: 768px) {
@@ -209,12 +207,50 @@ const props = withDefaults(defineProps<Props>(), {
 
 		@media (min-width: 768px) {
 			width: 50%;
+			max-width: 345px;
 		}
 	}
 
-	&__info {
-		padding: 24px;
-		border-top: 1px solid var(--neutral--50);
+	&__actions {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	&__manual-link {
+		appearance: none;
+		background: transparent;
+		border: 0;
+		color: var(--primary--500);
+		cursor: pointer;
+		font: inherit;
+		text-decoration: underline;
+	}
+
+	&__api-key-box {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		max-width: 420px;
+	}
+
+	&__api-key-label {
+		color: var(--neutral--700);
+		font-weight: 600;
+	}
+
+	&__api-key-input {
+		width: 100%;
+		border: 1px solid var(--neutral--200);
+		border-radius: 8px;
+		padding: 8px 12px;
+		font-size: 14px;
+	}
+
+	&__api-actions {
+		display: flex;
+		gap: 12px;
+		align-items: center;
 	}
 
 	&__footer {
@@ -307,13 +343,15 @@ const props = withDefaults(defineProps<Props>(), {
 	}
 }
 
-:deep(.hero .h-card) {
-	background: var(--neutral--0);
-	display: flex;
-	align-items: center;
-	flex-direction: column;
-	padding: 0;
+:deep(.h-card) {
 	width: 100%;
+}
+
+:deep(.h-notification-row) {
+	border: 1px solid #ffd28c;
+	@media (max-width: 768px) {
+		padding: 0;
+	}
 }
 
 @media (max-width: 320px) {

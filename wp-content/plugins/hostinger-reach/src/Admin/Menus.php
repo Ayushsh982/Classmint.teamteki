@@ -29,6 +29,9 @@ class Menus {
 
         if ( empty( $other_submenus ) ) {
             remove_menu_page( 'hostinger' );
+        } else {
+            // Hostinger parent already lists Reach — drop the standalone duplicate.
+            remove_menu_page( 'hostinger-reach' );
         }
     }
 
@@ -47,7 +50,7 @@ class Menus {
     public function add_sub_menu_page( array $submenus ): array {
         $submenus[] = array(
             'page_title' => $this->get_title(),
-            'menu_title' => __( 'Hostinger Reach', 'hostinger-reach' ),
+            'menu_title' => $this->get_title(),
             'capability' => 'manage_options',
             'menu_slug'  => 'hostinger-reach',
             'callback'   => array( $this, 'render_plugin_content' ),
@@ -72,6 +75,10 @@ class Menus {
     }
 
     public function render_plugin_content(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'hostinger-reach' ), '', array( 'response' => 403 ) );
+        }
+
         $allowed_tags = array_merge(
             wp_kses_allowed_html( 'post' ),
             array(
@@ -103,7 +110,7 @@ class Menus {
     }
 
     private function get_title(): string {
-        return __( 'Hostinger Reach', 'hostinger-reach' );
+        return __( 'Reach', 'hostinger-reach' );
     }
 
     private function get_icon(): string {

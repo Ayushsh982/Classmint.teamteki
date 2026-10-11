@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit2888bb05ce4aac4811a14add197f6ade
+class ComposerStaticInitc2faf6c24f5323a75899b1c424d7e7cc
 {
     public static $prefixLengthsPsr4 = array (
         'P' =>
@@ -71,7 +71,9 @@ class ComposerStaticInit2888bb05ce4aac4811a14add197f6ade
         'Hostinger\\Amplitude\\ActionDispatcher' => __DIR__ . '/..' . '/hostinger/hostinger-wp-amplitude/src/ActionDispatcher.php',
         'Hostinger\\Amplitude\\AmplitudeLoader' => __DIR__ . '/..' . '/hostinger/hostinger-wp-amplitude/src/AmplitudeLoader.php',
         'Hostinger\\Amplitude\\AmplitudeManager' => __DIR__ . '/..' . '/hostinger/hostinger-wp-amplitude/src/AmplitudeManager.php',
+        'Hostinger\\Amplitude\\DomainResolver' => __DIR__ . '/..' . '/hostinger/hostinger-wp-amplitude/src/DomainResolver.php',
         'Hostinger\\Amplitude\\Rest' => __DIR__ . '/..' . '/hostinger/hostinger-wp-amplitude/src/Rest.php',
+        'Hostinger\\Amplitude\\SoftwareIdResolver' => __DIR__ . '/..' . '/hostinger/hostinger-wp-amplitude/src/SoftwareIdResolver.php',
         'Hostinger\\Reach\\Admin\\Database\\CartsTable' => __DIR__ . '/../..' . '/src/Admin/Database/CartsTable.php',
         'Hostinger\\Reach\\Admin\\Database\\ContactListsTable' => __DIR__ . '/../..' . '/src/Admin/Database/ContactListsTable.php',
         'Hostinger\\Reach\\Admin\\Database\\DatabaseInterface' => __DIR__ . '/../..' . '/src/Admin/Database/DatabaseInterface.php',
@@ -122,6 +124,7 @@ class ComposerStaticInit2888bb05ce4aac4811a14add197f6ade
         'Hostinger\\Reach\\Integrations\\NinjaForms\\NinjaFormsIntegration' => __DIR__ . '/../..' . '/src/Integrations/NinjaForms/NinjaFormsIntegration.php',
         'Hostinger\\Reach\\Integrations\\OptInMonster\\OptInMonsterIntegration' => __DIR__ . '/../..' . '/src/Integrations/OptInMonster/OptInMonsterIntegration.php',
         'Hostinger\\Reach\\Integrations\\PluginManager' => __DIR__ . '/../..' . '/src/Integrations/PluginManager.php',
+        'Hostinger\\Reach\\Integrations\\Reach\\ReachFormBuilder' => __DIR__ . '/../..' . '/src/Integrations/Reach/ReachFormBuilder.php',
         'Hostinger\\Reach\\Integrations\\Reach\\ReachFormIntegration' => __DIR__ . '/../..' . '/src/Integrations/Reach/ReachFormIntegration.php',
         'Hostinger\\Reach\\Integrations\\SureForms\\SureFormsIntegration' => __DIR__ . '/../..' . '/src/Integrations/SureForms/SureFormsIntegration.php',
         'Hostinger\\Reach\\Integrations\\ThriveLeads\\ThriveLeadsIntegration' => __DIR__ . '/../..' . '/src/Integrations/ThriveLeads/ThriveLeadsIntegration.php',
@@ -170,6 +173,7 @@ class ComposerStaticInit2888bb05ce4aac4811a14add197f6ade
         'Hostinger\\Reach\\Setup\\Database' => __DIR__ . '/../..' . '/src/Setup/Database.php',
         'Hostinger\\Reach\\Setup\\Encrypt' => __DIR__ . '/../..' . '/src/Setup/Encrypt.php',
         'Hostinger\\Reach\\Tracking\\AbandonedCarts' => __DIR__ . '/../..' . '/src/Tracking/AbandonedCarts.php',
+        'Hostinger\\Reach\\Tracking\\RestoreCart' => __DIR__ . '/../..' . '/src/Tracking/RestoreCart.php',
         'Hostinger\\Surveys\\Ajax' => __DIR__ . '/..' . '/hostinger/hostinger-wp-surveys/src/Ajax.php',
         'Hostinger\\Surveys\\Assets' => __DIR__ . '/..' . '/hostinger/hostinger-wp-surveys/src/Assets.php',
         'Hostinger\\Surveys\\Loader' => __DIR__ . '/..' . '/hostinger/hostinger-wp-surveys/src/Loader.php',
@@ -191,9 +195,9 @@ class ComposerStaticInit2888bb05ce4aac4811a14add197f6ade
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit2888bb05ce4aac4811a14add197f6ade::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit2888bb05ce4aac4811a14add197f6ade::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit2888bb05ce4aac4811a14add197f6ade::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitc2faf6c24f5323a75899b1c424d7e7cc::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitc2faf6c24f5323a75899b1c424d7e7cc::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitc2faf6c24f5323a75899b1c424d7e7cc::$classMap;
 
         }, null, ClassLoader::class);
     }

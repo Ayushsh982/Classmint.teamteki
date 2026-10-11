@@ -14,6 +14,10 @@ export interface ReachData {
 	rawDomain: string;
 	hasValidResourceId: boolean;
 	resourceId: string;
+	pluginVersion: string;
+	latestVersion: string;
+	isUpdateAvailable: boolean;
+	pluginsPageUrl: string;
 }
 
 export interface HstReachDataRaw {
@@ -33,6 +37,13 @@ export interface HstReachDataRaw {
 	raw_domain: string;
 	has_valid_resource_id: boolean;
 	resource_id: string;
+	is_elementor_active: boolean;
+	elementor_new_page_url: string;
+	embed_script_url: string;
+	plugin_version: string;
+	latest_version: string;
+	is_update_available: boolean;
+	plugins_page_url: string;
 }
 
 export interface OverviewData {
