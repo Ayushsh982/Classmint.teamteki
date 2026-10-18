@@ -540,8 +540,8 @@ class Buttons extends _wordpress_element__WEBPACK_IMPORTED_MODULE_1__.Component 
     return (0,react__WEBPACK_IMPORTED_MODULE_0__.createElement)(react__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, (0,react__WEBPACK_IMPORTED_MODULE_0__.createElement)("div", {
       className: classNames.join(' ')
     }, (0,react__WEBPACK_IMPORTED_MODULE_0__.createElement)("div", {
-      className: `button-left` + (status === 'started' || isReviewing ? navPositionClass : ''),
-      style: styles
+      className: `button-left` + (status === 'started' || isReviewing ? navPositionClass : '')
+      //style={ styles }
     }, (status === 'completed' && canRetry || -1 !== ['', 'viewed'].indexOf(status)) && !isReviewing && !requiredPassword && (0,react__WEBPACK_IMPORTED_MODULE_0__.createElement)("button", {
       className: "lp-button start",
       onClick: this.startQuiz
@@ -1838,7 +1838,7 @@ const Timer = () => {
   return (0,react__WEBPACK_IMPORTED_MODULE_0__.createElement)("div", {
     className: "countdown"
   }, (0,react__WEBPACK_IMPORTED_MODULE_0__.createElement)("i", {
-    className: "lp-icon-stopwatch"
+    className: "lp-icon-clock"
   }), (0,react__WEBPACK_IMPORTED_MODULE_0__.createElement)("span", null, formatTime()), (0,react__WEBPACK_IMPORTED_MODULE_0__.createElement)("input", {
     type: "hidden",
     name: "lp-quiz-time-spend",

@@ -149,9 +149,9 @@ class CreateCourseViaAI {
         if (tone && lp_course_ai_setting?.tone) {
           tone.tomselect.setValue(lp_course_ai_setting.tone);
         }
-        const language = popup.querySelector('select[name="language"]');
+        const language = popup.querySelector('input[name="language"]');
         if (language && lp_course_ai_setting?.language) {
-          language.tomselect.setValue(lp_course_ai_setting.language);
+          language.value = lp_course_ai_setting.language;
         }
         targetAudience.addEventListener('change', event => {
           lp_course_ai_setting.target_audience = targetAudience.tomselect.getValue();
@@ -161,9 +161,8 @@ class CreateCourseViaAI {
           lp_course_ai_setting.tone = tone.tomselect.getValue();
           localStorage.setItem('lp_course_ai_setting', JSON.stringify(lp_course_ai_setting));
         });
-        language.addEventListener('change', event => {
-          const value = language.tomselect.getValue();
-          lp_course_ai_setting.language = value ? [value] : [];
+        language.addEventListener('input', event => {
+          lp_course_ai_setting.language = language.value;
           localStorage.setItem('lp_course_ai_setting', JSON.stringify(lp_course_ai_setting));
         });
       }
@@ -3690,14 +3689,13 @@ class GenerateWithOpenai {
             localStorage.setItem('lp_course_ai_setting', JSON.stringify(lp_course_ai_setting));
           });
         }
-        const language = popupSweetAlert.querySelector('select[name="language"]');
+        const language = popupSweetAlert.querySelector('input[name="language"]');
         if (language) {
           if (lp_course_ai_setting?.language) {
-            language.tomselect.setValue(lp_course_ai_setting.language);
+            language.value = lp_course_ai_setting.language;
           }
-          language.addEventListener('change', event => {
-            const value = language.tomselect.getValue();
-            lp_course_ai_setting.language = value ? [value] : [];
+          language.addEventListener('input', event => {
+            lp_course_ai_setting.language = language.value;
             localStorage.setItem('lp_course_ai_setting', JSON.stringify(lp_course_ai_setting));
           });
         }
@@ -15604,9 +15602,8 @@ class BuilderSettings {
     }
     this.isSaving = true;
     this.shouldRetryOnCompleted = false;
-    lpAssetsJsPath_lpToastify_js__WEBPACK_IMPORTED_MODULE_0__.show('Updating settings...', 'info', {
-      duration: 1800
-    });
+    //lpToastify.show( 'Updating settings...', 'info', { duration: 1800 } );
+
     window.lpAJAXG.fetchAJAX(this.getPayloadForSave(), {
       success: response => {
         if (response?.status !== 'success') {
@@ -16332,7 +16329,7 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.7
+ * @version 1.0.8
  */
 const lpClassName = {
   hidden: 'lp-hidden',
@@ -16587,8 +16584,11 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
  *
  * @param eventName
  * @param eventHandlers
+ * @param capture Use capture phase (default: false/bubble). Set true when
+ * the event may be stopped by a container calling stopPropagation() before
+ * it bubbles up to document (e.g. Headless UI DialogPanel on click).
  */
-const eventHandlers = (eventName, eventHandlers) => {
+const eventHandlers = (eventName, eventHandlers, capture = false) => {
   document.addEventListener(eventName, e => {
     const target = e.target;
     let args = {
@@ -16626,7 +16626,7 @@ const eventHandlers = (eventName, eventHandlers) => {
         }
       }
     });
-  });
+  }, capture);
 };
 
 /**
@@ -47676,25 +47676,28 @@ let __webpack_exports__ = {};
   \**************************************************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lpAssetsJsPath/utils.js */ "./assets/src/js/utils.js");
-/* harmony import */ var _course_builder_builder_course_builder_tab_course_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./course-builder/builder-course/builder-tab-course.js */ "./assets/src/js/frontend/course-builder/builder-course/builder-tab-course.js");
-/* harmony import */ var _course_builder_builder_course_builder_edit_course_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./course-builder/builder-course/builder-edit-course.js */ "./assets/src/js/frontend/course-builder/builder-course/builder-edit-course.js");
-/* harmony import */ var _admin_courses_generate_with_ai_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../admin/courses/generate-with-ai.js */ "./assets/src/js/admin/courses/generate-with-ai.js");
-/* harmony import */ var _admin_generate_with_openai_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../admin/generate-with-openai.js */ "./assets/src/js/admin/generate-with-openai.js");
-/* harmony import */ var _course_builder_builder_lesson_builder_tab_lesson_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./course-builder/builder-lesson/builder-tab-lesson.js */ "./assets/src/js/frontend/course-builder/builder-lesson/builder-tab-lesson.js");
-/* harmony import */ var _course_builder_builder_lesson_builder_edit_lesson_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./course-builder/builder-lesson/builder-edit-lesson.js */ "./assets/src/js/frontend/course-builder/builder-lesson/builder-edit-lesson.js");
-/* harmony import */ var _course_builder_builder_quiz_builder_tab_quiz_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./course-builder/builder-quiz/builder-tab-quiz.js */ "./assets/src/js/frontend/course-builder/builder-quiz/builder-tab-quiz.js");
-/* harmony import */ var _course_builder_builder_quiz_builder_standalone_quiz_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./course-builder/builder-quiz/builder-standalone-quiz.js */ "./assets/src/js/frontend/course-builder/builder-quiz/builder-standalone-quiz.js");
-/* harmony import */ var _course_builder_builder_question_builder_tab_question_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./course-builder/builder-question/builder-tab-question.js */ "./assets/src/js/frontend/course-builder/builder-question/builder-tab-question.js");
-/* harmony import */ var _course_builder_builder_question_builder_edit_question_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./course-builder/builder-question/builder-edit-question.js */ "./assets/src/js/frontend/course-builder/builder-question/builder-edit-question.js");
-/* harmony import */ var _course_builder_builder_popup_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./course-builder/builder-popup.js */ "./assets/src/js/frontend/course-builder/builder-popup.js");
-/* harmony import */ var _course_builder_builder_lesson_builder_material_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./course-builder/builder-lesson/builder-material.js */ "./assets/src/js/frontend/course-builder/builder-lesson/builder-material.js");
-/* harmony import */ var _course_builder_builder_dashboard_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./course-builder/builder-dashboard.js */ "./assets/src/js/frontend/course-builder/builder-dashboard.js");
-/* harmony import */ var _course_builder_builder_settings_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./course-builder/builder-settings.js */ "./assets/src/js/frontend/course-builder/builder-settings.js");
-/* harmony import */ var _course_builder_builder_form_state_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./course-builder/builder-form-state.js */ "./assets/src/js/frontend/course-builder/builder-form-state.js");
-/* harmony import */ var _admin_edit_course_edit_curriculum_edit_curriculum_ai_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ../admin/edit-course/edit-curriculum/edit-curriculum-ai.js */ "./assets/src/js/admin/edit-course/edit-curriculum/edit-curriculum-ai.js");
-/* harmony import */ var lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! lpAssetsJsPath/admin/init-tom-select.js */ "./assets/src/js/admin/init-tom-select.js");
-/* harmony import */ var lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! lpAssetsJsPath/admin/utils-admin.js */ "./assets/src/js/admin/utils-admin.js");
-/* harmony import */ var lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! lpAssetsJsPath/lpToastify */ "./assets/src/js/lpToastify.js");
+/* harmony import */ var sweetalert2__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! sweetalert2 */ "./node_modules/sweetalert2/dist/sweetalert2.all.js");
+/* harmony import */ var sweetalert2__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(sweetalert2__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _course_builder_builder_course_builder_tab_course_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./course-builder/builder-course/builder-tab-course.js */ "./assets/src/js/frontend/course-builder/builder-course/builder-tab-course.js");
+/* harmony import */ var _course_builder_swal_icons_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./course-builder/swal-icons.js */ "./assets/src/js/frontend/course-builder/swal-icons.js");
+/* harmony import */ var _course_builder_builder_course_builder_edit_course_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./course-builder/builder-course/builder-edit-course.js */ "./assets/src/js/frontend/course-builder/builder-course/builder-edit-course.js");
+/* harmony import */ var _admin_courses_generate_with_ai_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../admin/courses/generate-with-ai.js */ "./assets/src/js/admin/courses/generate-with-ai.js");
+/* harmony import */ var _admin_generate_with_openai_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../admin/generate-with-openai.js */ "./assets/src/js/admin/generate-with-openai.js");
+/* harmony import */ var _course_builder_builder_lesson_builder_tab_lesson_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./course-builder/builder-lesson/builder-tab-lesson.js */ "./assets/src/js/frontend/course-builder/builder-lesson/builder-tab-lesson.js");
+/* harmony import */ var _course_builder_builder_lesson_builder_edit_lesson_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./course-builder/builder-lesson/builder-edit-lesson.js */ "./assets/src/js/frontend/course-builder/builder-lesson/builder-edit-lesson.js");
+/* harmony import */ var _course_builder_builder_quiz_builder_tab_quiz_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./course-builder/builder-quiz/builder-tab-quiz.js */ "./assets/src/js/frontend/course-builder/builder-quiz/builder-tab-quiz.js");
+/* harmony import */ var _course_builder_builder_quiz_builder_standalone_quiz_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./course-builder/builder-quiz/builder-standalone-quiz.js */ "./assets/src/js/frontend/course-builder/builder-quiz/builder-standalone-quiz.js");
+/* harmony import */ var _course_builder_builder_question_builder_tab_question_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./course-builder/builder-question/builder-tab-question.js */ "./assets/src/js/frontend/course-builder/builder-question/builder-tab-question.js");
+/* harmony import */ var _course_builder_builder_question_builder_edit_question_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./course-builder/builder-question/builder-edit-question.js */ "./assets/src/js/frontend/course-builder/builder-question/builder-edit-question.js");
+/* harmony import */ var _course_builder_builder_popup_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./course-builder/builder-popup.js */ "./assets/src/js/frontend/course-builder/builder-popup.js");
+/* harmony import */ var _course_builder_builder_lesson_builder_material_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./course-builder/builder-lesson/builder-material.js */ "./assets/src/js/frontend/course-builder/builder-lesson/builder-material.js");
+/* harmony import */ var _course_builder_builder_dashboard_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./course-builder/builder-dashboard.js */ "./assets/src/js/frontend/course-builder/builder-dashboard.js");
+/* harmony import */ var _course_builder_builder_settings_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./course-builder/builder-settings.js */ "./assets/src/js/frontend/course-builder/builder-settings.js");
+/* harmony import */ var _course_builder_builder_form_state_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./course-builder/builder-form-state.js */ "./assets/src/js/frontend/course-builder/builder-form-state.js");
+/* harmony import */ var _admin_edit_course_edit_curriculum_edit_curriculum_ai_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../admin/edit-course/edit-curriculum/edit-curriculum-ai.js */ "./assets/src/js/admin/edit-course/edit-curriculum/edit-curriculum-ai.js");
+/* harmony import */ var lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! lpAssetsJsPath/admin/init-tom-select.js */ "./assets/src/js/admin/init-tom-select.js");
+/* harmony import */ var lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! lpAssetsJsPath/admin/utils-admin.js */ "./assets/src/js/admin/utils-admin.js");
+/* harmony import */ var lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! lpAssetsJsPath/lpToastify */ "./assets/src/js/lpToastify.js");
 /**
  * Course builder JS handler.
  *
@@ -47722,41 +47725,57 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
+let createCourseAiInitialized = false;
+let editCourseAiInitialized = false;
+
+/**
+ * Initialize delegated AI actions after Course Builder content is mounted.
+ * The Frontend Editor fetches its course markup asynchronously, after this
+ * bundle's initial page setup has already run.
+ *
+ * @param {HTMLElement|Document} container Content that may contain AI buttons.
+ */
+const initCourseBuilderAi = (container = document) => {
+  if (!createCourseAiInitialized && container.querySelector('.lp-btn-generate-course-with-ai, .lp-btn-warning-enable-ai')) {
+    new _admin_courses_generate_with_ai_js__WEBPACK_IMPORTED_MODULE_5__.CreateCourseViaAI({
+      autoInsertButton: false,
+      isCourseBuilder: true,
+      redirectDelayMs: 1200
+    });
+    createCourseAiInitialized = true;
+  }
+  if (!editCourseAiInitialized && container.querySelector('.cb-course-edit-ai-btn.lp-btn-generate-with-ai')) {
+    new _admin_generate_with_openai_js__WEBPACK_IMPORTED_MODULE_6__.GenerateWithOpenai({
+      autoInsertButtons: false,
+      isCourseBuilder: true
+    });
+    editCourseAiInitialized = true;
+  }
+};
+window.lpCourseBuilderInitAi = initCourseBuilderAi;
+
 // Initialize all builder components
 const initBuilderComponents = () => {
   try {
-    new _course_builder_builder_course_builder_tab_course_js__WEBPACK_IMPORTED_MODULE_1__.BuilderTabCourse();
-    new _course_builder_builder_course_builder_edit_course_js__WEBPACK_IMPORTED_MODULE_2__.BuilderEditCourse();
-    const hasCreateCourseAiButton = document.querySelector('.lp-btn-generate-course-with-ai, .lp-btn-warning-enable-ai');
-    if (hasCreateCourseAiButton) {
-      new _admin_courses_generate_with_ai_js__WEBPACK_IMPORTED_MODULE_3__.CreateCourseViaAI({
-        autoInsertButton: false,
-        isCourseBuilder: true,
-        redirectDelayMs: 1200
-      });
-    }
-    const hasEditCourseAiButton = document.querySelector('.cb-course-edit-ai-btn.lp-btn-generate-with-ai');
-    if (hasEditCourseAiButton) {
-      new _admin_generate_with_openai_js__WEBPACK_IMPORTED_MODULE_4__.GenerateWithOpenai({
-        autoInsertButtons: false,
-        isCourseBuilder: true
-      });
-    }
-    new _course_builder_builder_lesson_builder_tab_lesson_js__WEBPACK_IMPORTED_MODULE_5__.BuilderTabLesson();
-    new _course_builder_builder_lesson_builder_edit_lesson_js__WEBPACK_IMPORTED_MODULE_6__.BuilderEditLesson();
-    new _course_builder_builder_quiz_builder_tab_quiz_js__WEBPACK_IMPORTED_MODULE_7__.BuilderTabQuiz();
-    new _course_builder_builder_quiz_builder_standalone_quiz_js__WEBPACK_IMPORTED_MODULE_8__.BuilderStandaloneQuiz();
-    new _course_builder_builder_question_builder_tab_question_js__WEBPACK_IMPORTED_MODULE_9__.BuilderTabQuestion();
-    new _course_builder_builder_question_builder_edit_question_js__WEBPACK_IMPORTED_MODULE_10__.BuilderEditQuestion();
-    new _course_builder_builder_popup_js__WEBPACK_IMPORTED_MODULE_11__.BuilderPopup();
-    new _course_builder_builder_dashboard_js__WEBPACK_IMPORTED_MODULE_13__.BuilderDashboard();
-    new _course_builder_builder_settings_js__WEBPACK_IMPORTED_MODULE_14__.BuilderSettings();
-    new _admin_edit_course_edit_curriculum_edit_curriculum_ai_js__WEBPACK_IMPORTED_MODULE_16__.EditCurriculumAi({
+    new _course_builder_builder_course_builder_tab_course_js__WEBPACK_IMPORTED_MODULE_2__.BuilderTabCourse();
+    initCourseEditor();
+    initCourseBuilderAi();
+    new _course_builder_builder_lesson_builder_tab_lesson_js__WEBPACK_IMPORTED_MODULE_7__.BuilderTabLesson();
+    new _course_builder_builder_lesson_builder_edit_lesson_js__WEBPACK_IMPORTED_MODULE_8__.BuilderEditLesson();
+    new _course_builder_builder_quiz_builder_tab_quiz_js__WEBPACK_IMPORTED_MODULE_9__.BuilderTabQuiz();
+    new _course_builder_builder_quiz_builder_standalone_quiz_js__WEBPACK_IMPORTED_MODULE_10__.BuilderStandaloneQuiz();
+    new _course_builder_builder_question_builder_tab_question_js__WEBPACK_IMPORTED_MODULE_11__.BuilderTabQuestion();
+    new _course_builder_builder_question_builder_edit_question_js__WEBPACK_IMPORTED_MODULE_12__.BuilderEditQuestion();
+    new _course_builder_builder_popup_js__WEBPACK_IMPORTED_MODULE_13__.BuilderPopup();
+    new _course_builder_builder_dashboard_js__WEBPACK_IMPORTED_MODULE_15__.BuilderDashboard();
+    new _course_builder_builder_settings_js__WEBPACK_IMPORTED_MODULE_16__.BuilderSettings();
+    new _admin_edit_course_edit_curriculum_edit_curriculum_ai_js__WEBPACK_IMPORTED_MODULE_18__.EditCurriculumAi({
       isCourseBuilder: true
     });
 
     // Initialize form state management for ClassPress-style UX
-    (0,_course_builder_builder_form_state_js__WEBPACK_IMPORTED_MODULE_15__.getFormState)();
+    (0,_course_builder_builder_form_state_js__WEBPACK_IMPORTED_MODULE_17__.getFormState)();
 
     // Initialize sidebar toggle
     initSidebarToggle();
@@ -47766,6 +47785,29 @@ const initBuilderComponents = () => {
     console.error('Error initializing builder components:', e);
   }
 };
+const initializedCourseEditors = new WeakSet();
+
+/**
+ * Initialize the Course Builder edit form after it has been mounted dynamically.
+ *
+ * @param {HTMLElement} container Optional container holding the editor markup.
+ * @return {boolean} Whether the editor was initialized.
+ */
+const initCourseEditor = (container = document) => {
+  const editElement = container.matches?.('.cb-section__course-edit') ? container : container.querySelector?.('.cb-section__course-edit');
+  if (!editElement || initializedCourseEditors.has(editElement)) {
+    return false;
+  }
+  try {
+    new _course_builder_builder_course_builder_edit_course_js__WEBPACK_IMPORTED_MODULE_4__.BuilderEditCourse();
+    initializedCourseEditors.add(editElement);
+    return true;
+  } catch (error) {
+    console.error('Error initializing Course Builder edit form:', error);
+    return false;
+  }
+};
+window.lpCourseBuilderInitCourseEditor = initCourseEditor;
 
 /**
  * Initialize sidebar collapse/expand toggle
@@ -47846,7 +47888,7 @@ const initHeaderMoreActions = () => {
       }
     });
   };
-  document.addEventListener('click', e => {
+  document.addEventListener('click', async e => {
     const target = e.target;
     const toggleBtn = target.closest(toggleSelector);
     if (toggleBtn) {
@@ -47893,6 +47935,24 @@ const initHeaderMoreActions = () => {
       const elParentActionWrap = elAction.closest('.lp-cb-item-action-wrap');
       const elParentActionExpand = elParentActionWrap.querySelector('.lp-cb-item-action-expand-toggle');
       const dataSend = JSON.parse(elAction.dataset.send);
+      if (dataSend.action_type === 'delete') {
+        const result = await sweetalert2__WEBPACK_IMPORTED_MODULE_1___default().fire({
+          title: elAction.textContent,
+          text: elAction.dataset.confirm,
+          iconHtml: _course_builder_swal_icons_js__WEBPACK_IMPORTED_MODULE_3__.SWAL_ICON_DELETE,
+          customClass: {
+            icon: 'lp-cb-swal-icon-html'
+          },
+          showCloseButton: true,
+          showCancelButton: true,
+          cancelButtonText: lpData.i18n.cancel,
+          confirmButtonText: lpData.i18n.yes,
+          reverseButtons: true
+        });
+        if (!result.isConfirmed) {
+          return;
+        }
+      }
       lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elParentActionExpand, 1);
       const svg = elParentActionExpand.querySelector('svg');
       //lpUtils.lpShowHideEl( svg, 0 );
@@ -47905,7 +47965,7 @@ const initHeaderMoreActions = () => {
             status,
             data
           } = response;
-          lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_19__.show(message, status);
+          lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_21__.show(message, status);
           if (status === 'success') {
             if (data.redirect_url) {
               window.location.href = data.redirect_url;
@@ -47919,7 +47979,7 @@ const initHeaderMoreActions = () => {
           }
         },
         error: error => {
-          lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_19__.show(error, 'error');
+          lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_21__.show(error, 'error');
         },
         completed: () => {
           lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elParentActionExpand, 0);
@@ -47955,7 +48015,7 @@ initBuilderComponents();
 // Events
 document.addEventListener('click', e => {
   try {
-    (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_17__.initElsTomSelect)();
+    (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__.initElsTomSelect)();
   } catch (e) {
     console.warn('Error initializing TomSelect:', e);
   }
@@ -47963,7 +48023,7 @@ document.addEventListener('click', e => {
 document.addEventListener('DOMContentLoaded', () => {
   // Sure that the TomSelect is loaded if listener can't find elements.
   try {
-    (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_17__.initElsTomSelect)();
+    (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__.initElsTomSelect)();
   } catch (e) {
     console.warn('Error initializing TomSelect on DOMContentLoaded:', e);
   }
@@ -47977,16 +48037,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Use lpOnElementReady safely
-if (lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_18__.Utils?.lpOnElementReady) {
-  lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_18__.Utils.lpOnElementReady('select.lp-tom-select', () => {
+if (lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_20__.Utils?.lpOnElementReady) {
+  lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_20__.Utils.lpOnElementReady('select.lp-tom-select', () => {
     try {
-      (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_17__.initElsTomSelect)();
+      (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__.initElsTomSelect)();
     } catch (e) {
       console.warn('Error initializing TomSelect:', e);
     }
   });
 }
-window.lpFindTomSelect = lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_17__.initElsTomSelect;
+window.lpFindTomSelect = lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__.initElsTomSelect;
 
 /**
  * Initialize BuilderMaterial for Course Builder Settings tab Material
@@ -48012,7 +48072,7 @@ function initBuilderMaterialForCourseSettings() {
             // Mark as initialized to prevent multiple instances
             initializedContainers.add(materialContainer);
             // Initialize BuilderMaterial
-            new _course_builder_builder_lesson_builder_material_js__WEBPACK_IMPORTED_MODULE_12__.BuilderMaterial(materialContainer);
+            new _course_builder_builder_lesson_builder_material_js__WEBPACK_IMPORTED_MODULE_14__.BuilderMaterial(materialContainer);
           }
         } catch (e) {
           console.error('Error initializing BuilderMaterial:', e);

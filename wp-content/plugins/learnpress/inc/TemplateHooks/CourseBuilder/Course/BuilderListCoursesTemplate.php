@@ -448,8 +448,6 @@ class BuilderListCoursesTemplate {
 				$settings
 			);
 
-			$more_actions_icon = LP_WP_Filesystem::get_icon_svg( 'ico-cb-more.svg' );
-
 			// Set action by status
 			$action_by_status = [];
 			if ( $course_status === PostModel::STATUS_TRASH ) {
@@ -474,10 +472,14 @@ class BuilderListCoursesTemplate {
 			];
 
 			foreach ( $action_by_status as $action_status => $action_label ) {
+				$confirm_message        = 'delete' === $action_status
+					? sprintf( ' data-confirm="%s"', esc_attr__( 'Are you sure you want to permanently delete this course?', 'learnpress' ) )
+					: '';
 				$html_action_by_status .= sprintf(
-					'<span class="lp-cb-item-action %s" data-send="%s">%s</span>',
+					'<span class="lp-cb-item-action %s" data-send="%s"%s>%s</span>',
 					$action_status,
 					Template::convert_data_to_json( $data_send_action + [ 'action_type' => $action_status ] ),
+					$confirm_message,
 					$action_label
 				);
 			}
@@ -486,15 +488,19 @@ class BuilderListCoursesTemplate {
 				'learn-press/course-builder/list-courses/item/action',
 				[
 					'wrapper'                => '<div class="lp-cb-item-action-wrap">',
+					'preview'                => $course_status !== PostModel::STATUS_TRASH ? sprintf(
+						'<a class="btn-preview-course" href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+						esc_url( get_preview_post_link( $course_id ) ),
+						esc_html__( 'Preview', 'learnpress' )
+					) : '',
 					'edit'                   => $course_status !== PostModel::STATUS_TRASH ? sprintf(
 						'<div class="course-action-editor"><a class="btn-edit-course course-edit-permalink" href="%s">%s</a></div>',
 						$edit_link,
 						__( 'Edit', 'learnpress' )
 					) : '',
-					'action_expanded_button' => sprintf(
-						'<div class="lp-cb-item-action-expand-toggle lp-button">%s</div>',
-						$more_actions_icon
-					),
+					'action_expanded_button' => '<div class="lp-cb-item-action-expand-toggle lp-button">
+													<span class="lp-icon-ellipsis-v"></span>
+												</div>',
 					'action_wrap'            => '<div class="lp-cb-item-action-expand lp-hidden">',
 					'action'                 => $html_action_by_status,
 					'action_wrap_end'        => '</div>',

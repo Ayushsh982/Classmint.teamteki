@@ -65,6 +65,11 @@ if ( ! function_exists( 'LP_Install' ) ) {
 				$this->create_table_webhooks();
 			}
 
+			// Runtime migration for Student Notes table.
+			if ( ! LP_Settings::is_created_tb_notes() ) {
+				$this->create_table_notes();
+			}
+
 			// Set roles and capabilities.
 			learn_press_add_user_roles();
 
@@ -170,6 +175,12 @@ if ( ! function_exists( 'LP_Install' ) ) {
 			// Keep this explicit guard in addition to tables-v4 config loading.
 			if ( ! LP_Settings::is_created_tb_webhooks() ) {
 				$this->create_table_webhooks();
+			}
+
+			// Ensure Student Notes table exists for activation/upgrade flows.
+			// Keep this explicit guard in addition to tables-v4 config loading.
+			if ( ! LP_Settings::is_created_tb_notes() ) {
+				$this->create_table_notes();
 			}
 
 			update_option( 'learn_press_check_tables', 'yes' );
@@ -350,6 +361,44 @@ if ( ! function_exists( 'LP_Install' ) ) {
 		}
 
 		/**
+		 * Create table learnpress_notes.
+		 *
+		 * @since 4.4.9.2
+		 * @return void
+		 */
+		public function create_table_notes() {
+			global $wpdb;
+
+			try {
+				$collation = $wpdb->has_cap( 'collation' ) ? $wpdb->get_charset_collate() : 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
+
+				$sql = "CREATE TABLE IF NOT EXISTS {$this->lp_db->tb_lp_notes} (
+					note_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+					user_id bigint(20) unsigned NOT NULL,
+					course_id bigint(20) unsigned NOT NULL,
+					item_id bigint(20) unsigned NOT NULL,
+					item_type varchar(45) NOT NULL DEFAULT 'lp_lesson',
+					note_type varchar(20) NOT NULL DEFAULT 'text',
+					content longtext NULL,
+					highlight_text text NULL,
+					anchor longtext NULL,
+					created_at datetime NOT NULL,
+					updated_at datetime NULL DEFAULT NULL,
+					PRIMARY KEY (note_id),
+					KEY user_item (user_id, item_id),
+					KEY user_course (user_id, course_id),
+					KEY course_id (course_id),
+					KEY item_id (item_id),
+					KEY created_at (created_at)
+				) $collation";
+
+				$wpdb->query( $sql );
+			} catch ( Throwable $e ) {
+				error_log( $e->getMessage() );
+			}
+		}
+
+		/**
 		 * Create default pages for LP
 		 */
 		public static function create_pages() {
@@ -366,27 +415,27 @@ if ( ! function_exists( 'LP_Install' ) ) {
 
 					if ( $page === 'courses' ) {
 						$page_title = 'Courses';
-						$page_slug  = $page;
+						//$page_slug  = $page;
 					} elseif ( 'single_instructor' === $page ) {
 						$page_title = 'Instructor';
-						$page_slug  = 'instructor';
+						//$page_slug  = 'instructor';
 					} elseif ( 'instructors' === $page ) {
 						$page_title = 'Instructors';
-						$page_slug  = $page;
+						//$page_slug  = $page;
 					} elseif ( 'become_a_teacher' === $page ) {
 						$page_title = 'Become an Instructor';
-						$page_slug  = $page;
+						//$page_slug  = $page;
 					} elseif ( 'term_conditions' === $page ) {
 						$page_title = 'Terms and Conditions';
-						$page_slug  = $page;
+						//$page_slug  = $page;
 					} else {
 						$page_title = ucwords( str_replace( '_', ' ', $page ) );
-						$page_slug  = 'lp-' . str_replace( '_', '-', $page );
+						//$page_slug  = 'lp-' . str_replace( '_', '-', $page );
 					}
 
 					$data_create_page = array(
 						'post_title' => $page_title,
-						'post_name'  => $page_slug,
+						//'post_name'  => $page_slug,
 					);
 					LP_Helper::create_page( $data_create_page, "learn_press_{$page}_page_id" );
 				}

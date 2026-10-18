@@ -1411,7 +1411,7 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.7
+ * @version 1.0.8
  */
 const lpClassName = {
   hidden: 'lp-hidden',
@@ -1666,8 +1666,11 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
  *
  * @param eventName
  * @param eventHandlers
+ * @param capture Use capture phase (default: false/bubble). Set true when
+ * the event may be stopped by a container calling stopPropagation() before
+ * it bubbles up to document (e.g. Headless UI DialogPanel on click).
  */
-const eventHandlers = (eventName, eventHandlers) => {
+const eventHandlers = (eventName, eventHandlers, capture = false) => {
   document.addEventListener(eventName, e => {
     const target = e.target;
     let args = {
@@ -1705,7 +1708,7 @@ const eventHandlers = (eventName, eventHandlers) => {
         }
       }
     });
-  });
+  }, capture);
 };
 
 /**

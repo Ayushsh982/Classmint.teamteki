@@ -4,7 +4,7 @@
  * Plugin URI: https://thimpress.com/learnpress
  * Description: LearnPress is a WordPress complete solution for creating a Learning Management System (LMS). It can help you to create courses, lessons and quizzes.
  * Author: ThimPress
- * Version: 4.4.10
+ * Version: 4.4.11
  * Author URI: http://thimpress.com
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -32,6 +32,7 @@ use LearnPress\Ajax\LoadContentViaAjax;
 use LearnPress\Ajax\SampleDataAJAX;
 use LearnPress\Ajax\SetupWizardAjax;
 use LearnPress\Ajax\AI\AIAssistantAjax;
+use LearnPress\Ajax\NoteAjax;
 use LearnPress\Ajax\MCP\McpApiKeysAjax;
 use LearnPress\Ajax\Webhook\WebhooksAjax;
 use LearnPress\Ajax\CourseBuilder\CBEditCourseAjax;
@@ -97,8 +98,11 @@ use LearnPress\TemplateHooks\Profile\ProfileOrdersTemplate;
 use LearnPress\TemplateHooks\Profile\ProfileOrderTemplate;
 use LearnPress\TemplateHooks\Profile\ProfileQuizzesTemplate;
 use LearnPress\TemplateHooks\Profile\ProfileStudentEnrolledTemplate;
+use LearnPress\TemplateHooks\Profile\ProfileNotesTemplate;
 use LearnPress\TemplateHooks\Profile\ProfileStudentStatisticsTemplate;
 use LearnPress\TemplateHooks\Course\CourseAIAssistantTemplate;
+use LearnPress\TemplateHooks\Course\CourseNoteTemplate;
+use LearnPress\Services\NoteService;
 use LearnPress\Widgets\LPRegisterWidget;
 use LearnPress\WPGDPR\ErasePersonalData;
 use LearnPress\WPGDPR\ExportPersonalData;
@@ -407,6 +411,7 @@ if ( ! class_exists( 'LearnPress' ) ) {
 			BuilderPopupTemplate::instance();
 			ProfileCoursesTemplate::instance();
 			ProfileStudentEnrolledTemplate::instance();
+			ProfileNotesTemplate::instance();
 
 			// Admin template hooks.
 			AdminEditCurriculumTemplate::instance();
@@ -417,6 +422,7 @@ if ( ! class_exists( 'LearnPress' ) ) {
 			AdminCourseTools::instance();
 			CourseMaterialTemplate::instance();
 			CourseAIAssistantTemplate::instance();
+			CourseNoteTemplate::instance();
 			AdminOrderItemsTemplate::instance();
 			AdminOrderListTemplate::instance();
 			AdminCreateCourseAITemplate::instance();
@@ -429,6 +435,8 @@ if ( ! class_exists( 'LearnPress' ) ) {
 			// WP GDPR
 			ErasePersonalData::instance();
 			ExportPersonalData::instance();
+			// Student Notes: delete notes together with their user / course / lesson.
+			NoteService::instance();
 
 			// Models
 			include_once 'inc/Models/class-lp-rest-response.php';
@@ -441,14 +449,14 @@ if ( ! class_exists( 'LearnPress' ) ) {
 			include_once 'inc/handle-steps/class-lp-handle-upgrade-db-steps.php';
 
 			// LP Cache
-			include_once 'inc/cache/class-lp-cache.php';
-			include_once 'inc/cache/class-lp-courses-cache.php';
-			include_once 'inc/cache/class-lp-course-cache.php';
-			include_once 'inc/cache/class-lp-quiz-cache.php';
-			include_once 'inc/cache/class-lp-question-cache.php';
-			include_once 'inc/cache/class-lp-session-cache.php';
-			include_once 'inc/cache/class-lp-settings-cache.php';
-			include_once 'inc/cache/class-lp-user-items-cache.php';
+			include_once 'inc/Cache/class-lp-cache.php';
+			include_once 'inc/Cache/class-lp-courses-cache.php';
+			include_once 'inc/Cache/class-lp-course-cache.php';
+			include_once 'inc/Cache/class-lp-quiz-cache.php';
+			include_once 'inc/Cache/class-lp-question-cache.php';
+			include_once 'inc/Cache/class-lp-session-cache.php';
+			include_once 'inc/Cache/class-lp-settings-cache.php';
+			include_once 'inc/Cache/class-lp-user-items-cache.php';
 
 			// Background processes.
 			LPBackgroundTrigger::instance();
@@ -786,6 +794,7 @@ if ( ! class_exists( 'LearnPress' ) ) {
 					CourseBuilderAjax::catch_lp_ajax();
 					OpenAiAjax::catch_lp_ajax();
 					AIAssistantAjax::catch_lp_ajax();
+					NoteAjax::catch_lp_ajax();
 					ExportOrderCSVAjax::catch_lp_ajax();
 					McpApiKeysAjax::catch_lp_ajax();
 					WebhooksAjax::catch_lp_ajax();

@@ -494,6 +494,36 @@ const Sidebar = () => {
       toggleSidebar(LP.Cookies.get('sidebar-toggle'));
     }
   });
+
+  // Right Sidebar Toggle (open / close)
+  const rightSidebar = document.querySelector('#popup-right-sidebar');
+  if (rightSidebar) {
+    const isExpandedCookie = window.LP?.Cookies ? LP.Cookies.get('popup-right-sidebar-expanded') : null;
+
+    // Restore saved state from cookie
+    if (isExpandedCookie === 'no') {
+      rightSidebar.classList.remove('is-expanded');
+      rightSidebar.classList.add('is-collapsed');
+    } else {
+      rightSidebar.classList.add('is-expanded');
+      rightSidebar.classList.remove('is-collapsed');
+    }
+    const toggleRightSidebar = () => {
+      const willExpand = !rightSidebar.classList.contains('is-expanded');
+      rightSidebar.classList.toggle('is-expanded', willExpand);
+      rightSidebar.classList.toggle('is-collapsed', !willExpand);
+      if (window.LP?.Cookies) {
+        LP.Cookies.set('popup-right-sidebar-expanded', willExpand ? 'yes' : 'no');
+      }
+    };
+    const toggleBtn = rightSidebar.querySelector('.popup-right-sidebar__toggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', e => {
+        e.preventDefault();
+        toggleRightSidebar();
+      });
+    }
+  }
 };
 
 /***/ },
@@ -561,6 +591,135 @@ document.addEventListener('DOMContentLoaded', () => {
   const singleCurriculums = new SingleCurriculums();
   singleCurriculums.checkCourseDurationExpire();
 });
+
+/***/ },
+
+/***/ "./assets/src/apps/js/frontend/single-curriculum/learning-content-bar.js"
+/*!*******************************************************************************!*\
+  !*** ./assets/src/apps/js/frontend/single-curriculum/learning-content-bar.js ***!
+  \*******************************************************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lpAssetsJsPath/utils.js */ "./assets/src/js/utils.js");
+
+class LearningContentBar {
+  static eventRendered = 'lp-learning-content-bar-rendered';
+  static eventClosed = 'lp-learning-content-bar-closed';
+  constructor() {
+    this.items = new Map();
+  }
+  static selectors = {
+    contentBar: '.lp-addon-content-bar',
+    rightSidebarItem: '.popup-right-sidebar__item',
+    close: '.lp-addon-content-bar__head .lp-icon-close'
+  };
+  static _loadedEvents = false;
+  init() {
+    this.events();
+  }
+  events() {
+    if (LearningContentBar._loadedEvents) {
+      return;
+    }
+    LearningContentBar._loadedEvents = true;
+    document.addEventListener('lp-learning-content-bar-open', e => {
+      const item = document.querySelector(`[data-learning-bar-item="${CSS.escape(e.detail?.item || '')}"]`);
+      if (item) {
+        this.open({
+          target: item
+        });
+      }
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        this.close();
+      } else if ((e.key === 'Enter' || e.key === ' ') && e.target.matches(LearningContentBar.selectors.rightSidebarItem)) {
+        e.preventDefault();
+        this.open({
+          target: e.target
+        });
+      }
+    });
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('click', [{
+      selector: LearningContentBar.selectors.rightSidebarItem,
+      callBack: this.open.bind(this)
+    }, {
+      selector: LearningContentBar.selectors.close,
+      callBack: this.close.bind(this)
+    }]);
+  }
+  open(args) {
+    const {
+      target
+    } = args;
+    const elItem = target.closest(`${LearningContentBar.selectors.rightSidebarItem}`);
+    if (!elItem) {
+      return;
+    }
+    const contentBar = document.querySelector(LearningContentBar.selectors.contentBar);
+    if (!contentBar) {
+      return;
+    }
+    const template = elItem.querySelector('template');
+    const headTarget = contentBar.querySelector('.lp-addon-content-bar__left');
+    const contentTarget = contentBar.querySelector('.lp-addon-content-bar__content');
+    if (template && headTarget && contentTarget) {
+      const item = elItem.dataset.learningBarItem || '';
+      if (!this.items.has(item)) {
+        const head = template.content.querySelector('.lp-learning-bar-item-head');
+        const content = template.content.querySelector('.lp-learning-bar-item-content');
+        if (!head || !content) {
+          return;
+        }
+        this.items.set(item, {
+          head: head.cloneNode(true),
+          content: content.cloneNode(true)
+        });
+      }
+
+      // Keep each tool's DOM so drafts and requests survive switching tools.
+      const cached = this.items.get(item);
+      if (contentTarget.firstElementChild !== cached.content) {
+        headTarget.replaceChildren(cached.head);
+        contentTarget.replaceChildren(cached.content);
+      }
+      contentBar.dataset.learningBarItem = item;
+      contentBar.classList.add('open');
+      const sidebar = elItem.closest('#popup-right-sidebar');
+      sidebar?.classList.remove('is-collapsed');
+      sidebar?.classList.add('is-expanded');
+      document.querySelectorAll(LearningContentBar.selectors.rightSidebarItem).forEach(element => {
+        element.setAttribute('aria-expanded', String(element === elItem));
+      });
+      document.dispatchEvent(new CustomEvent(LearningContentBar.eventRendered, {
+        detail: {
+          item,
+          contentBar
+        }
+      }));
+    }
+  }
+  close(args) {
+    args?.e?.preventDefault();
+    const contentBar = document.querySelector(LearningContentBar.selectors.contentBar);
+    if (contentBar?.classList.contains('open')) {
+      contentBar.classList.remove('open');
+      const item = document.querySelector(`${LearningContentBar.selectors.rightSidebarItem}[aria-expanded="true"]`);
+      item?.setAttribute('aria-expanded', 'false');
+      item?.focus();
+      document.dispatchEvent(new CustomEvent(LearningContentBar.eventClosed, {
+        detail: {
+          item: contentBar.dataset.learningBarItem || '',
+          contentBar
+        }
+      }));
+    }
+  }
+}
+const learningContentBar = new LearningContentBar();
+learningContentBar.init();
 
 /***/ },
 
@@ -666,7 +825,7 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.7
+ * @version 1.0.8
  */
 const lpClassName = {
   hidden: 'lp-hidden',
@@ -921,8 +1080,11 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
  *
  * @param eventName
  * @param eventHandlers
+ * @param capture Use capture phase (default: false/bubble). Set true when
+ * the event may be stopped by a container calling stopPropagation() before
+ * it bubbles up to document (e.g. Headless UI DialogPanel on click).
  */
-const eventHandlers = (eventName, eventHandlers) => {
+const eventHandlers = (eventName, eventHandlers, capture = false) => {
   document.addEventListener(eventName, e => {
     const target = e.target;
     let args = {
@@ -960,7 +1122,7 @@ const eventHandlers = (eventName, eventHandlers) => {
         }
       }
     });
-  });
+  }, capture);
 };
 
 /**
@@ -1267,9 +1429,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _single_curriculum_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./single-curriculum/index */ "./assets/src/apps/js/frontend/single-curriculum/index.js");
 /* harmony import */ var _show_lp_overlay_complete_item__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./show-lp-overlay-complete-item */ "./assets/src/apps/js/frontend/show-lp-overlay-complete-item.js");
 /* harmony import */ var _material__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./material */ "./assets/src/apps/js/frontend/material.js");
+/* harmony import */ var _single_curriculum_learning_content_bar__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./single-curriculum/learning-content-bar */ "./assets/src/apps/js/frontend/single-curriculum/learning-content-bar.js");
 
 
 //import courseCurriculumSkeleton from './single-curriculum/skeleton';
+
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_single_curriculum_index__WEBPACK_IMPORTED_MODULE_0__["default"]);
 

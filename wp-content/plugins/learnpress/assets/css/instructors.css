@@ -61,7 +61,7 @@ button {
 .learnpress-page input[type=email],
 .learnpress-page input[type=number],
 .learnpress-page input[type=password], .learnpress-page textarea {
-  border-color: var(--lp-border-color, #E2E0DB);
+  border-color: var(--lp-border-color, #E1E1E1);
   border-radius: var(--lp-border-radius, 5px);
 }
 .learnpress-page input[type=text]:focus,
@@ -73,9 +73,9 @@ button {
 }
 .learnpress-page .lp-button, .learnpress-page #lp-button {
   padding: 12px 24px;
-  border: 1px solid var(--lp-border-color, #E2E0DB);
+  border: 1px solid var(--lp-border-color, #E1E1E1);
   color: var(--lp-color-base, #333);
-  background: transparent;
+  background: var(--lp-btn-bg-color, transparent);
   box-shadow: unset;
   font-family: inherit;
   font-weight: 400;

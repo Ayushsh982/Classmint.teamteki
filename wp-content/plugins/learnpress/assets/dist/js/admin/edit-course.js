@@ -2087,14 +2087,13 @@ class GenerateWithOpenai {
             localStorage.setItem('lp_course_ai_setting', JSON.stringify(lp_course_ai_setting));
           });
         }
-        const language = popupSweetAlert.querySelector('select[name="language"]');
+        const language = popupSweetAlert.querySelector('input[name="language"]');
         if (language) {
           if (lp_course_ai_setting?.language) {
-            language.tomselect.setValue(lp_course_ai_setting.language);
+            language.value = lp_course_ai_setting.language;
           }
-          language.addEventListener('change', event => {
-            const value = language.tomselect.getValue();
-            lp_course_ai_setting.language = value ? [value] : [];
+          language.addEventListener('input', event => {
+            lp_course_ai_setting.language = language.value;
             localStorage.setItem('lp_course_ai_setting', JSON.stringify(lp_course_ai_setting));
           });
         }
@@ -2883,7 +2882,7 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.7
+ * @version 1.0.8
  */
 const lpClassName = {
   hidden: 'lp-hidden',
@@ -3138,8 +3137,11 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
  *
  * @param eventName
  * @param eventHandlers
+ * @param capture Use capture phase (default: false/bubble). Set true when
+ * the event may be stopped by a container calling stopPropagation() before
+ * it bubbles up to document (e.g. Headless UI DialogPanel on click).
  */
-const eventHandlers = (eventName, eventHandlers) => {
+const eventHandlers = (eventName, eventHandlers, capture = false) => {
   document.addEventListener(eventName, e => {
     const target = e.target;
     let args = {
@@ -3177,7 +3179,7 @@ const eventHandlers = (eventName, eventHandlers) => {
         }
       }
     });
-  });
+  }, capture);
 };
 
 /**

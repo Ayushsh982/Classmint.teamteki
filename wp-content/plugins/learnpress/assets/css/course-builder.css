@@ -78,9 +78,9 @@ body {
 }
 .lp-button {
   padding: 8px 16px;
-  border: 1px solid var(--lp-border-color, #E2E0DB);
+  border: 1px solid var(--lp-border-color, #E1E1E1);
   border-radius: var(--lp-border-radius, 5px);
-  color: #374151;
+  color: var(--lp-color-base, #333);
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
@@ -161,7 +161,7 @@ button {
 .learnpress-page input[type=email],
 .learnpress-page input[type=number],
 .learnpress-page input[type=password], .learnpress-page textarea {
-  border-color: var(--lp-border-color, #E2E0DB);
+  border-color: var(--lp-border-color, #E1E1E1);
   border-radius: var(--lp-border-radius, 5px);
 }
 .learnpress-page input[type=text]:focus,
@@ -173,9 +173,9 @@ button {
 }
 .learnpress-page .lp-button, .learnpress-page #lp-button {
   padding: 12px 24px;
-  border: 1px solid var(--lp-border-color, #E2E0DB);
+  border: 1px solid var(--lp-border-color, #E1E1E1);
   color: var(--lp-color-base, #333);
-  background: transparent;
+  background: var(--lp-btn-bg-color, transparent);
   box-shadow: unset;
   font-family: inherit;
   font-weight: 400;
@@ -1230,29 +1230,18 @@ p:last-child {
   overflow-y: auto;
 }
 .lp-ai-images-warp .lp-ai-image-item {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 .lp-ai-images-warp .lp-ai-image-item img {
   object-fit: contain;
   width: 100%;
 }
-.lp-ai-images-warp .lp-ai-image-item .lp-btn-ai-apply-image {
-  position: absolute;
-  top: 5px;
-  right: 0;
-  transform: translateX(-5%);
-  background-color: rgba(0, 0, 0, 0.6);
+.lp-ai-images-warp .lp-ai-image-item .lp-btn-ai-apply-image:hover {
+  background-color: #7E6CE2;
   color: #fff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.lp-ai-images-warp .lp-ai-image-item:hover .lp-btn-ai-apply-image {
-  opacity: 1;
 }
 
 .lp-creating-course-ai-wrap .loading-wrap {
@@ -3850,6 +3839,7 @@ div:where(.swal2-container).swal2-center > .swal2-popup {
 #lp-course-builder .course-action .course-permalink:hover {
   text-decoration: underline;
 }
+#lp-course-builder .btn-preview-course,
 #lp-course-builder .btn-edit-course {
   display: inline-flex;
   align-items: center;
@@ -3866,6 +3856,15 @@ div:where(.swal2-container).swal2-center > .swal2-popup {
   color: #ffffff;
   transition: all 0.2s;
   white-space: nowrap;
+}
+#lp-course-builder .btn-preview-course {
+  border: 1px solid #7067ED;
+  background: #ffffff;
+  color: #7067ED;
+}
+#lp-course-builder .btn-preview-course:hover {
+  background: #EEF1FF;
+  color: #5b52d1;
 }
 #lp-course-builder .btn-edit-course:hover {
   background: #5b52d1;
@@ -17161,6 +17160,7 @@ table.lp-list-table thead tr:first-child td, table.lp-list-table thead tr:first-
   border-block-start: none;
 }
 table.lp-list-table thead tr {
+  border: none;
   border-bottom: 1px solid var(--lp-border-color, #E2E0DB);
   position: sticky;
   top: 0;
@@ -17251,6 +17251,9 @@ table.lp-list-table.order-table-details tfoot tr td, table.lp-list-table.order-t
 }
 table.lp-list-table.order-table-details tfoot tr:not(:last-child) td, table.lp-list-table.order-table-details tfoot tr:not(:last-child) th {
   padding-bottom: 0;
+}
+table.lp-list-table.profile-list-quizzes tfoot td {
+  padding: 10px 20px;
 }
 
 /**

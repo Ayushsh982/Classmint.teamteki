@@ -36,7 +36,7 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.7
+ * @version 1.0.8
  */
 const lpClassName = {
   hidden: 'lp-hidden',
@@ -291,8 +291,11 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
  *
  * @param eventName
  * @param eventHandlers
+ * @param capture Use capture phase (default: false/bubble). Set true when
+ * the event may be stopped by a container calling stopPropagation() before
+ * it bubbles up to document (e.g. Headless UI DialogPanel on click).
  */
-const eventHandlers = (eventName, eventHandlers) => {
+const eventHandlers = (eventName, eventHandlers, capture = false) => {
   document.addEventListener(eventName, e => {
     const target = e.target;
     let args = {
@@ -330,7 +333,7 @@ const eventHandlers = (eventName, eventHandlers) => {
         }
       }
     });
-  });
+  }, capture);
 };
 
 /**
@@ -5396,7 +5399,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   AIAssistantWidget: () => (/* binding */ AIAssistantWidget)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./assets/src/js/utils.js");
+/* harmony import */ var lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lpAssetsJsPath/utils.js */ "./assets/src/js/utils.js");
 /* harmony import */ var sweetalert2__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! sweetalert2 */ "./node_modules/sweetalert2/dist/sweetalert2.all.js");
 /* harmony import */ var sweetalert2__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(sweetalert2__WEBPACK_IMPORTED_MODULE_1__);
 /**
@@ -5405,7 +5408,7 @@ __webpack_require__.r(__webpack_exports__);
  * LearnPress runtime implementation:
  * - ES6 class module.
  * - Delegated events via lpUtils.eventHandlers.
- * - Boot via lpUtils.lpOnElementReady.
+ * - Boot via the learning content bar after its template is inserted.
  * - AJAX transport via window.lpAJAXG.fetchAJAX.
  *
  * @since   4.3.5
@@ -5427,9 +5430,6 @@ class AIAssistantWidget {
   }
   static selectors = {
     root: '#lp-ai-assistant',
-    toggleBtn: '.lp-ai-assistant__toggle',
-    panel: '.lp-ai-assistant__panel',
-    closeBtn: '.lp-ai-assistant__close-btn',
     clearBtn: '.lp-ai-assistant__clear-btn',
     msgList: '.lp-ai-assistant__messages',
     inputEl: '.lp-ai-assistant__input',
@@ -5441,95 +5441,63 @@ class AIAssistantWidget {
     quizCard: '.lp-ai-assistant__quiz-card',
     quizOptionBtn: '.lp-ai-assistant__quiz-option'
   };
-
-  /**
-   * Curriculum item types the assistant supports.
-   *
-   * Mirrors AIAssistantController::get_supported_item_types(). The server re-validates,
-   * so this only avoids pointless requests.
-   */
+  static eventContentBarRendered = 'lp-learning-content-bar-rendered';
   static itemTypes = ['lp_lesson', 'lp_quiz'];
-  init() {
-    if (!this.validateConfig()) {
+  init(root) {
+    this.events();
+    this.activateRoot(root);
+  }
+  events() {
+    if (AIAssistantWidget._loadedEvents) {
       return;
     }
-    this.root = document.querySelector(AIAssistantWidget.selectors.root);
-    if (!this.root) {
-      return;
+    AIAssistantWidget._loadedEvents = this;
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('click', [{
+      selector: AIAssistantWidget.selectors.clearBtn,
+      callBack: this.handleClearClick.bind(this)
+    }, {
+      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.sendBtn}`,
+      callBack: this.handleSendClick.bind(this)
+    }, {
+      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.quickBtn}`,
+      callBack: this.handleQuickActionClick.bind(this)
+    }, {
+      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.quizOptionBtn}`,
+      callBack: this.handleQuizOptionClick.bind(this)
+    }]);
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('keydown', [{
+      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.inputEl}`,
+      callBack: this.handleInputKeydown.bind(this)
+    }]);
+  }
+  readConfigFromRoot(root) {
+    const raw = root?.dataset?.lpAiConfig;
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          this.config = parsed;
+          return;
+        }
+      } catch (_e) {}
     }
+    this.config = null;
+  }
+  activateRoot(root) {
+    this.readConfigFromRoot(root);
+    this.root = root;
     this.cacheElements();
-    if (!this.validateDOM()) {
-      return;
-    }
-    this.storageKey = `lp_ai_chat_${this.config.context}_${this.config.itemId}`;
+    this.storageKey = `lp_ai_chat_${this.config.itemType}_${this.config.itemId}`;
     this.applyInitialState();
     this.loadHistory();
     this.renderHistoryToDOM();
     this.bindQuizCompletedHook();
-    this.events();
-  }
-  validateConfig() {
-    if (typeof window.lpAIAssistant !== 'object' || !window.lpAIAssistant) {
-      return false;
-    }
-    this.config = window.lpAIAssistant;
-    if (!this.config.enabled) {
-      return false;
-    }
-    const requiredString = ['nonce', 'ajaxUrl'];
-    for (const key of requiredString) {
-      if (typeof this.config[key] !== 'string' || !this.config[key]) {
-        return false;
-      }
-    }
-    const itemId = Number.isInteger(this.config.itemId) ? this.config.itemId : this.config.lessonId;
-    if (!Number.isInteger(itemId) || itemId <= 0) {
-      return false;
-    }
-    if (!Number.isInteger(this.config.courseId) || this.config.courseId <= 0) {
-      return false;
-    }
-
-    /**
-     * itemType is required and must come from the server-localized config. It is
-     * never guessed from context, lessonId or the numeric ID: a course item is
-     * identified by (courseId, itemType, itemId), and inferring one leg of that
-     * tuple on the client would let a lesson request address a quiz record.
-     */
-    if (!AIAssistantWidget.itemTypes.includes(this.config.itemType)) {
-      return false;
-    }
-    this.config.itemId = itemId;
-    this.config.lessonId = itemId; // Backward compatibility for existing AJAX contract.
-    this.config.context = this.config.context === 'quiz' ? 'quiz' : 'lesson';
-    this.config.quizCompleted = !!this.config.quizCompleted;
-    this.config.enabledActions = {
-      summarize: true,
-      explain: true,
-      quick_quiz: true,
-      smart_review: true,
-      ...(this.config.enabledActions || {})
-    };
-    this.config.i18n = {
-      you: this.config?.i18n?.you || 'You',
-      assistant: this.config?.i18n?.assistant || 'AI Assistant',
-      thinking: this.config?.i18n?.thinking || 'Thinking...',
-      sendError: this.config?.i18n?.sendError || 'An error occurred. Please try again.',
-      clearConfirm: this.config?.i18n?.clearConfirm || 'Clear chat history?',
-      explainPrompt: this.config?.i18n?.explainPrompt || 'Explain a concept from this lesson.',
-      quizPrompt: this.config?.i18n?.quizPrompt || 'Create a quick quiz from this lesson.',
-      summarizePrompt: this.config?.i18n?.summarizePrompt || 'Summarize this lesson with key points.',
-      smartReviewPrompt: this.config?.i18n?.smartReviewPrompt || 'Give me a smart review of my quiz results.',
-      quizCorrectTitle: this.config?.i18n?.quizCorrectTitle || 'Correct!',
-      quizWrongTitle: this.config?.i18n?.quizWrongTitle || 'Not correct!'
-    };
     return true;
   }
   cacheElements() {
-    this.elements.toggleBtn = document.querySelector(AIAssistantWidget.selectors.toggleBtn);
-    this.elements.panel = this.root.querySelector(AIAssistantWidget.selectors.panel);
-    this.elements.closeBtn = this.root.querySelector(AIAssistantWidget.selectors.closeBtn);
-    this.elements.clearBtn = this.root.querySelector(AIAssistantWidget.selectors.clearBtn);
+    this.elements = {};
+    const contentBar = this.root.closest('.lp-addon-content-bar');
+    this.elements.clearBtn = contentBar?.querySelector(AIAssistantWidget.selectors.clearBtn);
     this.elements.msgList = this.root.querySelector(AIAssistantWidget.selectors.msgList);
     this.elements.inputEl = this.root.querySelector(AIAssistantWidget.selectors.inputEl);
     this.elements.sendBtn = this.root.querySelector(AIAssistantWidget.selectors.sendBtn);
@@ -5537,19 +5505,15 @@ class AIAssistantWidget {
     this.elements.quickActions = this.root.querySelector(AIAssistantWidget.selectors.quickActions);
     this.elements.smartReviewBtn = this.root.querySelector(AIAssistantWidget.selectors.smartReviewBtn);
   }
-  validateDOM() {
-    // inputEl and sendBtn are optional — absent when free chat is disabled.
-    return !!(this.elements.toggleBtn && this.elements.panel && this.elements.msgList);
-  }
   applyInitialState() {
     if (this.elements.smartReviewBtn) {
-      const showSmartReview = this.config.context === 'quiz' ? this.config.quizCompleted : !!this.config.enabledActions?.smart_review;
+      const showSmartReview = this.config.itemType === 'lp_quiz' ? this.config.quizCompleted : !!this.config.enabledActions?.smart_review;
       this.elements.smartReviewBtn.hidden = !showSmartReview;
     }
     this.setQuizInputMode(false);
   }
   bindQuizCompletedHook() {
-    if (this.config.context === 'quiz') {
+    if (this.config.itemType === 'lp_quiz') {
       return;
     }
     if (this.quizHookBound || !this.elements.smartReviewBtn) {
@@ -5568,65 +5532,15 @@ class AIAssistantWidget {
     });
     this.quizHookBound = true;
   }
-  events() {
-    if (AIAssistantWidget._loadedEvents) {
-      return;
-    }
-    AIAssistantWidget._loadedEvents = this;
-    _utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('click', [{
-      selector: AIAssistantWidget.selectors.toggleBtn,
-      class: this,
-      callBack: this.handleToggleClick.name
-    }, {
-      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.closeBtn}`,
-      class: this,
-      callBack: this.handleCloseClick.name
-    }, {
-      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.clearBtn}`,
-      class: this,
-      callBack: this.handleClearClick.name
-    }, {
-      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.sendBtn}`,
-      class: this,
-      callBack: this.handleSendClick.name
-    }, {
-      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.quickBtn}`,
-      class: this,
-      callBack: this.handleQuickActionClick.name
-    }, {
-      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.quizOptionBtn}`,
-      class: this,
-      callBack: this.handleQuizOptionClick.name
-    }]);
-    _utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('keydown', [{
-      selector: `${AIAssistantWidget.selectors.root} ${AIAssistantWidget.selectors.inputEl}`,
-      class: this,
-      callBack: this.handleInputKeydown.name
-    }, {
-      selector: 'body',
-      class: this,
-      callBack: this.handleEscapeKeydown.name
-    }]);
-  }
-  handleToggleClick(args) {
-    args.e.preventDefault();
-    if (this.elements.panel.hidden) {
-      this.openPanel();
-    } else {
-      this.closePanel();
-    }
-  }
-  handleCloseClick(args) {
-    args.e.preventDefault();
-    this.closePanel();
-  }
   handleClearClick(args) {
-    args.e.preventDefault();
+    const {
+      e,
+      target
+    } = args;
     sweetalert2__WEBPACK_IMPORTED_MODULE_1___default().fire({
       title: this.config.i18n.clearConfirm,
       icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: 'var(--lp-primary-color, #ffb606)'
+      showCancelButton: true
     }).then(result => {
       if (result.isConfirmed) {
         this.clearHistory();
@@ -5639,7 +5553,10 @@ class AIAssistantWidget {
     this.sendMessage((_this$elements$inputE = this.elements.inputEl?.value) !== null && _this$elements$inputE !== void 0 ? _this$elements$inputE : '');
   }
   handleQuickActionClick(args) {
-    args.e.preventDefault();
+    const {
+      e,
+      target
+    } = args;
     if (this.activeQuizState?.is_active) {
       return;
     }
@@ -5658,7 +5575,6 @@ class AIAssistantWidget {
     if (!prompt) {
       return;
     }
-    this.openPanel();
     this.sendMessage(prompt, action);
   }
   handleQuizOptionClick(args) {
@@ -5685,38 +5601,6 @@ class AIAssistantWidget {
       args.e.preventDefault();
       this.sendMessage((_this$elements$inputE2 = this.elements.inputEl?.value) !== null && _this$elements$inputE2 !== void 0 ? _this$elements$inputE2 : '');
     }
-  }
-  handleEscapeKeydown(args) {
-    if (args.e.key !== 'Escape') {
-      return;
-    }
-    if (this.elements.panel && !this.elements.panel.hidden) {
-      this.closePanel();
-    }
-  }
-  getAjaxHandle() {
-    const ajaxHandle = window.lpAJAXG;
-    if (!ajaxHandle || typeof ajaxHandle.fetchAJAX !== 'function') {
-      return null;
-    }
-    return ajaxHandle;
-  }
-  openPanel() {
-    this.elements.panel.hidden = false;
-    this.root.setAttribute('aria-hidden', 'false');
-    this.elements.toggleBtn.setAttribute('aria-expanded', 'true');
-    this.elements.toggleBtn.classList.add('is-hidden');
-    this.elements.inputEl?.focus();
-    if (this.elements.msgList) {
-      this.elements.msgList.scrollTop = this.elements.msgList.scrollHeight;
-    }
-  }
-  closePanel() {
-    this.elements.panel.hidden = true;
-    this.root.setAttribute('aria-hidden', 'true');
-    this.elements.toggleBtn.setAttribute('aria-expanded', 'false');
-    this.elements.toggleBtn.classList.remove('is-hidden');
-    this.elements.toggleBtn.focus();
   }
   setLoadingState(isLoading) {
     this.isRequesting = isLoading;
@@ -5957,8 +5841,7 @@ class AIAssistantWidget {
     if (this.isRequesting || !text) {
       return;
     }
-    const ajaxHandle = this.getAjaxHandle();
-    if (!ajaxHandle) {
+    if (!window.lpAJAXG || typeof window.lpAJAXG.fetchAJAX !== 'function') {
       this.appendMessage('assistant', this.config.i18n.sendError);
       return;
     }
@@ -6023,12 +5906,18 @@ class AIAssistantWidget {
         this.scrollToMessageStart(pendingEl);
       }
     };
-    ajaxHandle.fetchAJAX(dataSend, callBack);
+    window.lpAJAXG.fetchAJAX(dataSend, callBack);
   }
 }
 const aiAssistantWidget = new AIAssistantWidget();
-_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpOnElementReady(AIAssistantWidget.selectors.root, () => {
-  aiAssistantWidget.init();
+document.addEventListener(AIAssistantWidget.eventContentBarRendered, e => {
+  if (e.detail?.item !== 'ai-assistant') {
+    return;
+  }
+  const root = e.detail.contentBar.querySelector(AIAssistantWidget.selectors.root);
+  if (root && root !== aiAssistantWidget.root) {
+    aiAssistantWidget.init(root);
+  }
 });
 })();
 

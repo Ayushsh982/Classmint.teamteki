@@ -16,7 +16,7 @@ use LearnPress\Models\CourseModel;
 use LearnPress\Models\CoursePostModel;
 use LearnPress\Models\QuizPostModel;
 use LP_Cache;
-use LP_Course_Cache;
+use LearnPress\Cache\LPCourseCache;
 use LP_Course_Item;
 use LP_Courses_Cache;
 use LP_Datetime;
@@ -1142,7 +1142,6 @@ class UserCourseModel extends UserItemModel {
 			$can_impact_item = new WP_Error( 'user_not_exists', __( 'User not exists!', 'learnpress' ) );
 		}
 
-		$status = $this->get_status();
 		if ( $this->has_canceled() || ! $this->has_enrolled() ) {
 			$can_impact_item = new WP_Error( 'user_not_enroll_course', __( 'You have not enroll this course!', 'learnpress' ) );
 		}
@@ -1164,7 +1163,7 @@ class UserCourseModel extends UserItemModel {
 	 * @return void
 	 *
 	 * @since 4.2.5.4
-	 * @version 1.0.1
+	 * @version 1.0.2
 	 */
 	public function clean_caches() {
 		$key_cache         = "userCourseModel/find/{$this->user_id}/{$this->item_id}/{$this->item_type}";
@@ -1173,8 +1172,8 @@ class UserCourseModel extends UserItemModel {
 
 		parent::clean_caches();
 		// Clear cache total students enrolled of a course.
-		$lp_course_cache = new LP_Course_Cache( true );
-		$lp_course_cache->clean_total_students_enrolled( $this->item_id );
+		$lp_course_cache = new LPCourseCache( true );
+		//$lp_course_cache->clean_total_students_enrolled( $this->item_id );
 		$lp_course_cache->clean_total_students_enrolled_or_purchased( $this->item_id );
 		// Clear cache count students of many course
 		$lp_courses_cache = new LP_Courses_Cache( true );

@@ -53,7 +53,7 @@ button {
 .learnpress-page input[type=email],
 .learnpress-page input[type=number],
 .learnpress-page input[type=password], .learnpress-page textarea {
-  border-color: var(--lp-border-color, #E2E0DB);
+  border-color: var(--lp-border-color, #E1E1E1);
   border-radius: var(--lp-border-radius, 5px);
 }
 .learnpress-page input[type=text]:focus,
@@ -65,9 +65,9 @@ button {
 }
 .learnpress-page .lp-button, .learnpress-page #lp-button {
   padding: 12px 24px;
-  border: 1px solid var(--lp-border-color, #E2E0DB);
+  border: 1px solid var(--lp-border-color, #E1E1E1);
   color: var(--lp-color-base, #333);
-  background: transparent;
+  background: var(--lp-btn-bg-color, transparent);
   box-shadow: unset;
   font-family: inherit;
   font-weight: 400;
@@ -204,7 +204,7 @@ p:last-child {
   position: absolute;
   bottom: 0;
   left: 0;
-  background: var(--lp-white-grey, #F7F7FB);
+  background: var(--lp-white-grey, #F1F2F8);
   padding: 12px 20px;
   border-radius: 0 var(--lp-border-radius, 5px) 0 var(--lp-border-radius, 5px);
   text-transform: capitalize;
@@ -242,7 +242,7 @@ p:last-child {
   align-items: center;
   width: 100%;
   height: 250px;
-  border: 2px dashed var(--lp-border-color, #E2E0DB);
+  border: 2px dashed var(--lp-border-color, #E1E1E1);
   border-radius: var(--lp-border-radius, 5px);
   cursor: pointer;
   position: relative;
@@ -325,7 +325,7 @@ p:last-child {
   display: flex;
   width: 200px;
   height: 200px;
-  border: 1px dashed var(--lp-border-color, #E2E0DB);
+  border: 1px dashed var(--lp-border-color, #E1E1E1);
   border-radius: 3px;
   background-color: #fafafa;
   font-size: 0.875em;
@@ -440,7 +440,7 @@ body .wp-site-blocks {
 .lp-single-instructor__info__right .instructor-social {
   display: flex;
   gap: 12px;
-  font-size: calc(var(--lp-font-size-base, 1em) * 0.925);
+  font-size: calc(var(--lp-font-size-base, 1em) * 0.9);
 }
 .lp-single-instructor__info__right .instructor-social:empty {
   margin: 0;
@@ -451,7 +451,7 @@ body .wp-site-blocks {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--lp-border-color, #E2E0DB);
+  border: 1px solid var(--lp-border-color, #E1E1E1);
   border-radius: 50%;
 }
 .lp-single-instructor__info__right .instructor-social i:hover {
@@ -510,7 +510,7 @@ body .wp-site-blocks {
   color: var(--lp-primary-color);
 }
 .lp-single-instructor .ul-instructor-courses .course-item {
-  border: 1px solid var(--lp-border-color, #E2E0DB);
+  border: 1px solid var(--lp-border-color, #E1E1E1);
   border-radius: var(--lp-border-radius, 5px);
 }
 .lp-single-instructor .ul-instructor-courses .course-item:hover {
@@ -588,16 +588,16 @@ body .wp-site-blocks {
 .lp-single-instructor .ul-instructor-courses .course-price {
   display: block;
   margin: 0 0 12px 0;
-  font-size: calc(var(--lp-font-size-base, 1em) * 1.25);
+  font-size: calc(var(--lp-font-size-base, 1em) * 1.18);
   font-weight: 700;
 }
 .lp-single-instructor .ul-instructor-courses .course-price .free {
-  color: #3AB500;
+  color: #3bb54a;
 }
 .lp-single-instructor .ul-instructor-courses .course-price .origin-price {
   text-decoration: line-through;
   opacity: 0.6;
-  font-size: calc(var(--lp-font-size-base, 1em) * 0.925);
+  font-size: calc(var(--lp-font-size-base, 1em) * 0.9);
   margin-left: 4px;
 }
 .lp-single-instructor .ul-instructor-courses .course-title {
@@ -612,7 +612,7 @@ body .wp-site-blocks {
   padding: 8px 24px;
   border-radius: var(--lp-border-radius, 5px);
   color: var(--lp-color-base, #333);
-  border: 1px solid var(--lp-color-base, #333);
+  border: 1px solid var(--lp-border-color, #E1E1E1);
   transition: all 0.3s;
   display: block;
   background: transparent;

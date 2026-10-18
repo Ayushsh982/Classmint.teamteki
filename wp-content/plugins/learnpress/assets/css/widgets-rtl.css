@@ -30,7 +30,7 @@
 
 @font-face {
   font-family: "lp-icon";
-  src: url("../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=148") format("woff2");
+  src: url("../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=61") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -858,6 +858,26 @@
   content: "\e932";
 }
 
+.lp-icon-notes:before {
+  content: "\e933";
+}
+
+.lp-icon-light:before {
+  content: "\e934";
+}
+
+.lp-icon-chat:before {
+  content: "\e935";
+}
+
+.lp-icon-ai-assistant:before {
+  content: "\e936";
+}
+
+.lp-icon-extend:before {
+  content: "\e937";
+}
+
 .lp-ico-ai {
   display: inline-block;
   width: 13px;
@@ -1045,6 +1065,7 @@
   border-radius: 4px;
   background-color: var(--lp-button-background-color);
   color: var(--lp-button-color);
+  cursor: pointer;
 }
 .lp-form-course-filter .course-filter-submit:focus, .lp-form-course-filter .course-filter-reset:focus {
   outline: none;
@@ -1324,7 +1345,7 @@
   overflow: hidden;
   position: relative;
   height: 6px;
-  background: #ccc;
+  background: var(--lp-white-grey, #F1F2F8);
   border-radius: 5px;
 }
 .learnpress.widget_course_progress .lp-course-progress.learn-press-progress .progress-bg .progress-active,
@@ -1334,7 +1355,7 @@
   width: 100%;
   height: 100%;
   margin-right: -100%;
-  background: var(--lp-primary-color);
+  background: #3bb54a;
   border-radius: 5px;
 }
 .learnpress.widget_course_progress .lp-course-progress.learn-press-progress .lp-passing-conditional,
@@ -1350,7 +1371,7 @@
 .lp_widget_course_info {
   margin: 0;
   padding: 20px;
-  border: 1px solid var(--lp-border-color, #E2E0DB);
+  border: 1px solid var(--lp-border-color, #E1E1E1);
 }
 .lp_widget_course_info h3 {
   margin-bottom: 15px;

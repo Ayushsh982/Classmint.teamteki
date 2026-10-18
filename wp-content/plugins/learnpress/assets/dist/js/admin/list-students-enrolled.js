@@ -36,7 +36,7 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.7
+ * @version 1.0.8
  */
 const lpClassName = {
   hidden: 'lp-hidden',
@@ -291,8 +291,11 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
  *
  * @param eventName
  * @param eventHandlers
+ * @param capture Use capture phase (default: false/bubble). Set true when
+ * the event may be stopped by a container calling stopPropagation() before
+ * it bubbles up to document (e.g. Headless UI DialogPanel on click).
  */
-const eventHandlers = (eventName, eventHandlers) => {
+const eventHandlers = (eventName, eventHandlers, capture = false) => {
   document.addEventListener(eventName, e => {
     const target = e.target;
     let args = {
@@ -330,7 +333,7 @@ const eventHandlers = (eventName, eventHandlers) => {
         }
       }
     });
-  });
+  }, capture);
 };
 
 /**
@@ -596,16 +599,14 @@ __webpack_require__.r(__webpack_exports__);
  * Pagination is handled by loadAJAX.js clickNumberPage (via .page-numbers class).
  *
  * @since 4.3.3
- * @version 1.0.0
+ * @version 1.0.1
  */
 
 class ListStudentsEnrolled {
   constructor() {
-    this.instructorId = null;
-    this.elContainer = null;
+    this.elLayout = null;
   }
   static selectors = {
-    elContainer: '.lp-enrolled-students',
     elLayout: '.lp-students-enrolled-layout',
     elForm: '.lp-enrolled-students-form',
     elLPTarget: '.lp-target',
@@ -619,17 +620,9 @@ class ListStudentsEnrolled {
     elBtnClear: '.lp-enrolled-btn-clear'
   };
   init() {
-    this.elContainer = document.querySelector(ListStudentsEnrolled.selectors.elContainer);
-    if (!this.elContainer) {
+    this.elLayout = document.querySelector(ListStudentsEnrolled.selectors.elLayout);
+    if (!this.elLayout) {
       return;
-    }
-    const elLPTarget = this.elContainer.querySelector(ListStudentsEnrolled.selectors.elLPTarget);
-    const ajaxHandle = this.getAjaxHandle();
-    if (elLPTarget && ajaxHandle) {
-      const dataSend = ajaxHandle.getDataSetCurrent(elLPTarget);
-      if (dataSend && dataSend.args) {
-        this.instructorId = dataSend.args.instructor_id;
-      }
     }
     this.events();
   }
@@ -640,13 +633,15 @@ class ListStudentsEnrolled {
     ListStudentsEnrolled._loadedEvents = this;
 
     // Search/Clear button click.
+    // Capture phase: clicks inside containers that call stopPropagation()
+    // on click (e.g. Headless UI DialogPanel) never reach document on bubble.
     lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('click', [{
       selector: ListStudentsEnrolled.selectors.elBtnSearch,
       callBack: this.searchStudents.bind(this)
     }, {
       selector: ListStudentsEnrolled.selectors.elBtnClear,
       callBack: this.clearFilters.bind(this)
-    }]);
+    }], true);
 
     // Search on Enter key.
     lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('keydown', [{
@@ -665,19 +660,19 @@ class ListStudentsEnrolled {
       selector: ListStudentsEnrolled.selectors.elEndDateInput,
       callBack: this.triggerBtnSearch.bind(this),
       checkIsEventEnter: true
-    }]);
+    }], true);
     lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('change', [{
       selector: ListStudentsEnrolled.selectors.elStartDateInput,
       callBack: this.checkDatesRange.bind(this)
     }, {
       selector: ListStudentsEnrolled.selectors.elEndDateInput,
       callBack: this.checkDatesRange.bind(this)
-    }]);
+    }], true);
   }
 
   // Click button search.
   triggerBtnSearch() {
-    const buttonSearch = this.elContainer.querySelector(ListStudentsEnrolled.selectors.elBtnSearch);
+    const buttonSearch = this.elLayout.querySelector(ListStudentsEnrolled.selectors.elBtnSearch);
     if (buttonSearch) {
       buttonSearch.click();
     }
@@ -760,12 +755,11 @@ class ListStudentsEnrolled {
    */
   searchStudents(args) {
     const {
-      e
+      e,
+      target
     } = args;
-    if (e) {
-      e.preventDefault();
-    }
-    const btn = args?.target?.closest(ListStudentsEnrolled.selectors.elBtnSearch);
+    const btn = target.closest(ListStudentsEnrolled.selectors.elBtnSearch);
+    e.preventDefault();
     if (!btn) {
       return;
     }
@@ -857,7 +851,7 @@ class ListStudentsEnrolled {
 
 // Auto-initialize when DOM is available (for standalone page load).
 const listStudentsEnrolled = new ListStudentsEnrolled();
-lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpOnElementReady(ListStudentsEnrolled.selectors.elContainer, () => {
+lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpOnElementReady(ListStudentsEnrolled.selectors.elLayout, () => {
   listStudentsEnrolled.init();
 });
 })();

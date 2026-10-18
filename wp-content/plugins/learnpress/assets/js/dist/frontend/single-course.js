@@ -328,6 +328,36 @@ const Sidebar = () => {
       toggleSidebar(LP.Cookies.get('sidebar-toggle'));
     }
   });
+
+  // Right Sidebar Toggle (open / close)
+  const rightSidebar = document.querySelector('#popup-right-sidebar');
+  if (rightSidebar) {
+    const isExpandedCookie = window.LP?.Cookies ? LP.Cookies.get('popup-right-sidebar-expanded') : null;
+
+    // Restore saved state from cookie
+    if (isExpandedCookie === 'no') {
+      rightSidebar.classList.remove('is-expanded');
+      rightSidebar.classList.add('is-collapsed');
+    } else {
+      rightSidebar.classList.add('is-expanded');
+      rightSidebar.classList.remove('is-collapsed');
+    }
+    const toggleRightSidebar = () => {
+      const willExpand = !rightSidebar.classList.contains('is-expanded');
+      rightSidebar.classList.toggle('is-expanded', willExpand);
+      rightSidebar.classList.toggle('is-collapsed', !willExpand);
+      if (window.LP?.Cookies) {
+        LP.Cookies.set('popup-right-sidebar-expanded', willExpand ? 'yes' : 'no');
+      }
+    };
+    const toggleBtn = rightSidebar.querySelector('.popup-right-sidebar__toggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', e => {
+        e.preventDefault();
+        toggleRightSidebar();
+      });
+    }
+  }
 };
 
 /***/ },
@@ -967,7 +997,7 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.7
+ * @version 1.0.8
  */
 const lpClassName = {
   hidden: 'lp-hidden',
@@ -1222,8 +1252,11 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
  *
  * @param eventName
  * @param eventHandlers
+ * @param capture Use capture phase (default: false/bubble). Set true when
+ * the event may be stopped by a container calling stopPropagation() before
+ * it bubbles up to document (e.g. Headless UI DialogPanel on click).
  */
-const eventHandlers = (eventName, eventHandlers) => {
+const eventHandlers = (eventName, eventHandlers, capture = false) => {
   document.addEventListener(eventName, e => {
     const target = e.target;
     let args = {
@@ -1261,7 +1294,7 @@ const eventHandlers = (eventName, eventHandlers) => {
         }
       }
     });
-  });
+  }, capture);
 };
 
 /**
