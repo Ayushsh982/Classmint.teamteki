@@ -27,6 +27,17 @@ class InternalNotificationDispatcher {
 	const SEND_ENDPOINT = 'wc-push-notifications/send';
 
 	/**
+	 * Query parameter carrying the JWT as a fallback credential.
+	 *
+	 * Some hosting setups (e.g. nginx to PHP-FPM, or Plesk's nginx-to-Apache
+	 * proxying) do not pass the `Authorization` header through to PHP. On
+	 * those hosts a header-only credential silently fails and every
+	 * notification degrades to the slower ActionScheduler safety net. The
+	 * same token is therefore also sent in the URL, where nothing strips it.
+	 */
+	const TOKEN_QUERY_PARAM = 'wcpn_token';
+
+	/**
 	 * JWT expiry in seconds.
 	 */
 	const JWT_EXPIRY_SECONDS = 30;
@@ -65,8 +76,17 @@ class InternalNotificationDispatcher {
 			wp_salt( 'auth' )
 		);
 
-		$response = wp_remote_post(
-			rest_url( self::SEND_ENDPOINT ),
+		/**
+		 * The request is non-blocking so the response is not handled anywhere.
+		 * If the request fails, the ActionScheduler safety net will pick up
+		 * unsent notifications after 60 seconds.
+		 *
+		 * The token travels both as an Authorization header and as a query
+		 * parameter: the receiver prefers the header and falls back to the
+		 * parameter on hosts that strip the header (see TOKEN_QUERY_PARAM).
+		 */
+		wp_remote_post(
+			add_query_arg( self::TOKEN_QUERY_PARAM, $token, rest_url( self::SEND_ENDPOINT ) ),
 			array(
 				'blocking' => false,
 				'timeout'  => 1,
@@ -77,12 +97,5 @@ class InternalNotificationDispatcher {
 				'body'     => $body,
 			)
 		);
-
-		if ( is_wp_error( $response ) ) {
-			wc_get_logger()->error(
-				sprintf( 'Loopback dispatch failed: %s', $response->get_error_message() ),
-				array( 'source' => PushNotifications::FEATURE_NAME )
-			);
-		}
 	}
 }

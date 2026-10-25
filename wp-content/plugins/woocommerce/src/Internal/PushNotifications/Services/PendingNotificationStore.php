@@ -6,8 +6,10 @@ namespace Automattic\WooCommerce\Internal\PushNotifications\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use Automattic\WooCommerce\Internal\PushNotifications\DataStores\PushTokensDataStore;
 use Automattic\WooCommerce\Internal\PushNotifications\Dispatchers\InternalNotificationDispatcher;
 use Automattic\WooCommerce\Internal\PushNotifications\Notifications\Notification;
+use Automattic\WooCommerce\Internal\PushNotifications\Services\NotificationProcessor;
 
 /**
  * Store that collects notifications during a request and dispatches them all on
@@ -31,11 +33,15 @@ class PendingNotificationStore {
 	 * The dispatcher that will be used to send notifications on shutdown.
 	 *
 	 * @var InternalNotificationDispatcher
-	 *
-	 * @phpstan-ignore property.onlyWritten (this will be read when the loopback
-	 * controller is added)
 	 */
 	private InternalNotificationDispatcher $dispatcher;
+
+	/**
+	 * The push tokens data store.
+	 *
+	 * @var PushTokensDataStore
+	 */
+	private PushTokensDataStore $data_store;
 
 	/**
 	 * Pending notifications keyed by identifier.
@@ -57,11 +63,13 @@ class PendingNotificationStore {
 	 * @internal
 	 *
 	 * @param InternalNotificationDispatcher $dispatcher The dispatcher to use on shutdown.
+	 * @param PushTokensDataStore            $data_store The push tokens data store.
 	 *
 	 * @since 10.7.0
 	 */
-	final public function init( InternalNotificationDispatcher $dispatcher ): void {
+	final public function init( InternalNotificationDispatcher $dispatcher, PushTokensDataStore $data_store ): void {
 		$this->dispatcher = $dispatcher;
+		$this->data_store = $data_store;
 	}
 
 	/**
@@ -84,6 +92,8 @@ class PendingNotificationStore {
 	 * request are silently ignored. The shutdown hook is registered on the
 	 * first call.
 	 *
+	 * Notifications are dropped when no push token is registered, so neither the safety net job nor the loopback request is created for a send that has no recipient.
+	 *
 	 * @param Notification $notification The notification to add.
 	 * @return void
 	 *
@@ -91,6 +101,10 @@ class PendingNotificationStore {
 	 */
 	public function add( Notification $notification ): void {
 		if ( ! $this->enabled ) {
+			return;
+		}
+
+		if ( ! $this->data_store->has_tokens() ) {
 			return;
 		}
 
@@ -102,6 +116,8 @@ class PendingNotificationStore {
 
 		$this->pending[ $key ] = $notification;
 
+		$this->schedule_safety_net( $notification );
+
 		if ( ! $this->shutdown_registered ) {
 			add_action( 'shutdown', array( $this, 'dispatch_all' ) );
 			$this->shutdown_registered = true;
@@ -109,7 +125,37 @@ class PendingNotificationStore {
 	}
 
 	/**
-	 * Dispatches all pending notifications via the loopback endpoint.
+	 * Schedules an ActionScheduler safety net job for the notification.
+	 *
+	 * If the shutdown hook never fires (OOM, SIGKILL, etc.), this job
+	 * guarantees the notification is still processed.
+	 *
+	 * @param Notification $notification The notification to schedule.
+	 * @return void
+	 *
+	 * @since 10.7.0
+	 */
+	private function schedule_safety_net( Notification $notification ): void {
+		// Canonical, identity-keyed args shared with NotificationProcessor::cancel_safety_net().
+		// Action Scheduler matches stored args by exact equality, so both sides must derive
+		// them from the same place; see Notification::get_safety_net_args().
+		$args = $notification->get_safety_net_args();
+
+		if ( as_has_scheduled_action( NotificationProcessor::SAFETY_NET_HOOK, $args, NotificationProcessor::ACTION_SCHEDULER_GROUP ) ) {
+			return;
+		}
+
+		as_schedule_single_action(
+			time() + NotificationProcessor::SAFETY_NET_DELAY,
+			NotificationProcessor::SAFETY_NET_HOOK,
+			$args,
+			NotificationProcessor::ACTION_SCHEDULER_GROUP,
+			true
+		);
+	}
+
+	/**
+	 * Dispatches all pending notifications via InternalNotificationDispatcher.
 	 *
 	 * Called on shutdown. Sends all pending notifications through the
 	 * InternalNotificationDispatcher, then clears the store.
@@ -123,21 +169,8 @@ class PendingNotificationStore {
 			return;
 		}
 
-		/**
-		 * Fires when pending push notifications are ready to be dispatched.
-		 *
-		 * @param Notification[] $notifications The notifications to dispatch.
-		 *
-		 * @since 10.7.0
-		 *
-		 * The call to dispatch the notifications will go here when the
-		 * receiving controller has been added.
-		 */
+		$this->dispatcher->dispatch( array_values( $this->pending ) );
 
-		/**
-		 * Store is single-use per request lifecycle, so disable it and clear
-		 * pending notifications.
-		 */
 		$this->enabled = false;
 		$this->pending = array();
 	}

@@ -23,6 +23,22 @@ use WP_Query;
  * @since 10.5.0
  */
 class PushTokensDataStore {
+	/**
+	 * In-memory cache for get_tokens_for_roles() results, keyed by the
+	 * comma-joined role list (with optional pagination suffix). Avoids
+	 * repeated DB queries within the same PHP request.
+	 *
+	 * @var array<string, PushToken[]|array{tokens: PushToken[], total: int, total_pages: int}>
+	 */
+	private array $tokens_by_roles_cache = array();
+
+	/**
+	 * Memoized has_tokens() result. Null until the first lookup, and reset by create() so a stale false cannot drop a notification.
+	 *
+	 * @var bool|null
+	 */
+	private ?bool $has_tokens = null;
+
 	const SUPPORTED_META = array(
 		'origin',
 		'device_uuid',
@@ -71,6 +87,8 @@ class PushTokensDataStore {
 		}
 
 		$push_token->set_id( $id );
+
+		$this->has_tokens = null;
 
 		return $push_token;
 	}
@@ -187,6 +205,50 @@ class PushTokensDataStore {
 	}
 
 	/**
+	 * Deletes every push token belonging to a user.
+	 *
+	 * A non-positive ID is refused rather than queried, so a caller that loses
+	 * the user ID cannot match the rows of every author-less token at once.
+	 *
+	 * @since 11.2.0
+	 * @param int $user_id The user whose tokens should be deleted.
+	 * @return int The number of tokens deleted.
+	 */
+	public function delete_for_user( int $user_id ): int {
+		if ( $user_id < 1 ) {
+			return 0;
+		}
+
+		global $wpdb;
+
+		// Direct query so pre_get_posts filters cannot hide a token, and any status is deleted.
+		$post_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_author = %d",
+				PushToken::POST_TYPE,
+				$user_id
+			)
+		);
+
+		if ( empty( $post_ids ) ) {
+			return 0;
+		}
+
+		$deleted = 0;
+
+		foreach ( $post_ids as $post_id ) {
+			if ( wp_delete_post( (int) $post_id, true ) ) {
+				++$deleted;
+			}
+		}
+
+		// Anything read earlier in this request now includes deleted tokens.
+		$this->tokens_by_roles_cache = array();
+
+		return $deleted;
+	}
+
+	/**
 	 * Find tokens for this user and platform that match either the token
 	 * or device UUID. We check the token value to avoid creating a duplicate.
 	 * We check the device UUID value because only one token should be issued
@@ -300,6 +362,152 @@ class PushTokensDataStore {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Determines whether any push token exists, ignoring roles and preferences so callers can bail out before the cost of get_tokens_for_roles().
+	 *
+	 * @since 11.2.0
+	 * @return bool True if at least one push token exists.
+	 */
+	public function has_tokens(): bool {
+		if ( null !== $this->has_tokens ) {
+			return $this->has_tokens;
+		}
+
+		global $wpdb;
+
+		// Exactly this SQL to leverage the wp_posts type_status_author index.
+		$this->has_tokens = (bool) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT 1 FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'private' LIMIT 1",
+				PushToken::POST_TYPE
+			)
+		);
+
+		return $this->has_tokens;
+	}
+
+	/**
+	 * Returns push tokens belonging to users with the given roles.
+	 *
+	 * When called without pagination parameters, returns all tokens as a
+	 * flat array (cached per-request). When $page and $per_page are
+	 * provided, returns a paginated result with total counts.
+	 *
+	 * The eligible-user lookup is restricted to users that actually own
+	 * push tokens, so the role check runs against a handful of IDs instead
+	 * of scanning every user's capabilities meta, which does not scale on
+	 * sites with very large user tables.
+	 *
+	 * @param string[] $roles    The roles to query tokens for.
+	 * @param int|null $page     Optional page number (1-based).
+	 * @param int|null $per_page Optional number of tokens per page.
+	 * @return PushToken[]|array{tokens: PushToken[], total: int, total_pages: int}
+	 *
+	 * @since 10.7.0
+	 */
+	public function get_tokens_for_roles( array $roles, ?int $page = null, ?int $per_page = null ) {
+		$paginate  = null !== $page && null !== $per_page;
+		$cache_key = $paginate ? implode( ',', $roles ) . ":$page:$per_page" : implode( ',', $roles );
+
+		$empty_result = $paginate
+			? array(
+				'tokens'      => array(),
+				'total'       => 0,
+				'total_pages' => 0,
+			)
+			: array();
+
+		if ( empty( $roles ) ) {
+			return $empty_result;
+		}
+
+		if ( isset( $this->tokens_by_roles_cache[ $cache_key ] ) ) {
+			return $this->tokens_by_roles_cache[ $cache_key ];
+		}
+
+		global $wpdb;
+
+		// Exactly this SQL to leverage the wp_posts type_status_author index; low token cardinality keeps it fast at any store size.
+		$users_with_tokens = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT post_author FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'private'",
+				PushToken::POST_TYPE
+			)
+		);
+
+		// An empty include must short-circuit: WP_User_Query would ignore it and scan all users by role.
+		$user_ids = empty( $users_with_tokens ) ? array() : get_users(
+			array(
+				'role__in' => $roles,
+				'fields'   => 'ID',
+				'include'  => $users_with_tokens,
+			)
+		);
+
+		if ( empty( $user_ids ) ) {
+			$this->tokens_by_roles_cache[ $cache_key ] = $empty_result;
+			return $this->tokens_by_roles_cache[ $cache_key ];
+		}
+
+		$query_args = array(
+			'post_type'      => PushToken::POST_TYPE,
+			'post_status'    => 'private',
+			'author__in'     => $user_ids,
+			'posts_per_page' => $paginate ? $per_page : -1,
+			'fields'         => 'ids',
+		);
+
+		if ( $paginate ) {
+			$query_args['paged']   = $page;
+			$query_args['orderby'] = 'ID';
+			$query_args['order']   = 'ASC';
+		}
+
+		$query = new WP_Query( $query_args );
+
+		/**
+		 * Typehint for PHPStan, specifies these are IDs and not instances of
+		 * WP_Post.
+		 *
+		 * @var int[] $post_ids
+		 */
+		$post_ids = $query->posts;
+
+		if ( empty( $post_ids ) ) {
+			$this->tokens_by_roles_cache[ $cache_key ] = $empty_result;
+			return $this->tokens_by_roles_cache[ $cache_key ];
+		}
+
+		_prime_post_caches( $post_ids, false, true );
+
+		$tokens = array();
+
+		foreach ( $post_ids as $post_id ) {
+			try {
+				$tokens[] = $this->read( (int) $post_id );
+			} catch ( WC_Data_Exception $e ) {
+				wc_get_logger()->warning(
+					'Skipping malformed push token during role-based query.',
+					array(
+						'token_id' => $post_id,
+						'error'    => $e->getMessage(),
+					)
+				);
+			}
+		}
+
+		$result = $paginate
+			? array(
+				'tokens'      => $tokens,
+				'total'       => (int) $query->found_posts,
+				'total_pages' => (int) $query->max_num_pages,
+			)
+			: $tokens;
+
+		$this->tokens_by_roles_cache[ $cache_key ] = $result;
+		return $result;
 	}
 
 	/**

@@ -9,8 +9,10 @@
  */
 
 use Automattic\Jetpack\Constants;
-use Automattic\WooCommerce\Utilities\NumberUtil;
 use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
+use Automattic\WooCommerce\Enums\DefaultCustomerAddress;
+use Automattic\WooCommerce\Utilities\NumberUtil;
+use Automattic\WooCommerce\Internal\Logging\OrderLogsCleanupHelper;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -561,6 +563,7 @@ function get_woocommerce_currency_symbols() {
 			'CAD' => '&#36;',
 			'CDF' => 'Fr',
 			'CHF' => '&#67;&#72;&#70;',
+			'CHW' => 'CHW',
 			'CLP' => '&#36;',
 			'CNY' => '&yen;',
 			'COP' => '&#36;',
@@ -626,7 +629,7 @@ function get_woocommerce_currency_symbols() {
 			'MKD' => '&#x434;&#x435;&#x43d;',
 			'MMK' => 'Ks',
 			'MNT' => '&#x20ae;',
-			'MOP' => 'P',
+			'MOP' => 'MOP&#36;',
 			'MRU' => 'UM',
 			'MUR' => '&#x20a8;',
 			'MVR' => '.&#x783;',
@@ -694,7 +697,8 @@ function get_woocommerce_currency_symbols() {
 			'XPF' => 'XPF',
 			'YER' => '&#xfdfc;',
 			'ZAR' => '&#82;',
-			'ZMW' => 'ZK',
+			// CLDR uses K for en-ZM and ZK for its narrow representation.
+			'ZMW' => 'K',
 		)
 	);
 
@@ -1051,12 +1055,26 @@ function wc_fix_rewrite_rules( $rules ) {
 		}
 	}
 
-	// If the shop page is used as the base, we need to handle shop page subpages to avoid 404s.
-	if ( ! $permalinks['use_verbose_page_rules'] ) {
+	$shop_page_id      = wc_get_page_id( 'shop' );
+	$product_base      = trim( rawurldecode( $permalinks['product_base'] ), '/' );
+	$uses_shop_as_base = false;
+
+	// The product base is site-wide, while multilingual extensions can filter the Shop page for the current request.
+	$shop_page_ids = array_unique( array( absint( get_option( 'woocommerce_shop_page_id' ) ), $shop_page_id ) );
+	foreach ( $shop_page_ids as $candidate_shop_page_id ) {
+		$shop_page = $candidate_shop_page_id > 0 ? get_post( $candidate_shop_page_id ) : null;
+		$shop_base = $shop_page instanceof WP_Post && 'page' === $shop_page->post_type ? trim( rawurldecode( (string) get_page_uri( $candidate_shop_page_id ) ), '/' ) : '';
+
+		if ( '' !== $shop_base && ( $shop_base === $product_base || 0 === strpos( $product_base, $shop_base . '/' ) ) ) {
+			$uses_shop_as_base = true;
+			break;
+		}
+	}
+
+	if ( ! $uses_shop_as_base ) {
 		return $rules;
 	}
 
-	$shop_page_id = wc_get_page_id( 'shop' );
 	if ( $shop_page_id ) {
 		$page_rewrite_rules = array();
 		$subpages           = wc_get_page_children( $shop_page_id );
@@ -1204,10 +1222,10 @@ function wc_get_customer_geolocation( $fallback = array(
  * @return array
  */
 function wc_get_customer_default_location() {
-	$set_default_location_to = get_option( 'woocommerce_default_customer_address', 'base' );
+	$set_default_location_to = get_option( 'woocommerce_default_customer_address', DefaultCustomerAddress::BASE );
 
 	// Unless the location should be blank, use the base location as the default.
-	if ( '' !== $set_default_location_to ) {
+	if ( DefaultCustomerAddress::NO_DEFAULT !== $set_default_location_to ) {
 		$default_location_string = get_option( 'woocommerce_default_country', 'US:CA' );
 	}
 
@@ -1233,7 +1251,7 @@ function wc_get_customer_default_location() {
 	}
 
 	// Geolocation takes priority if geolocation is possible.
-	if ( in_array( $set_default_location_to, array( 'geolocation', 'geolocation_ajax' ), true ) ) {
+	if ( in_array( $set_default_location_to, array( DefaultCustomerAddress::GEOLOCATION, DefaultCustomerAddress::GEOLOCATION_AJAX ), true ) ) {
 		$default_location = wc_get_customer_geolocation( $default_location );
 	}
 
@@ -1477,7 +1495,7 @@ function wc_get_credit_card_type_label( $type ) {
 	$labels = apply_filters(
 		'woocommerce_credit_card_type_labels',
 		array(
-			'mastercard'       => _x( 'MasterCard', 'Name of credit card', 'woocommerce' ),
+			'mastercard'       => _x( 'Mastercard', 'Name of credit card', 'woocommerce' ),
 			'visa'             => _x( 'Visa', 'Name of credit card', 'woocommerce' ),
 			'discover'         => _x( 'Discover', 'Name of credit card', 'woocommerce' ),
 			'american express' => _x( 'American Express', 'Name of credit card', 'woocommerce' ),
@@ -2025,6 +2043,8 @@ function wc_cleanup_logs() {
 	if ( is_callable( array( $logger, 'clear_expired_logs' ) ) ) {
 		$logger->clear_expired_logs();
 	}
+
+	wc_get_container()->get( OrderLogsCleanupHelper::class )->cleanup();
 }
 add_action( 'woocommerce_cleanup_logs', 'wc_cleanup_logs' );
 
@@ -2127,10 +2147,14 @@ function wc_list_pluck( $list, $callback_or_field, $index_key = null ) {
  * Get permalink settings for things like products and taxonomies.
  *
  * As of 3.3.0, the permalink settings are stored to the option instead of
- * being blank and inheritting from the locale. This speeds up page loading
+ * being blank and inheriting from the locale. This speeds up page loading
  * times by negating the need to switch locales on each page load.
  *
  * This is more inline with WP core behavior which does not localize slugs.
+ *
+ * The `use_verbose_page_rules` key is kept for backward compatibility only. WooCommerce no longer
+ * writes or reads it - wc_fix_rewrite_rules() derives Shop subpage rules from the current product
+ * base and Shop page path instead - so its stored value is whatever the last save left behind.
  *
  * @since  3.0.0
  * @return array

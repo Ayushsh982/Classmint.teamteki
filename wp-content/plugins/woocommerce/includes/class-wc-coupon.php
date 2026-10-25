@@ -50,7 +50,7 @@ class WC_Coupon extends WC_Legacy_Coupon {
 		'minimum_amount'              => '',
 		'maximum_amount'              => '',
 		'email_restrictions'          => array(),
-		'used_by'                     => array(),
+		'used_by'                     => null,
 		'virtual'                     => false,
 	);
 
@@ -152,6 +152,9 @@ class WC_Coupon extends WC_Legacy_Coupon {
 	 * @return array
 	 */
 	public function get_data() {
+		// Ensure used_by is populated before the raw data array is returned, since
+		// parent::get_data() reads $this->data directly and bypasses get_used_by().
+		$this->get_used_by( 'edit' );
 		$data = parent::get_data();
 		if ( '' === $data['minimum_amount'] ) {
 			$data['minimum_amount'] = '0';
@@ -455,11 +458,22 @@ class WC_Coupon extends WC_Legacy_Coupon {
 	/**
 	 * Get records of all users who have used the current coupon.
 	 *
+	 * The list is loaded lazily on first access rather than during object construction,
+	 * because a coupon with hundreds of thousands of usages would otherwise allocate an
+	 * enormous PHP array on every WC_Coupon instantiation — even for code paths such as
+	 * order-status changes or cart validation that never need this data.
+	 *
 	 * @since  3.0.0
 	 * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
 	 * @return array
 	 */
 	public function get_used_by( $context = 'view' ) {
+		if ( is_null( $this->data['used_by'] ) ) {
+			// Bypass set_prop() so the lazy fetch does not mark the object as dirty.
+			$this->data['used_by'] = $this->get_id()
+				? array_filter( (array) get_post_meta( $this->get_id(), '_used_by', false ) )
+				: array();
+		}
 		return $this->get_prop( 'used_by', $context );
 	}
 
@@ -556,7 +570,7 @@ class WC_Coupon extends WC_Legacy_Coupon {
 	/**
 	 * Set coupon status.
 	 *
-	 * @since 3.0.0
+	 * @since 6.2.0
 	 * @param string $status Status.
 	 * @return void
 	 */
@@ -602,6 +616,15 @@ class WC_Coupon extends WC_Legacy_Coupon {
 	 */
 	public function set_amount( $amount ) {
 		$amount = wc_format_decimal( $amount );
+
+		// Remove leading zeros from numeric strings (e.g., "050" becomes "50")
+		// to ensure clean display of the coupon amount.
+		if ( '' !== $amount && is_string( $amount ) ) {
+			$amount = ltrim( $amount, '0' );
+			if ( '' === $amount || '.' === $amount[0] ) {
+				$amount = '0' . $amount;
+			}
+		}
 
 		if ( ! is_numeric( $amount ) ) {
 			$amount = 0;
@@ -780,7 +803,11 @@ class WC_Coupon extends WC_Legacy_Coupon {
 	 * @return void
 	 */
 	public function set_minimum_amount( $amount ) {
-		$this->set_prop( 'minimum_amount', wc_format_decimal( $amount ) );
+		$amount = wc_format_decimal( $amount );
+		if ( (float) $this->get_maximum_amount() && (float) $amount > (float) $this->get_maximum_amount() ) {
+			$this->error( 'coupon_invalid_minimum_amount', __( 'Invalid minimum spend value.', 'woocommerce' ) );
+		}
+		$this->set_prop( 'minimum_amount', $amount );
 	}
 
 	/**
@@ -791,11 +818,12 @@ class WC_Coupon extends WC_Legacy_Coupon {
 	 * @return void
 	 */
 	public function set_maximum_amount( $amount ) {
+		$amount = wc_format_decimal( $amount );
 		if ( (float) $amount && (float) $this->get_minimum_amount() > (float) $amount ) {
 			$this->error( 'coupon_invalid_maximum_amount', __( 'Invalid maximum spend value.', 'woocommerce' ) );
 		}
 
-		$this->set_prop( 'maximum_amount', wc_format_decimal( $amount ) );
+		$this->set_prop( 'maximum_amount', $amount );
 	}
 
 	/**
@@ -1434,5 +1462,87 @@ class WC_Coupon extends WC_Legacy_Coupon {
 			default:
 				return array();
 		}
+	}
+
+	/**
+	 * Set a collection of props in one go.
+	 *
+	 * Overrides the base implementation to validate the minimum_amount /
+	 * maximum_amount pair as a unit when both are supplied in the same call.
+	 * This avoids false rejections caused by stale-value comparisons in the
+	 * individual setter guards, which fire sequentially and each see the old
+	 * stored value for the other field.
+	 *
+	 * Only the amount pair receives this joint validation.  All other props
+	 * in the same call are still applied using the normal partial-application
+	 * semantics of the parent: each setter runs independently, and a failure
+	 * in one does not roll back props that were already applied.
+	 *
+	 * When only one of the two amounts is supplied, the individual setter
+	 * guard still applies.  When neither is supplied, this delegates entirely
+	 * to the parent.
+	 *
+	 * @since 11.2.0
+	 * @param array  $props   Key/value pairs of properties to set.
+	 * @param string $context Operation context ('set', 'edit', 'view').
+	 * @return bool|WP_Error True on success, WP_Error on failure.
+	 */
+	public function set_props( $props, $context = 'set' ) {
+		$has_minimum = array_key_exists( 'minimum_amount', $props );
+		$has_maximum = array_key_exists( 'maximum_amount', $props );
+
+		// When only one amount or neither is supplied, the parent sequential
+		// setter calls (and their individual guards) handle everything.
+		// While loading from the database, skip the pair check so a stored minimum above the maximum is kept rather than dropped.
+		if ( ! $has_minimum || ! $has_maximum || ! $this->get_object_read() ) {
+			return parent::set_props( $props, $context );
+		}
+
+		// Both amounts are being set in the same call.  Pre-validate the
+		// projected final pair before touching any property so that a valid
+		// simultaneous update (e.g. raising 100/200 to 250/300) is never
+		// rejected due to intermediate stale-value comparisons.
+		$projected_min = wc_format_decimal( $props['minimum_amount'] );
+		$projected_max = wc_format_decimal( $props['maximum_amount'] );
+		$min_float     = (float) $projected_min;
+		$max_float     = (float) $projected_max;
+
+		// All props except the two amounts are still processed by the parent.
+		$remaining = $props;
+		unset( $remaining['minimum_amount'], $remaining['maximum_amount'] );
+
+		if ( $min_float && $max_float && $min_float > $max_float ) {
+			// Projected pair is invalid.  Return WP_Error without mutating
+			// either amount property.  Remaining props are still applied so
+			// that error aggregation behaviour is unchanged.
+			$error = new WP_Error(
+				'coupon_invalid_minimum_amount',
+				__( 'Minimum spend cannot exceed maximum spend.', 'woocommerce' ),
+				array( 'status' => 400 )
+			);
+
+			if ( ! empty( $remaining ) ) {
+				$other_errors = parent::set_props( $remaining, $context );
+				if ( is_wp_error( $other_errors ) ) {
+					foreach ( $other_errors->get_error_codes() as $code ) {
+						$error->add( $code, $other_errors->get_error_message( $code ), $other_errors->get_error_data( $code ) );
+					}
+				}
+			}
+
+			return $error;
+		}
+
+		// Projected pair is valid.  Apply both amounts directly via set_prop()
+		// to bypass the individual setter guards — they would compare against
+		// the stale stored value and produce a spurious rejection.
+		$this->set_prop( 'minimum_amount', $projected_min );
+		$this->set_prop( 'maximum_amount', $projected_max );
+
+		if ( empty( $remaining ) ) {
+			return true;
+		}
+
+		return parent::set_props( $remaining, $context );
 	}
 }
