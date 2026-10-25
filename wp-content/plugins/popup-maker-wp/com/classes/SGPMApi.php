@@ -33,6 +33,10 @@ class SGPMApi
 			wp_die('Security check fail');
 		}
 
+		if (!SGPMHelper::currentUserCanManagePlugin()) {
+			wp_die(esc_html__('You do not have permission to perform this action.', 'popup-maker-api'), 403);
+		}
+
 		$options = get_option('sgpm_popup_maker_api_option');
 		$connectUrl = SGPM_SERVICE_URL.'app/connect';
 		$apiKey = $this->sanitize('sgpm-api-key');
@@ -69,15 +73,23 @@ class SGPMApi
 
 		$data = json_decode($response['body'], true);
 
+		if (!is_array($data)) {
+			$data = array();
+		}
+
 		$options['apiKey'] = '';
 		$options['isAuthenticate'] = false;
 
 		if (isset($data['isAuthenticate']) && $data['isAuthenticate']) {
 			$options['oldUser'] = true;
 			$options['isAuthenticate'] = true;
-			$options['apiKey'] = $data['apiKey'];
-			$options['popups'] = array_reverse($data['popups'], true);
-			$options['user'] = $data['user'];
+			$options['apiKey'] = isset($data['apiKey']) ? $data['apiKey'] : '';
+			$options['popups'] = !empty($data['popups']) && is_array($data['popups']) ? array_reverse($data['popups'], true) : array();
+			$options['user'] = isset($data['user']) && is_array($data['user']) ? $data['user'] : $options['user'];
+		}
+
+		if (!isset($options['popups']) || !is_array($options['popups'])) {
+			$options['popups'] = array();
 		}
 
 		$newestPopup = true;

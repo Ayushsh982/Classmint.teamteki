@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) exit;
 <div class="sgpm-container">
 	<div class="sgpm-content">
 		<div class="sgpm-wrapper">
-			<?php if (isset($options['isAuthenticate']) && !$options['isAuthenticate'] && isset($_GET['tryconnect']) && wp_verify_nonce($ajax_nonce, SGPM_AJAX_NONCE)): ?>
+			<?php if (isset($options['isAuthenticate']) && !$options['isAuthenticate'] && isset($_GET['tryconnect'])): ?>
 				<div class="error">
 					<p>You must provide a valid API Key to authenticate to Popup Maker.</p>
 				</div>
@@ -58,9 +58,9 @@ if (!defined('ABSPATH')) exit;
 											'li' => array('class' => [], 'tilte' =>[]),
 											'a' => array('class' => [], 'href' => [], 'data-id'=>[]),
 											'span' => array('class' => [], 'role' => [], 'aria-autocomplete'=>[], 'aria-haspopup'=>[], 'aria-expanded'=>[], 'tabindex'=>[]),
-											'select' => array('class' => [], 'name' => [], 'data-select-type'=>[], 'autocomplete'=>[], 'multiple' => [], 'isnotposttype' => [], 'data-value-param'=>[]),
-											'optgroup' => array('label' => [], 'value' => [], 'selected' => []), // Corrected the handling of optgroup attributes
-											'option' => array('label' => [], 'value' => [], 'selected' => []) // Corrected the handling of optgroup attributes
+											'select' => array('class' => [], 'name' => [], 'data-select-type'=>[], 'autocomplete'=>[], 'multiple' => [], 'isnotposttype' => [], 'data-value-param'=>[], 'data-value-type'=>[], 'data-select-class'=>[], 'data-*' => true),
+											'optgroup' => array('label' => [], 'value' => [], 'selected' => []),
+											'option' => array('label' => [], 'value' => [], 'selected' => [])
 										));
 										?>
 									</div>

@@ -7,7 +7,7 @@ $popupChecker = true;
 <div class="sgpm-container">
 	<div class="sgpm-content">
 		<div class="sgpm-wrapper">
-			<?php if (isset($options['isAuthenticate']) && !$options['isAuthenticate'] && isset($_GET['tryconnect']) && wp_verify_nonce($ajax_nonce, SGPM_AJAX_NONCE)) : ?>
+			<?php if (isset($options['isAuthenticate']) && !$options['isAuthenticate'] && isset($_GET['tryconnect'])) : ?>
 				<div class="error">
 					<p>You must provide a valid API Key to authenticate to Popup Maker.</p>
 				</div>

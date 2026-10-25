@@ -125,39 +125,14 @@ class SGPMMenu
 
 	private function allowedToUsePlugin()
 	{
-		$allowedToUsePlugin = true;
-
-		// get user data
-		$isAdmin = current_user_can('administrator');
-		$currentUserId = get_current_user_id();
-		$user = get_userdata($currentUserId);
-		$userRoles = $user->roles;
-
-		$selectedUserRoles = get_option('sgpm_popup_maker_user_roles');
-		if (!is_array($selectedUserRoles)) {
-			$selectedUserRoles = array();
-		}
-		$hasCurrentUserRoleInSelectedList = array_intersect($userRoles, $selectedUserRoles);
-
-		// check role capatibility
-		if (!$isAdmin && count($selectedUserRoles) && empty($hasCurrentUserRoleInSelectedList)) {
-			$allowedToUsePlugin = false;
-		}
-
-		return $allowedToUsePlugin;
+		return SGPMHelper::currentUserCanManagePlugin();
 	}
 
 	public function menu()
 	{
-		$allowedToUsePlugin = $this->allowedToUsePlugin();
-		if (!$allowedToUsePlugin) return;
+		$menuCapability = SGPMHelper::getMenuCapability();
 
-		$selectedUserRoles = get_option('sgpm_popup_maker_user_roles');
-		if (!is_array($selectedUserRoles)) {
-			$selectedUserRoles = array();
-		}
-
-		$this->hook = add_menu_page("Popup Maker", "Popup Maker", "read", "popup-maker-api-settings", array($this, 'page'), 'dashicons-welcome-widgets-menus');
+		$this->hook = add_menu_page("Popup Maker", "Popup Maker", $menuCapability, "popup-maker-api-settings", array($this, 'page'), 'dashicons-welcome-widgets-menus');
 
 		if ($this->hook) {
 			add_action('load-'.$this->hook, array($this, 'assets'));
@@ -166,6 +141,10 @@ class SGPMMenu
 
 	public function page()
 	{
+		if (!$this->allowedToUsePlugin()) {
+			wp_die(esc_html__('You do not have permission to access this page.', 'popup-maker-api'), 403);
+		}
+
 		$sgpmPage = new SGPMPage();
 		$sgpmPage->init();
 	}

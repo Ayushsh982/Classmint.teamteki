@@ -52,9 +52,9 @@ class SGPMCondition
 				<div data-condition-name="<?php echo esc_attr($conditionName);?>" class="<?php echo 'sgpm-condition-'.esc_attr($conditionName).'-wrapper'.' '.esc_attr($showRowStatusClass); ?>">
 					<div class="sgpm-condition-<?php echo esc_attr($conditionName)?>-content">
 						<?php echo wp_kses(self::createConditionElement($condition, esc_attr($conditionName), esc_attr($ruleId)), array(
-											'select' => array('class' => [], 'name' => [], 'data-select-type'=>[], 'autocomplete'=>[], 'multiple' => [], 'isnotposttype' => [], 'data-value-param'=>[]),
-											'optgroup' => array('label' => [], 'value' => [], 'selected' => []), // Corrected the handling of optgroup attributes
-											'option' => array('label' => [], 'value' => [], 'selected' => []) // Corrected the handling of optgroup attributes
+											'select' => array('class' => [], 'name' => [], 'data-select-type'=>[], 'autocomplete'=>[], 'multiple' => [], 'isnotposttype' => [], 'data-value-param'=>[], 'data-value-type'=>[], 'data-select-class'=>[], 'data-*' => true),
+											'optgroup' => array('label' => [], 'value' => [], 'selected' => []),
+											'option' => array('label' => [], 'value' => [], 'selected' => [])
 										));?>
 					</div>
 				</div>

@@ -19,14 +19,14 @@
 							$selected = '';
 						?>
 							<?php
-								if ($key == 'administrator') continue;
+								if ($key == 'administrator' || in_array($key, SGPMHelper::getDisallowedManageRoles(), true)) continue;
 								if (in_array($key, $selectedUserRoles))  $selected = 'selected';
 							?>
 							<?php if (in_array($key, $selectedUserRoles)) ?>
 							<option value="<?php echo esc_attr($key)?>" <?php echo esc_html($selected)?>><?php echo esc_html($name)?></option>
 					  	<?php endforeach; ?>
 					</select>
-					<span class="sgpm-info-text"><small><strong>Attention: </strong>If you don't select any role, the plugin will be available for all user roles.</small></span>
+					<span class="sgpm-info-text"><small><strong>Attention: </strong>If you don't select any role, only administrators can use the plugin.</small></span>
 				</div>
 			</div>
 			<h2>Custom HTML Tags</h2>

@@ -96,6 +96,7 @@ class SGPMBase
 		 */
 
 		$this->helper = new SGPMHelper();
+		add_filter('user_has_cap', array('SGPMHelper', 'filterUserHasCap'), 10, 4);
 		$this->menu = new SGPMMenu();
 		$this->api = new SGPMApi();
 		$this->output = new SGPMOutput();
@@ -141,14 +142,25 @@ class SGPMBase
 
 	public function clearAllNotifications()
 	{
+		check_ajax_referer(SGPM_AJAX_NONCE, 'nonce_ajax');
+
+		if (!SGPMHelper::currentUserCanManagePlugin()) {
+			wp_send_json_error(array('message' => 'Forbidden'), 403);
+		}
+
 		$this->notificationEngine->clearAllNotifications();
 	}
 
 	public function removeNotification()
 	{
-		// Verify nonce
-		if ( ! isset($_POST['notificationType']) || ! isset($_POST['hash']) || ! isset($_POST['notificationId']) || ! wp_verify_nonce($_POST['notificationType'], 'notificationType_action') ) {
-			wp_send_json_error('Nonce verification failed'); // Send an error response and exit
+		check_ajax_referer(SGPM_AJAX_NONCE, 'nonce_ajax');
+
+		if (!isset($_POST['notificationType']) || !isset($_POST['hash']) || !isset($_POST['notificationId'])) {
+			wp_send_json_error('Missing parameters');
+		}
+
+		if (!SGPMHelper::currentUserCanManagePlugin()) {
+			wp_send_json_error(array('message' => 'Forbidden'), 403);
 		}
 
 		$notificationType = sanitize_text_field($_POST['notificationType']);

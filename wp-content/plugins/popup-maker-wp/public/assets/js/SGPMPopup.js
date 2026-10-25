@@ -289,6 +289,10 @@ function SGPMPopup(config) {
 
     mainDiv.style.cursor = "pointer";
     var handler = function (e) {
+      if (SGP.isInteractivePopupTarget(e.target)) {
+        return;
+      }
+
       if (
         contentClickBehavior.enable &&
         contentClickBehavior.option == "redirectUrl"
@@ -1837,13 +1841,16 @@ function SGPMPopup(config) {
       mainDiv.className = newClassNameList;
     }
     DIV.style.display = "none";
-    contents = replaceVariablesInContent(contents);
+    contents = SGP.sanitizePopupContents(replaceVariablesInContent(contents));
     mainDiv.innerHTML =
       '<div style="height:100%;width:100%;' +
       (contentBox.scrollingEnabled ? "" : "overflow:hidden") +
       '">' +
       contents +
       "</div>";
+
+    SGP.bindInteractiveElementProtection(mainDiv);
+    SGP.bindPopupContentHandlers(mainDiv);
 
     // Create necessary elements
     contentDiv.appendChild(closeButtonOverlay);
@@ -2727,6 +2734,172 @@ SGPMPopup.openSGPMPopup = function (id) {
 
 // SGP Class
 function SGP() {}
+
+SGP.sanitizePopupContents = function (html) {
+  if (!html || typeof html !== "string") {
+    return "";
+  }
+
+  var allowedOnclick =
+    /^SGP\.(contact|subscribe|subscribeToMailChimp|onClickButtonElement|ageRestrictionClickOnYesButton|oldSubscribe)\(/;
+  var doc = new DOMParser().parseFromString(html, "text/html");
+  var dangerousTags = {
+    script: true,
+    object: true,
+    embed: true,
+  };
+
+  var sanitizeNode = function (node) {
+    if (node.nodeType !== 1) {
+      return;
+    }
+
+    var attrs = node.attributes;
+    if (attrs) {
+      for (var i = attrs.length - 1; i >= 0; i--) {
+        var attrName = attrs[i].name.toLowerCase();
+        var attrValue = attrs[i].value;
+
+        if (attrName.indexOf("on") === 0) {
+          if (attrName === "onclick" && allowedOnclick.test(attrValue)) {
+            node.setAttribute("data-sgpm-rebind-onclick", attrValue);
+          }
+          node.removeAttribute(attrs[i].name);
+        } else if (
+          (attrName === "href" ||
+            attrName === "src" ||
+            attrName === "xlink:href") &&
+          /^\s*javascript:/i.test(attrValue)
+        ) {
+          node.removeAttribute(attrs[i].name);
+        }
+      }
+    }
+
+    for (var j = node.childNodes.length - 1; j >= 0; j--) {
+      var child = node.childNodes[j];
+      if (child.nodeType !== 1) {
+        continue;
+      }
+
+      var tagName = child.tagName.toLowerCase();
+      if (tagName === "iframe") {
+        var iframeId = child.getAttribute("id") || "";
+        if (iframeId.indexOf("sg-html-element-iframe-") === 0) {
+          sanitizeNode(child);
+          continue;
+        }
+        node.removeChild(child);
+        continue;
+      }
+
+      if (dangerousTags[tagName]) {
+        node.removeChild(child);
+      } else {
+        sanitizeNode(child);
+      }
+    }
+  };
+
+  sanitizeNode(doc.body);
+  return doc.body.innerHTML;
+};
+
+SGP.isInteractivePopupTarget = function (element) {
+  if (!element || element.nodeType !== 1) {
+    return false;
+  }
+
+  var interactiveTags = {
+    INPUT: true,
+    TEXTAREA: true,
+    SELECT: true,
+    BUTTON: true,
+    A: true,
+    LABEL: true,
+    OPTION: true,
+  };
+
+  var current = element;
+  while (current && current.nodeType === 1) {
+    if (interactiveTags[current.tagName]) {
+      return true;
+    }
+
+    if (
+      current.isContentEditable ||
+      current.getAttribute("contenteditable") === "true" ||
+      current.getAttribute("contenteditable") === ""
+    ) {
+      return true;
+    }
+
+    if (current.tagName === "FORM") {
+      return true;
+    }
+
+    if (current.classList && current.classList.contains("sgpm-popup-maker-wrapper")) {
+      break;
+    }
+
+    current = current.parentNode;
+  }
+
+  return false;
+};
+
+SGP.bindInteractiveElementProtection = function (container) {
+  if (!container) {
+    return;
+  }
+
+  var selector =
+    "input, textarea, select, button, a, label, [contenteditable='true'], [contenteditable='']";
+  var elements = container.querySelectorAll(selector);
+
+  for (var i = 0; i < elements.length; i++) {
+    elements[i].addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
+    elements[i].addEventListener("mousedown", function (e) {
+      e.stopPropagation();
+    });
+  }
+};
+
+SGP.bindPopupContentHandlers = function (root) {
+  if (!root) {
+    return;
+  }
+
+  var allowedOnclick =
+    /^SGP\.(contact|subscribe|subscribeToMailChimp|onClickButtonElement|ageRestrictionClickOnYesButton|oldSubscribe)\(/;
+  var nodes = root.querySelectorAll("[data-sgpm-rebind-onclick]");
+
+  for (var i = 0; i < nodes.length; i++) {
+    (function (node) {
+      var expr = node.getAttribute("data-sgpm-rebind-onclick");
+      node.removeAttribute("data-sgpm-rebind-onclick");
+
+      if (!expr || !allowedOnclick.test(expr)) {
+        return;
+      }
+
+      node.addEventListener("click", function (e) {
+        e.stopPropagation();
+        try {
+          var handler = new Function(
+            "SGP",
+            "node",
+            "event",
+            "return (" + expr.replace(/\bthis\b/g, "node") + ")"
+          );
+          handler(SGP, node, e);
+        } catch (err) {}
+      });
+    })(nodes[i]);
+  }
+};
 
 SGP.afterFBPageLiked = function (url, htmlElement, popupId) {
   if (!popupId) {
@@ -4787,7 +4960,17 @@ SGP.contact = function (pid, btnElement) {
 
   var responseFunction = function (response, id) {
     /*We trigger onmouseout to make button come to its initial look*/
-    btnElement.onmouseout();
+    if (typeof btnElement.onmouseout === "function") {
+      btnElement.onmouseout();
+    } else if (typeof btnElement.dispatchEvent === "function") {
+      btnElement.dispatchEvent(
+        new MouseEvent("mouseout", {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        })
+      );
+    }
     btnElement.removeAttribute("disabled", "");
     /*Make button text to default*/
     btnElement.innerHTML = btnText;

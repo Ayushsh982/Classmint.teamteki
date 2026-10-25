@@ -10,7 +10,10 @@ class SGPMHelper
 
 		if (!empty($attrs) && isset($attrs)) {
 			foreach ($attrs as $attrName => $attrValue) {
-				$attrString .= ''.$attrName.'="'.$attrValue.'" ';
+				if (is_array($attrValue) || is_object($attrValue)) {
+					continue;
+				}
+				$attrString .= esc_attr($attrName).'="'.esc_attr($attrValue).'" ';
 			}
 		}
 
@@ -36,7 +39,7 @@ class SGPMHelper
 			}
 
 			if (is_array($label)) {
-				$selectBox .= '<optgroup label="'.$value.'">';
+				$selectBox .= '<optgroup label="'.esc_attr($value).'">';
 					foreach ($label as $key => $optionLabel) {
 						$selected = '';
 						if (is_array($selectedValue)) {
@@ -52,12 +55,12 @@ class SGPMHelper
 							$selected = 'selected';
 						}
 
-						$selectBox .= '<option value="'.$key.'" '.$selected.'>'.$optionLabel.'</option>';
+						$selectBox .= '<option value="'.esc_attr($key).'" '.$selected.'>'.esc_html($optionLabel).'</option>';
 					}
 				$selectBox .= '</optgroup>';
 			}
 			else {
-				$selectBox .= '<option value="'.$value.'" '.$selected.'>'.$label.'</option>';
+				$selectBox .= '<option value="'.esc_attr($value).'" '.$selected.'>'.esc_html($label).'</option>';
 			}
 
 			$selected = '';
@@ -78,11 +81,18 @@ class SGPMHelper
 		}
 		if (!empty($attrs) && isset($attrs)) {
 			foreach ($attrs as $attrName => $attrValue) {
-				$attrString .= ''.$attrName.'="'.$attrValue.'" ';
+				if (is_array($attrValue) || is_object($attrValue)) {
+					continue;
+				}
+				$attrString .= esc_attr($attrName).'="'.esc_attr($attrValue).'" ';
 			}
 		}
 
-		$input = "<input $attrString value=\"$savedData\">";
+		if (is_array($savedData) || is_object($savedData)) {
+			$savedData = '';
+		}
+
+		$input = '<input '.$attrString.' value="'.esc_attr($savedData).'">';
 
 		return $input;
 	}
@@ -97,11 +107,14 @@ class SGPMHelper
 		}
 		if (!empty($attrs) && isset($attrs)) {
 			foreach ($attrs as $attrName => $attrValue) {
-				$attrString .= ''.$attrName.'="'.$attrValue.'" ';
+				if (is_array($attrValue) || is_object($attrValue)) {
+					continue;
+				}
+				$attrString .= esc_attr($attrName).'="'.esc_attr($attrValue).'" ';
 			}
 		}
 
-		$input = "<input $attrString $checked>";
+		$input = '<input '.$attrString.' '.$checked.'>';
 
 		return $input;
 	}
@@ -266,6 +279,90 @@ class SGPMHelper
 		return $postTypes;
 	}
 
+	/**
+	 * Fixed allowlist of page-type slugs. Stored display-target values must
+	 * never be invoked as PHP callables; only these keys are valid.
+	 *
+	 * @return string[]
+	 */
+	public static function getAllowedPageTypeSlugs()
+	{
+		return array_keys(self::getPageTypes());
+	}
+
+	/**
+	 * Keep only allowlisted page-type slugs from a stored or posted value.
+	 *
+	 * @param mixed $values
+	 * @return string[]
+	 */
+	public static function sanitizePageTypeValues($values)
+	{
+		if (!is_array($values)) {
+			$values = array($values);
+		}
+
+		$allowed = self::getAllowedPageTypeSlugs();
+		$clean = array();
+
+		foreach ($values as $key => $value) {
+			$candidates = array();
+			if (is_string($key) && $key !== '' && !is_numeric($key)) {
+				$candidates[] = $key;
+			}
+			if (is_string($value) && $value !== '') {
+				$candidates[] = $value;
+			}
+
+			foreach ($candidates as $candidate) {
+				if (in_array($candidate, $allowed, true)) {
+					$clean[] = $candidate;
+					break;
+				}
+			}
+		}
+
+		return array_values(array_unique($clean));
+	}
+
+	/**
+	 * Allowed display-target param slugs (never trust posted param names).
+	 *
+	 * @return string[]
+	 */
+	public static function getAllowedDisplayTargetParams()
+	{
+		$allowed = array(
+			'post_all',
+			'post_selected',
+			'post_type',
+			'post_category',
+			'page_all',
+			'page_selected',
+			'page_type',
+			'page_template',
+		);
+
+		foreach (self::getAllCustomPostTypes() as $customPostType) {
+			$allowed[] = $customPostType.'_all';
+			$allowed[] = $customPostType.'_selected';
+			if ($customPostType === 'product') {
+				$allowed[] = $customPostType.'_selected_category';
+			}
+		}
+
+		return $allowed;
+	}
+
+	/**
+	 * @param string $type
+	 * @return bool
+	 */
+	public static function isAllowedConditionType($type)
+	{
+		return $type === 'displayTarget';
+	}
+
 	public static function getPageTemplates()
 	{
 		$pageTemplates = array(
@@ -408,5 +505,80 @@ class SGPMHelper
 		}
 
 		return array_unique($validAttrs);
+	}
+
+	/**
+	 * Whether the current user may manage plugin settings and state-changing actions.
+	 *
+	 * @return bool
+	 */
+	public static function currentUserCanManagePlugin()
+	{
+		if (current_user_can('manage_options')) {
+			return true;
+		}
+
+		return current_user_can(SGPM_MANAGE_CAPABILITY);
+	}
+
+	/**
+	 * WordPress capability required to register the admin menu page.
+	 * Never use "read": that would expose settings (and nonces) to Subscribers.
+	 *
+	 * @return string
+	 */
+	public static function getMenuCapability()
+	{
+		return SGPM_MANAGE_CAPABILITY;
+	}
+
+	/**
+	 * Grant the plugin capability via user_has_cap instead of registering the
+	 * menu at "read". Administrators always have it; other roles only when
+	 * explicitly selected in plugin settings.
+	 *
+	 * @param array   $allcaps
+	 * @param array   $caps
+	 * @param array   $args
+	 * @param WP_User $user
+	 * @return array
+	 */
+	public static function filterUserHasCap($allcaps, $caps, $args, $user)
+	{
+		if (!isset($args[0]) || $args[0] !== SGPM_MANAGE_CAPABILITY) {
+			return $allcaps;
+		}
+
+		if (!empty($allcaps['manage_options'])) {
+			$allcaps[SGPM_MANAGE_CAPABILITY] = true;
+			return $allcaps;
+		}
+
+		$selectedUserRoles = get_option('sgpm_popup_maker_user_roles');
+		if (!is_array($selectedUserRoles) || empty($selectedUserRoles)) {
+			return $allcaps;
+		}
+
+		if (!($user instanceof WP_User) || empty($user->roles)) {
+			return $allcaps;
+		}
+
+		$selectedUserRoles = array_values(array_diff($selectedUserRoles, self::getDisallowedManageRoles()));
+
+		if (array_intersect($user->roles, $selectedUserRoles)) {
+			$allcaps[SGPM_MANAGE_CAPABILITY] = true;
+		}
+
+		return $allcaps;
+	}
+
+	/**
+	 * Roles that must never receive plugin-management access.
+	 *
+	 * @return string[]
+	 */
+	public static function getDisallowedManageRoles()
+	{
+		return array('subscriber');
 	}
 }

@@ -33,7 +33,9 @@ class SGPMOutput
 	public function output()
 	{
 		$options = get_option('sgpm_popup_maker_api_option');
-		$postId = $pageId = get_the_ID();
+		if (empty($options['popups']) || !is_array($options['popups'])) {
+			return;
+		}
 		$popupHashIds = array();
 
 		foreach ($options['popups'] as $popupId => $popup) {
@@ -207,21 +209,9 @@ class SGPMOutput
 			}
 		}
 		else if ($targetData['param'] == 'page_type' && !empty($targetData['value'])) {
-			$postTypes = $targetData['value'];
-			foreach ($postTypes as $postType) {
-
-				if ($postType == 'is_home_page') {
-					if (is_front_page() && is_home()) {
-						// Default homepage
-						$isInit = true;
-						break;
-					} elseif (is_front_page()) {
-						// static homepage
-						$isInit = true;
-						break;
-					}
-				}
-				else if ($postType()) {
+			$pageTypes = SGPMHelper::sanitizePageTypeValues($targetData['value']);
+			foreach ($pageTypes as $pageType) {
+				if ($this->currentRequestMatchesPageType($pageType)) {
 					$isInit = true;
 					break;
 				}
@@ -236,5 +226,28 @@ class SGPMOutput
 		}
 
 		return $isInit;
+	}
+
+	/**
+	 * Resolve an allowlisted page-type slug to a WordPress conditional.
+	 * Stored values are never used as variable function names.
+	 *
+	 * @param string $pageType
+	 * @return bool
+	 */
+	private function currentRequestMatchesPageType($pageType)
+	{
+		switch ($pageType) {
+			case 'is_home_page':
+				return is_front_page();
+			case 'is_home':
+				return is_home();
+			case 'is_search':
+				return is_search();
+			case 'is_404':
+				return is_404();
+			default:
+				return false;
+		}
 	}
 }

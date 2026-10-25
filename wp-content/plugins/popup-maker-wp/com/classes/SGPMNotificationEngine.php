@@ -277,26 +277,33 @@ class SGPMNotificationEngine
 			// dismiss disabled notifications
 			if ($notification['status'] == $this->statusDisabled) continue;
 
-			$body .= '<div class="sgpm-notification-body sgpm-notification-'.$id.'">';
+			$body .= '<div class="sgpm-notification-body sgpm-notification-'.esc_attr($id).'">';
 			$body .= '<div class="sgpm-notification-header">';
 			$body .= '<h3 class="sgpm-notification-title">';
-			$body .= '<span>'.$notification['title'].'</span>';
+			$body .= '<span>'.esc_html(isset($notification['title']) ? $notification['title'] : '').'</span>';
 			$body .= '</h3>';
 
+			$hash = isset($notification['hash']) ? (string) $notification['hash'] : '';
+			$type = isset($notification['type']) ? (string) $notification['type'] : '';
 			$body .= '<h3 class="sgpm-notification-buttons">';
-			$body .= '<span class="sgpm-collapce sgpm-action-icon-container" onclick="removeNotification(\''.$notification['hash'].'\',\''.$notification['type'].'\','.$id.')">';
+			$body .= '<span class="sgpm-collapce sgpm-action-icon-container" onclick="removeNotification('.esc_attr(wp_json_encode($hash)).','.esc_attr(wp_json_encode($type)).','.(int) $id.')">';
 			$body .= $this->closeNotifictionIconSvg;
 			$body .= '</span>';
 			$body .= '</h3>';
 			$body .= '</div>';
 
 			$body .= '<div class="sgpm-notification-text">';
-			$body .= $notification['text'];
+			$body .= wp_kses_post(isset($notification['text']) ? $notification['text'] : '');
 			$body .= '</div>';
 
 			$body .= '<div class="sgpm-notification-footer">';
-			foreach ($notification['links'] as $link) {
-				$body .= '<a class="sgpm-info-link '.$link['className'].'" target="_blank" href="'.$link['url'].'">'.$link['label'].'</a>';
+			if (!empty($notification['links']) && is_array($notification['links'])) {
+				foreach ($notification['links'] as $link) {
+					$label = isset($link['label']) ? $link['label'] : '';
+					$url = isset($link['url']) ? $link['url'] : '';
+					$className = isset($link['className']) ? $link['className'] : '';
+					$body .= '<a class="sgpm-info-link '.esc_attr($className).'" target="_blank" href="'.esc_url($url).'">'.esc_html($label).'</a>';
+				}
 			}
 			$body .= '</div>';
 

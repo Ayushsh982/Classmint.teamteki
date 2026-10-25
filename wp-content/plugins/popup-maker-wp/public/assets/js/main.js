@@ -131,6 +131,7 @@ function clearAllNotifications()
 
 		var data = {
 			action: 'sgpm_clear_all_notifications',
+			nonce_ajax: (typeof SGPM_JS_PARAMS !== 'undefined') ? SGPM_JS_PARAMS.nonce : ''
 		};
 
 		jQuery.post(ajaxurl, data);
@@ -153,7 +154,8 @@ function removeNotification(hash, type, id)
 		action: 'sgpm_remove_notification',
 		hash: hash,
 		notificationId: id,
-		notificationType: type
+		notificationType: type,
+		nonce_ajax: (typeof SGPM_JS_PARAMS !== 'undefined') ? SGPM_JS_PARAMS.nonce : ''
 	};
 
 	jQuery.post(ajaxurl, data);
