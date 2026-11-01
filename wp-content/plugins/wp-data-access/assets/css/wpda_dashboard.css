@@ -567,6 +567,7 @@ i.wpda_tooltip:hover {
     font: bold 10px "Helvetica Neue", Sans-Serif;
     box-shadow: 0 0 7px black;
     text-align: center;
+    max-width: 400px;
 }
 .arrow {
     width: 70px;

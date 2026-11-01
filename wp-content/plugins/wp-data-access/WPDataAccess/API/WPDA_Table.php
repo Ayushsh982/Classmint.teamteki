@@ -50,7 +50,6 @@ class WPDA_Table extends WPDA_API_Core {
             'args'                => array(
                 'dbs'                => $this->get_param( 'dbs' ),
                 'tbl'                => $this->get_param( 'tbl' ),
-                'col'                => $this->get_param( 'cols' ),
                 'page_index'         => $this->get_param( 'page_index' ),
                 'page_size'          => $this->get_param( 'page_size' ),
                 'search'             => $this->get_param( 'search' ),
@@ -312,7 +311,6 @@ class WPDA_Table extends WPDA_API_Core {
     public function table_select( $request ) {
         $dbs = $request->get_param( 'dbs' );
         $tbl = $request->get_param( 'tbl' );
-        $col = $request->get_param( 'col' );
         $page_index = $request->get_param( 'page_index' );
         $page_size = $request->get_param( 'page_size' );
         $search = $request->get_param( 'search' );
@@ -332,10 +330,19 @@ class WPDA_Table extends WPDA_API_Core {
             'select',
             $msg
         ) ) {
+            // Get searchable table columns (for Data Explorer = all)
+            $wpda_list_columns = WPDA_List_Columns_Cache::get_list_columns( $dbs, $tbl );
+            $table_columns = $wpda_list_columns->get_table_columns();
+            $searchable_columns = array();
+            foreach ( $table_columns as $column ) {
+                if ( isset( $column['column_name'] ) ) {
+                    $searchable_columns[$column['column_name']] = true;
+                }
+            }
             return $this->select(
                 $dbs,
                 $tbl,
-                $col,
+                $searchable_columns,
                 $page_index,
                 $page_size,
                 $search,
@@ -473,7 +480,11 @@ class WPDA_Table extends WPDA_API_Core {
                     $tbl
                 ) );
             }
-            $orderby = ' order by 2 ';
+            if ( strpos( strtolower( $where ), 'order by' ) === false ) {
+                $orderby = ' order by 2 ';
+            } else {
+                $orderby = '';
+            }
             $sql .= " {$where} {$orderby} ";
             // $where and $orderby already sanitized and prepared
             $dataset = $wpdadb->get_results( $sql, 'OBJECT' );
@@ -542,7 +553,7 @@ class WPDA_Table extends WPDA_API_Core {
                 if ( '' === $where ) {
                     $where = $default_where;
                 } else {
-                    $where .= " and {$default_where} ";
+                    $where .= " and ( {$default_where} ) ";
                 }
             }
             // Get table column data types
@@ -606,47 +617,77 @@ class WPDA_Table extends WPDA_API_Core {
         }
     }
 
-    public function insert( $dbs, $tbl, $column_values ) {
+    public function insert(
+        $dbs,
+        $tbl,
+        $column_values,
+        $default_where = ''
+    ) {
         $wpdadb = WPDADB::get_db_connection( $dbs );
         if ( null === $wpdadb ) {
-            // Error connecting.
-            return new \WP_Error('error', "Error connecting to database {$dbs}", array(
+            return new \WP_Error(
+                'db_connection_failed',
+                /* translators: database name */
+                sprintf( __( 'Error connecting to database %s', 'wp-data-access' ), $dbs ),
+                array(
+                    'status' => 500,
+                )
+            );
+        }
+        if ( !is_array( $column_values ) || empty( $column_values ) ) {
+            return new \WP_Error('invalid_arguments', __( 'Invalid arguments', 'wp-data-access' ), array(
+                'status' => 400,
+            ));
+        }
+        // Get column default values
+        $column_list = WPDA_List_Columns_Cache::get_list_columns( $dbs, $tbl );
+        $table_columns = $column_list->get_table_columns();
+        foreach ( $table_columns as $table_column_type ) {
+            if ( isset( $column_values[$table_column_type['column_name']] ) && $column_values[$table_column_type['column_name']] === $table_column_type['column_default'] ) {
+                // Remove default values if send values equals column default to support defaults using functions
+                unset($column_values[$table_column_type['column_name']]);
+            }
+        }
+        // Sanitize column names and values.
+        $sanitized_column_values = self::sanitize_column_values( $dbs, $tbl, $column_values );
+        if ( false === $sanitized_column_values ) {
+            return new \WP_Error('error', "Invalid arguments", array(
                 'status' => 420,
             ));
-        } else {
-            // Get column default values
-            $column_list = WPDA_List_Columns_Cache::get_list_columns( $dbs, $tbl );
-            $table_columns = $column_list->get_table_columns();
-            foreach ( $table_columns as $table_column_type ) {
-                if ( isset( $column_values[$table_column_type['column_name']] ) && $column_values[$table_column_type['column_name']] === $table_column_type['column_default'] ) {
-                    // Remove default values if send values equals column default to support defaults using functions
-                    unset($column_values[$table_column_type['column_name']]);
-                }
+        }
+        if ( '' !== $default_where ) {
+            // Check if insert is allowed
+            $select_parts = array();
+            $select_values = array();
+            foreach ( $sanitized_column_values as $col => $val ) {
+                $select_parts[] = '%s AS `' . str_replace( '`', '``', $col ) . '`';
+                $select_values[] = $val;
             }
-            // Sanitize column names and values.
-            $sanitized_column_values = self::sanitize_column_values( $dbs, $tbl, $column_values );
-            if ( false === $sanitized_column_values ) {
-                return new \WP_Error('error', "Invalid arguments", array(
-                    'status' => 420,
+            $select_sql = implode( ', ', $select_parts );
+            $check_sql = "SELECT 1 FROM ( SELECT {$select_sql} FROM DUAL ) AS t WHERE ( {$default_where} )";
+            $allowed = $wpdadb->get_var( $wpdadb->prepare( $check_sql, $select_values ) );
+            if ( null === $allowed ) {
+                return new \WP_Error('not_allowed', __( 'Insert not allowed', 'wp-data-access' ), array(
+                    'status' => 403,
                 ));
             }
-            // Insert row.
-            $rows_inserted = $wpdadb->insert( $tbl, $sanitized_column_values );
-            // Send response.
-            if ( 1 === $rows_inserted ) {
-                return $this->WPDA_Rest_Response( __( 'Row successfully inserted', 'wp-data-access' ), null, array(
-                    'insert_id' => $wpdadb->insert_id,
-                ) );
+        }
+        // Insert row.
+        $rows_inserted = $wpdadb->insert( $tbl, $sanitized_column_values );
+        // Send response.
+        if ( 1 === $rows_inserted ) {
+            return $this->WPDA_Rest_Response( __( 'Row successfully inserted', 'wp-data-access' ), null, array(
+                'insert_id' => $wpdadb->insert_id,
+            ) );
+        } else {
+            if ( '' !== $wpdadb->last_error ) {
+                return new \WP_Error('error', $wpdadb->last_error, array(
+                    'status' => 420,
+                ));
             } else {
-                if ( '' !== $wpdadb->last_error ) {
-                    return new \WP_Error('error', $wpdadb->last_error, array(
-                        'status' => 420,
-                    ));
-                } else {
-                    return new \WP_Error('error', 'Insert failed', array(
-                        'status' => 420,
-                    ));
-                }
+                return new \WP_Error('error', 'Insert failed', array(
+                    'status' => 420,
+                ));
             }
         }
     }
@@ -658,100 +699,153 @@ class WPDA_Table extends WPDA_API_Core {
         $column_values,
         $column_names = array(),
         $code_columns = array(),
-        $html_columns = array()
+        $html_columns = array(),
+        $default_where = ''
     ) {
         $wpdadb = WPDADB::get_db_connection( $dbs );
         if ( null === $wpdadb ) {
-            // Error connecting.
-            return new \WP_Error('error', "Error connecting to database {$dbs}", array(
-                'status' => 420,
+            return new \WP_Error(
+                'db_connection_failed',
+                /* translators: database name */
+                sprintf( __( 'Error connecting to database %s', 'wp-data-access' ), $dbs ),
+                array(
+                    'status' => 500,
+                )
+            );
+        }
+        if ( !is_array( $primary_key ) || empty( $primary_key ) ) {
+            return new \WP_Error('invalid_primary_key', __( 'Update failed: no primary key provided', 'wp-data-access' ), array(
+                'status' => 400,
             ));
+        }
+        // Sanitize column values.
+        $sanitized_column_values = self::sanitize_column_values(
+            $dbs,
+            $tbl,
+            $column_values,
+            $code_columns,
+            $html_columns
+        );
+        if ( false === $sanitized_column_values || empty( $sanitized_column_values ) ) {
+            return new \WP_Error('invalid_arguments', __( 'Invalid arguments', 'wp-data-access' ), array(
+                'status' => 400,
+            ));
+        }
+        if ( '' === $default_where ) {
+            $rows_updated = $wpdadb->update( $tbl, $sanitized_column_values, $primary_key );
         } else {
-            // Sanitize column names and values.
-            $sanitized_column_values = self::sanitize_column_values(
+            $set_parts = array();
+            $set_values = array();
+            foreach ( $sanitized_column_values as $key => $value ) {
+                $set_parts[] = '`' . str_replace( '`', '``', $key ) . '` = %s';
+                $set_values[] = $value;
+            }
+            $set_sql = implode( ', ', $set_parts );
+            $where_parts = array();
+            $where_values = array();
+            foreach ( $primary_key as $key => $value ) {
+                $where_parts[] = '`' . str_replace( '`', '``', $key ) . '` = %s';
+                $where_values[] = $value;
+            }
+            $where_sql = implode( ' AND ', $where_parts );
+            if ( '' !== $default_where ) {
+                $where_sql .= " AND ( {$default_where} )";
+            }
+            $tbl_sql = '`' . str_replace( '`', '``', $tbl ) . '`';
+            $sql = "UPDATE {$tbl_sql} SET {$set_sql} WHERE {$where_sql}";
+            $rows_updated = $wpdadb->query( $wpdadb->prepare( $sql, array_merge( $set_values, $where_values ) ) );
+        }
+        if ( false === $rows_updated ) {
+            return new \WP_Error('update_failed', ( $wpdadb->last_error ?: __( 'Update failed', 'wp-data-access' ) ), array(
+                'status' => 500,
+            ));
+        }
+        if ( 0 === $rows_updated ) {
+            return $this->WPDA_Rest_Response_Info( __( 'Nothing to update', 'wp-data-access' ) );
+        }
+        $context = null;
+        if ( !empty( $column_names ) ) {
+            // Return updated values
+            $updated_row = $this->get(
                 $dbs,
                 $tbl,
-                $column_values,
-                $code_columns,
-                $html_columns
+                $primary_key,
+                $column_names
             );
-            if ( false === $sanitized_column_values ) {
-                return new \WP_Error('error', "Invalid arguments", array(
-                    'status' => 420,
-                ));
-            }
-            // Update row.
-            $rows_inserted = $wpdadb->update( $tbl, $sanitized_column_values, $primary_key );
-            // Send response.
-            if ( 0 === $rows_inserted ) {
-                return $this->WPDA_Rest_Response_Info( 'Nothing to update' );
-            } elseif ( 1 === $rows_inserted ) {
-                $context = null;
-                if ( 0 < count( $column_names ) ) {
-                    // Return updated values
-                    $updated_row = $this->get(
-                        $dbs,
-                        $tbl,
-                        $primary_key,
-                        $column_names
-                    );
-                    if ( isset( $updated_row->data['data'][0] ) ) {
-                        $updated_values = $updated_row->data['data'][0];
-                        $updated_context = array();
-                        foreach ( $updated_values as $key => $value ) {
-                            if ( !isset( $column_values[$key] ) ) {
-                                $updated_context[$key] = $value;
-                            }
-                        }
-                        if ( 0 < count( $updated_context ) ) {
-                            $context = array(
-                                'updated' => $updated_context,
-                            );
-                        }
+            if ( !is_wp_error( $updated_row ) && isset( $updated_row->data['data'][0] ) ) {
+                $updated_values = $updated_row->data['data'][0];
+                $updated_context = array();
+                foreach ( $updated_values as $key => $value ) {
+                    if ( !isset( $column_values[$key] ) ) {
+                        $updated_context[$key] = $value;
                     }
                 }
-                return $this->WPDA_Rest_Response( __( 'Row successfully updated', 'wp-data-access' ), null, $context );
-            } else {
-                if ( '' !== $wpdadb->last_error ) {
-                    return new \WP_Error('error', $wpdadb->last_error, array(
-                        'status' => 420,
-                    ));
-                } else {
-                    return new \WP_Error('error', 'Update failed', array(
-                        'status' => 420,
-                    ));
+                if ( !empty( $updated_context ) ) {
+                    $context = array(
+                        'updated' => $updated_context,
+                    );
                 }
             }
         }
+        /* translators: rows updated */
+        $message = ( 1 === $rows_updated ? __( 'Row successfully updated', 'wp-data-access' ) : sprintf( __( '%d rows successfully updated', 'wp-data-access' ), $rows_updated ) );
+        return $this->WPDA_Rest_Response( $message, null, $context );
     }
 
-    public function delete( $dbs, $tbl, $primary_key ) {
+    public function delete(
+        $dbs,
+        $tbl,
+        $primary_key,
+        $default_where = ''
+    ) {
         $wpdadb = WPDADB::get_db_connection( $dbs );
         if ( null === $wpdadb ) {
-            // Error connecting.
-            return new \WP_Error('error', "Error connecting to database {$dbs}", array(
-                'status' => 420,
-            ));
-        } else {
-            // Delete row.
-            $rows_deleted = $wpdadb->delete( $tbl, $primary_key );
-            // Send response.
-            if ( 0 === $rows_deleted ) {
-                return $this->WPDA_Rest_Response_Info( __( 'No data found', 'wp-data-access' ) );
-            } elseif ( 1 === $rows_deleted ) {
-                return $this->WPDA_Rest_Response( __( 'Row successfully deleted', 'wp-data-access' ) );
-            } else {
-                if ( '' !== $wpdadb->last_error ) {
-                    return new \WP_Error('error', $wpdadb->last_error, array(
-                        'status' => 420,
-                    ));
-                } else {
-                    return new \WP_Error('error', 'Delete failed', array(
-                        'status' => 420,
-                    ));
-                }
-            }
+            return new \WP_Error(
+                'db_connection_failed',
+                /* translators: database name */
+                sprintf( __( 'Error connecting to database %s', 'wp-data-access' ), $dbs ),
+                array(
+                    'status' => 500,
+                )
+            );
         }
+        if ( !is_array( $primary_key ) || empty( $primary_key ) ) {
+            return new \WP_Error('invalid_primary_key', __( 'Delete failed: no primary key provided', 'wp-data-access' ), array(
+                'status' => 400,
+            ));
+        }
+        if ( '' === $default_where ) {
+            $rows_deleted = $wpdadb->delete( $tbl, $primary_key );
+        } else {
+            $where_parts = array();
+            $where_values = array();
+            foreach ( $primary_key as $key => $value ) {
+                $where_parts[] = '`' . str_replace( '`', '``', $key ) . '` = %s';
+                $where_values[] = $value;
+            }
+            $where_sql = implode( ' AND ', $where_parts );
+            if ( '' !== $default_where ) {
+                $where_sql .= " AND ( {$default_where} )";
+            }
+            $tbl_sql = '`' . str_replace( '`', '``', $tbl ) . '`';
+            $sql = "DELETE FROM {$tbl_sql} WHERE {$where_sql}";
+            $rows_deleted = $wpdadb->query( $wpdadb->prepare( $sql, $where_values ) );
+        }
+        if ( false === $rows_deleted ) {
+            return new \WP_Error('delete_failed', ( $wpdadb->last_error ?: __( 'Delete failed', 'wp-data-access' ) ), array(
+                'status' => 500,
+            ));
+        }
+        if ( 0 === $rows_deleted ) {
+            return $this->WPDA_Rest_Response_Info( __( 'No data found', 'wp-data-access' ) );
+        }
+        if ( 1 === $rows_deleted ) {
+            return $this->WPDA_Rest_Response( __( 'Row successfully deleted', 'wp-data-access' ) );
+        }
+        return $this->WPDA_Rest_Response( 
+            /* translators: rows delete */
+            sprintf( __( '%d rows successfully deleted', 'wp-data-access' ), $rows_deleted )
+         );
     }
 
     private function generate_lookup_condition(
@@ -945,7 +1039,7 @@ class WPDA_Table extends WPDA_API_Core {
      *
      * @param string  $dbs Schema name (database).
      * @param string  $tbl Table Name.
-     * @param string  $column_names Column Names.
+     * @param array  $column_names Column Names.
      * @param string  $page_index Page number.
      * @param string  $page_size Rows per page.
      * @param string  $search Filter.
@@ -1104,9 +1198,9 @@ class WPDA_Table extends WPDA_API_Core {
                     $rowcount = 0;
                 } else {
                     $estimate = false;
-                    if ( '1' === $row_count_estimate && '' === $where ) {
+                    if ( '1' == $row_count_estimate && '' === $where ) {
                         // Perform row count estimate
-                        $countrows = $wpdadb->get_results( $wpdadb->prepare( "\n\t\t\t\t\t\t\t\t\tselect table_rows as rowcount\n\t\t\t\t\t\t\t\t\t from  information_schema.tables\n\t\t\t\t\t\t\t\t\twhere  table_schema = %s\n\t\t\t\t\t\t\t\t\t  and  table_name = %s\n\t\t\t\t\t\t\t\t", [$wpdadb->dbname, $tbl] ), 'ARRAY_A' );
+                        $countrows = $wpdadb->get_results( $wpdadb->prepare( "\n\t\t\t\t\t\t\t\t\tselect table_rows as rowcount\n\t\t\t\t\t\t\t\t\t from  `information_schema`.`tables`\n\t\t\t\t\t\t\t\t\twhere  table_schema = %s\n\t\t\t\t\t\t\t\t\t  and  table_name = %s\n\t\t\t\t\t\t\t\t", [$wpdadb->dbname, $tbl] ), 'ARRAY_A' );
                         if ( isset( $countrows[0]['rowcount'] ) && 0 != $countrows[0]['rowcount'] ) {
                             $estimate = true;
                         }

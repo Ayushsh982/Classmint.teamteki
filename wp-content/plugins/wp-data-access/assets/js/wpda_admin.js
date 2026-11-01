@@ -29,46 +29,6 @@ function wpda_toggle_row_actions( rownum ) {
 	}
 }
 
-function wpda_list_table_favourite( schema_name, table_name )  {
-	if (jQuery('#span_favourites_'+ table_name).hasClass('dashicons-star-empty')) {
-		action = 'wpda_add_favourite';
-	} else {
-		action = 'wpda_rem_favourite';
-	}
-	url = location.pathname + '?action=' + action;
-	jQuery.ajax({
-		method: 'POST',
-		url: url,
-		data: {
-			wpdaschema_name: schema_name,
-			table_name: table_name
-		}
-	}).done(
-		function (msg) {
-			if (msg === '1') {
-				if (jQuery('#span_favourites_' + table_name).hasClass('dashicons-star-empty')) {
-					jQuery('#span_favourites_' + table_name)
-					.removeClass('dashicons-star-empty')
-					.addClass('dashicons-star-filled')
-					.prop('title', 'Remove from favourites');
-				} else {
-					jQuery('#span_favourites_' + table_name)
-					.removeClass('dashicons-star-filled')
-					.addClass('dashicons-star-empty')
-					.prop('title', 'Add to favourites');
-				}
-				if (jQuery('#wpda_main_favourites_list').val()!=='') {
-                    jQuery("#wpda_main_form :input[name='action']").val('-1');
-                    jQuery("#wpda_main_form :input[name='action2']").val('-1');
-					jQuery('#wpda_main_form').submit();
-				}
-			} else {
-				alert('Adding to favourites failed!');
-			}
-		}
-	);
-}
-
 function wpda_main_export_start() {
 	jQuery("#wpda_main_export_form").submit();
 	jQuery("#wpda_row_export_anchor").empty();
@@ -914,36 +874,6 @@ function wpdaSetMediaSelection(mediaItem, frame) {
 			selection.add(attachment ? [attachment] : []);
 		}
 	);
-}
-
-const setLegacyTools = () => {
-	jQuery("#wpda-legacy-tool-settings-panel").toggle();
-}
-
-const setLegacyToolStatus = (element) => {
-	if (jQuery(element).find("i.fas.fa-toggle-off").length === 1) {
-		// Turn on
-		jQuery(element).html('<i class="fas fa-toggle-on" style="font-size: 28px;"></i>');
-	} else {
-		// Turn off
-		jQuery(element).html('<i class="fas fa-toggle-off" style="font-size: 28px;"></i>');
-	}
-}
-
-const updateLegacyTools = () => {
-	const toolStatus = {}
-
-	jQuery.each(
-		jQuery("#wpda-legacy-tool-settings-panel table td.status"),
-		function(key, value) {
-			const tool = jQuery(value).data("tool");
-			const status = jQuery(value).find("i.fas.fa-toggle-off").length === 0
-			toolStatus[tool] = status;
-		}
-	);
-
-	jQuery("#wpda-legacy-tool-settings-legacy-tool-data").val(JSON.stringify(toolStatus));
-	jQuery("#wpda-legacy-tool-settings-form-data").submit();
 }
 
 const submitMailCallbackOk = (response, debug) => {

@@ -475,7 +475,7 @@ namespace WPDataAccess\Simple_Form {
 			<td class="data">
 				<?php
 				// Get column value
-				$this->show_context_column_value = esc_html( str_replace( '&', '&amp;', (string) $this->item_value ) );
+				$this->show_context_column_value = str_replace( '&', '&amp;', (string) $this->item_value );
 
 				// Set primary key class(es)
 				$this->show_context_class_primary_key = $this->is_key_column ? 'wpda_primary_key' : '';
@@ -495,8 +495,8 @@ namespace WPDataAccess\Simple_Form {
 				$this->show_item();
 				?>
 				<input type="hidden"
-					   name="<?php echo esc_attr( $this->item_name ); ?>_old"
-					   value="<?php echo $this->show_context_column_value; // phpcs:ignore WordPress.Security.EscapeOutput ?>"
+                    name="<?php echo esc_attr( $this->item_name ); ?>_old"
+					value="<?php echo esc_html( $this->show_context_column_value ); ?>"
 				/>
 				<?php echo '' === $label_after ? '' : '<label>' . esc_attr( $label_after ) . '</label>'; ?>
 			</td>
@@ -539,7 +539,7 @@ namespace WPDataAccess\Simple_Form {
 			<input name="<?php echo esc_attr( $this->item_name ); ?>"
 				   id="<?php echo esc_attr( $this->item_name ); ?>"
 				   type="text"
-				   value="<?php echo $this->show_context_column_value; // phpcs:ignore WordPress.Security.EscapeOutput ?>"
+				   value="<?php echo esc_html( $this->show_context_column_value ); ?>"
 				   data-db-is-null="<?php echo null === $this->item_value ? 'true' : 'false'; ?>"
 				   class="wpda_data_type_<?php echo esc_attr( $data_type ); ?> <?php echo esc_attr( $this->show_context_class_primary_key ); ?> <?php echo esc_attr( $this->item_class ); ?> <?php
 					if ( 'NO' === $this->is_nullable && ! $this->is_auto_increment ) {

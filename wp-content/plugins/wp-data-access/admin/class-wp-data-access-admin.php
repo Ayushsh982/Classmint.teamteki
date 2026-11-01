@@ -712,7 +712,8 @@ class WP_Data_Access_Admin {
                 self::PAGE_DESIGNER,
                 WPDP::PAGE_TEMPLATES,
                 self::MAIN_PAGE_SLUG . '-account',
-                self::MAIN_PAGE_SLUG . '-wp-support-forum'
+                self::MAIN_PAGE_SLUG . '-wp-support-forum',
+                self::MAIN_PAGE_SLUG . '-affiliation'
             );
             foreach ( $hidden_submenus as $submenu ) {
                 remove_submenu_page( self::MAIN_PAGE_SLUG, $submenu );
@@ -720,7 +721,6 @@ class WP_Data_Access_Admin {
         } else {
             global $submenu;
             $submenu[self::PAGE_MAIN][0][2] = self::PAGE_DASHBOARD;
-            // phpcs:ignore WordPress.WP.GlobalVariablesOverride
         }
         return $submenu_file;
     }
@@ -882,32 +882,6 @@ class WP_Data_Access_Admin {
     }
 
     public function data_navi() {
-        if ( isset( $_POST['wpda-legacy-tool-status'] ) ) {
-            // Legacy tools update
-            $update_status = json_decode( sanitize_text_field( wp_unslash( $_POST['wpda-legacy-tool-status'] ) ), true );
-            if ( null !== $update_status ) {
-                if ( isset( 
-                    $update_status['tables'],
-                    $update_status['forms'],
-                    $update_status['templates'],
-                    $update_status['designer'],
-                    $update_status['dashboards'],
-                    $update_status['charts']
-                 ) ) {
-                    // Get current legacy tool settings
-                    $option_legacy_tools = \WPDataAccess\Utilities\WPDA_Legacy_Tool_Visibility::get();
-                    // Update legacy tool settings
-                    $option_legacy_tools['tables'][0] = $update_status['tables'];
-                    $option_legacy_tools['forms'][0] = $update_status['forms'];
-                    $option_legacy_tools['templates'][0] = $update_status['templates'];
-                    $option_legacy_tools['designer'][0] = $update_status['designer'];
-                    $option_legacy_tools['dashboards'][0] = $update_status['dashboards'];
-                    $option_legacy_tools['charts'][0] = $update_status['charts'];
-                    // Save legacy tool settings
-                    WPDA::set_option( WPDA::OPTION_PLUGIN_LEGACY_TOOLS, $option_legacy_tools );
-                }
-            }
-        }
         WPDA_Dashboard::add_dashboard();
         $navi = new WPDA_Navi();
         $navi->show();

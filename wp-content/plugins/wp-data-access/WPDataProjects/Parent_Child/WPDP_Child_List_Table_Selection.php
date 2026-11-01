@@ -61,7 +61,7 @@ namespace WPDataProjects\Parent_Child {
 			?>
 			<div style="padding-top:5px;padding-left:3px;">
 				<button type="button"
-						   onclick="javascript:window.location.href='<?php echo $url; // phpcs:ignore WordPress.Security.EscapeOutput ?>'"
+						   onclick="javascript:window.location.href='<?php echo esc_url_raw( $url ); ?>'"
 						   class="button button-secondary">
 					<i class="fas fa-angle-left wpda_icon_on_button"></i>
 					<?php esc_html_e( 'Child List', 'wp-data-access' ); ?>

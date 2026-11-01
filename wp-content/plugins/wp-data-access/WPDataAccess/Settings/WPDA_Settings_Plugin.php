@@ -110,8 +110,8 @@ namespace WPDataAccess\Settings {
 							);
 						}
 
-						if ( ! isset( $_REQUEST['secret_key'] ) || ! isset( $_REQUEST['secret_iv'] ) ) {
-							// Leave both values untouched
+                        /* noinspection EmptyBlockStatementInspection */
+                        if ( ! isset( $_REQUEST['secret_key'] ) || ! isset( $_REQUEST['secret_iv'] ) ) { // Leave both values untouched
 						} else {
 							$secret_key_old = WPDA::get_option( WPDA::OPTION_PLUGIN_SECRET_KEY );
 							$secret_iv_old  = WPDA::get_option( WPDA::OPTION_PLUGIN_SECRET_IV );
@@ -218,26 +218,32 @@ namespace WPDataAccess\Settings {
 			$debug = WPDA::get_option( WPDA::OPTION_PLUGIN_DEBUG );
 
 			$remote_databases = WPDADB::get_remote_databases( true );
+
+            $test_remote_db_wp_nonce = wp_create_nonce( 'wpda-test-remote-database-' . WPDA::get_current_user_login() );
 			?>
 
 			<style>
+                /* noinspection CssUnusedSymbol */
 				.item_label {
 					width: 14.9em;
 					display: inline-block;
 					padding-left: 0.3em;
 				}
 
+                /* noinspection CssUnusedSymbol */
 				.item_label_text {
 					width: 7em;
 					display: inline-block;
 				}
 
+                /* noinspection CssUnusedSymbol */
 				.item_label_format {
 					width: 5em;
 					padding: 0.6em;
 					border-radius: 4px;
 				}
 
+                /* noinspection CssUnusedSymbol */
 				.item_label_align {
 					float: right;
 				}
@@ -266,7 +272,7 @@ namespace WPDataAccess\Settings {
 			<script>
 				function delete_remote_database(id) {
 					remote_database_name = jQuery('#remote_database_name' + id).val();
-					if (confirm("<?php esc_html_e( 'Delete remote database connection from plugin repository?', 'wp-data-access' ); ?>")) {
+					if (confirm("<?php esc_html_e( /** @lang text */ 'Delete remote database connection from plugin repository?', 'wp-data-access' ); ?>")) {
 						jQuery('#delete_remote_database_name').val(remote_database_name);
 						jQuery('#wpda_delete_database').submit();
 					}
@@ -301,6 +307,7 @@ namespace WPDataAccess\Settings {
 					} else {
 						jQuery('#remote_database_block_ssl').hide();
 					}
+                    jQuery('#remote_database_block_test_content').html('');
 				}
 
 				function test_remote_clear(mode = '') {
@@ -329,7 +336,8 @@ namespace WPDataAccess\Settings {
 							user: user,
 							passwd: pass,
 							port: port,
-							schema: dbs
+							schema: dbs,
+                            _wpnonce: '<?php echo esc_attr( $test_remote_db_wp_nonce ); ?>',
 						}
 					}).done(
 						function (msg) {
@@ -405,14 +413,14 @@ namespace WPDataAccess\Settings {
 						<label for="remote_schema" style="vertical-align:baseline;" class="database_item_label">MySQL schema:</label>
 						<input type="text" name="remote_schema" id="remote_schema">
 						<br/>
-						<label for="remote_schema" style="vertical-align:baseline;line-height:30px;" class="database_item_label">
+						<label for="remote_enabled" style="vertical-align:baseline;line-height:30px;" class="database_item_label">
 							Enabled:
 						</label>
 						<input type="checkbox" name="remote_enabled" id="remote_enabled">
 
 						<br/>
-						<label style="line-height:30px;" for="remote_ssl" style="vertical-align:baseline;" class="database_item_label">SSL:</label>
-						<input type="checkbox" name="remote_ssl" id="remote_ssl" unchecked onclick="jQuery('#remote_database_block_ssl').toggle()">
+						<label style="line-height:30px;vertical-align:baseline;" for="remote_ssl" class="database_item_label">SSL:</label>
+						<input type="checkbox" name="remote_ssl" id="remote_ssl" onclick="jQuery('#remote_database_block_ssl').toggle()">
 						<div id="remote_database_block_ssl">
 							<label for="remote_client_key" style="vertical-align:baseline;" class="database_item_label">Client key:</label>
 							<input type="text" name="remote_client_key" id="remote_client_key">
@@ -514,8 +522,10 @@ namespace WPDataAccess\Settings {
 					<tr>
 						<th><?php esc_html_e( 'Secret key and IV', 'wp-data-access' ); ?></th>
 						<td>
-							<input type="text" name="secret_key" value="<?php echo esc_attr( $secret_key ); ?>"/>
+							<!--suppress HtmlFormInputWithoutLabel -->
+                            <input type="text" name="secret_key" value="<?php echo esc_attr( $secret_key ); ?>"/>
 							<br/>
+                            <!--suppress HtmlFormInputWithoutLabel -->
 							<input type="text" name="secret_iv" value="<?php echo esc_attr( $secret_iv ); ?>"/>
 							<br/><br/>
 							<span class="dashicons dashicons-info"></span><?php esc_html_e( 'Existing remote database connection settings will be converted', 'wp-data-access' ); ?>
@@ -534,7 +544,7 @@ namespace WPDataAccess\Settings {
 								   onclick="delete_remote_database('<?php echo esc_attr( $i ); ?>')"
 								   style="text-decoration:none;"
 								   class="wpda_tooltip"
-								   title="<?php esc_html_e( 'Delete remote database connection from plugin repository', 'wp-data-access' ); ?>">
+								   title="<?php esc_html_e( /** @lang text */ 'Delete remote database connection from plugin repository', 'wp-data-access' ); ?>">
 									<span class="dashicons dashicons-trash" style="font-size:18px;"></span>
 								</a>
 								<label class="wpda_tooltip" title="<?php esc_html_e( 'Disable remote database connection', 'wp-data-access' ); ?>">

@@ -33,22 +33,6 @@ namespace WPDataAccess\Backup {
 		const SHOW_JOBS_OPTION_NAME = 'wpda_data_backup_show_jobs';
 
 		/**
-		 * Holds the scheduled cron jobs
-		 *
-		 * @var array
-		 */
-		protected $schedules;
-
-		/**
-		 * WPDA_Data_Export constructor
-		 *
-		 * Gets and stores the scheduled cron jobs.
-		 */
-		public function __construct() {
-			$this->schedules       = wp_get_schedules();
-		}
-
-		/**
 		 * Data entry form to add or update a data backup
 		 *
 		 * @param string $action Add for new export; Update to edit existing export.
@@ -110,6 +94,7 @@ namespace WPDataAccess\Backup {
 			}
 
 			$table_list = WPDA_Dictionary_Lists::get_tables( false, $schema_name );
+            $schedules  = wp_get_schedules();
 			?>
 			<div class="wrap">
 				<h1 class="wp-heading-inline">
@@ -178,7 +163,7 @@ namespace WPDataAccess\Backup {
 															<option value="runonce"><?php esc_html_e( 'Run once (no interval)', 'wp-data-access' ); ?></option>
 														<?php } ?>
 														<?php
-														foreach ( $this->schedules as $key => $schedule ) {
+														foreach ( $schedules as $key => $schedule ) {
 															echo '<option value="' . esc_attr( $key ) . '">' .
 																	esc_attr( $schedule['display'] ) . ' (' . esc_attr( $schedule['interval'] ) . ' sec)' .
 																'</option>';
@@ -398,6 +383,7 @@ namespace WPDataAccess\Backup {
 			esc_html_e( 'Data Backup', 'wp-data-access' );
 			echo '</h1>';
 
+            $schedules = wp_get_schedules();
 			if ( $data_backups_found || 'all' === $show_jobs ) {
 				echo '<table cellpadding="3" cellspacing="3" border="0" style="border-collapse:collapse;">';
 				echo '<tr>';
@@ -453,8 +439,8 @@ namespace WPDataAccess\Backup {
 							echo '<a href="javascript:void(0)" onclick="jQuery(this).closest(\'form\').submit()" class="dashicons dashicons-edit"></a>';
 							echo '<input type="hidden" name="action" value="edit" />';
 							echo '<input type="hidden" name="schedule" value="' . esc_attr( $key ) . '" />';
-							foreach ( $this->schedules as $schedule_key => $schedule ) {
-								if ( $schedule['display'] === $this->schedules[ $value_value['schedule'] ]['display'] ) {
+							foreach ( $schedules as $schedule_key => $schedule ) {
+								if ( $schedule['display'] === $schedules[ $value_value['schedule'] ]['display'] ) {
 									$interval = $schedule_key;
 								}
 							}
@@ -492,8 +478,8 @@ namespace WPDataAccess\Backup {
 							}
 							echo '</td>';
 							echo '<td>';
-							if ( isset( $this->schedules[ $value_value['schedule'] ]['display'] ) ) {
-								echo esc_attr( $this->schedules[ $value_value['schedule'] ]['display'] );
+							if ( isset( $schedules[ $value_value['schedule'] ]['display'] ) ) {
+								echo esc_attr( $schedules[ $value_value['schedule'] ]['display'] );
 								if ( isset( $value_value['interval'] ) ) {
 									echo ' (' . esc_attr( $value_value['interval'] ) . ' sec)';
 								}

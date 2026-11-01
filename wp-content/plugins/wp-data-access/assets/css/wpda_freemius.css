@@ -1,0 +1,15 @@
+#fs_account div.postbox {
+    max-width: unset;
+}
+
+header.fs-app-header,
+.wrap.fs-section h2.nav-tab-wrapper {
+    display: none;
+}
+
+.wpda_tooltip_icons_css {
+    width: fit-content;
+    border: none;
+    position: fixed !important;
+    z-index: 999999 !important;
+}

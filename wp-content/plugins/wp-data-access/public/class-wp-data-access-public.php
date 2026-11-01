@@ -74,8 +74,13 @@ class WP_Data_Access_Public {
         global $wp_version;
         wp_register_style(
             'wpdadiehard',
-            '/wp-admin/load-styles.php?load%5B%5D=list-tables,forms,common,buttons',
-            array(),
+            false,
+            array(
+                'list-tables',
+                'forms',
+                'common',
+                'buttons'
+            ),
             $wp_version
         );
         wp_register_style(
@@ -187,8 +192,8 @@ class WP_Data_Access_Public {
         global $wp_version;
         wp_register_script(
             'wpdadiehard',
-            '/wp-admin/load-scripts.php?load%5B%5D=hoverIntent,hoverintent-js,list-tables,forms,buttons,common',
-            array('wp-i18n'),
+            false,
+            array('wp-i18n', 'hoverIntent', 'common'),
             $wp_version,
             false
         );

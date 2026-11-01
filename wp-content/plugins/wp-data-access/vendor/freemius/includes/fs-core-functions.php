@@ -298,9 +298,9 @@
                     return strtolower( $_REQUEST[ $action_key ] );
                 }
             }
-            // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
             return false;
+            // phpcs:enable WordPress.Security.NonceVerification.Recommended
         }
     }
 

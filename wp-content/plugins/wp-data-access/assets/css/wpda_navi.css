@@ -50,16 +50,6 @@
     display: grid;
     grid-template-columns: 1fr 296px;
 }
-@media screen and (max-width: 800px) {
-    .wpda-navi-container-header-title {
-        display: grid;
-        grid-template-columns: 1fr;
-    }
-
-    .wpda-navi-container-header-image {
-        display: none;
-    }
-}
 
 .wpda-navi-container-header h1,
 .wpda-navi-container-header h2 {
@@ -283,14 +273,6 @@
         padding: 20px;
     }
 
-    /*.wpda-navi-container-content-items .wpda-navi-container-content-item .wpda-navi-container-content-item-facts {*/
-    /*    display: none;*/
-    /*}*/
-
-    .wpda-navi-container-content-items .wpda-navi-container-content-item .wpda-navi-container-content-item-facts.whats-new {
-        max-height: 70px !important;
-    }
-
     .wpda-navi-container-content-items .wpda-navi-container-content-item .switch-grid {
         grid-template-columns: 1fr;
     }
@@ -311,9 +293,28 @@
 }
 
 @media screen and (max-width: 800px) {
+    .wpda-navi-container-header-title {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .wpda-navi-container-header-image {
+        display: none;
+    }
+
     .wpda-navi-container-content-items,
     .wpda-navi-container-content-item.wpda-hot-topics .wpda-navi-container-content-item-facts {
         grid-template-columns: 1fr;
+    }
+
+    .wpda-navi-container-content-item-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media screen and (max-width: 500px) {
+    #wpda-legacy-tool-settings a span {
+        width: min-content;
     }
 }
 

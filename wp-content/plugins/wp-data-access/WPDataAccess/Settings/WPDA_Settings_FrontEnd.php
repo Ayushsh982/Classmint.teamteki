@@ -2,8 +2,6 @@
 
 namespace WPDataAccess\Settings {
 
-	use WPDataAccess\Data_Dictionary\WPDA_Dictionary_Exist;
-	use WPDataAccess\Data_Dictionary\WPDA_Dictionary_Lists;
 	use WPDataAccess\Utilities\WPDA_Message_Box;
 	use WPDataAccess\WPDA;
 
@@ -19,13 +17,6 @@ namespace WPDataAccess\Settings {
 		protected function add_content() {
 			global $wpdb;
 
-			if ( isset( $_REQUEST['database'] ) ) {
-				$database = sanitize_text_field( wp_unslash( $_REQUEST['database'] ) ); // input var okay.
-			} else {
-				$database = $wpdb->dbname;
-			}
-			$is_wp_database = $database === $wpdb->dbname;
-
 			if ( isset( $_REQUEST['action'] ) ) {
 				$action = sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ); // input var okay.
 
@@ -36,69 +27,12 @@ namespace WPDataAccess\Settings {
 				}
 
 				if ( 'save' === $action ) {
-					if ( $is_wp_database ) {
-						WPDA::set_option(
-							WPDA::OPTION_FE_TABLE_ACCESS,
-							isset( $_REQUEST['table_access'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['table_access'] ) ) : null // input var okay.
-						);
-					} else {
-						update_option(
-							WPDA::FRONTEND_OPTIONNAME_DATABASE_ACCESS . $database,
-							isset( $_REQUEST['table_access'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['table_access'] ) ) : null // input var okay.
-						);
-					}
-
-					$table_access_selected_new_value = isset( $_REQUEST['table_access_selected'] ) ?
-						WPDA::sanitize_text_field_array( $_REQUEST['table_access_selected'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-					if ( is_array( $table_access_selected_new_value ) ) {
-						// Check the requested table names for sql injection. This is simply done by checking if the table
-						// name exists in our WordPress database.
-						$table_access_selected_new_value_checked = array();
-						foreach ( $table_access_selected_new_value as $key => $value ) {
-							$wpda_dictionary_checks = new WPDA_Dictionary_Exist( $database, $value );
-							if ( $wpda_dictionary_checks->table_exists( false, false ) ) {
-								// Add existing table to list.
-								$table_access_selected_new_value_checked[ $key ] = $value;
-							} else {
-								// An invalid table name was provided. Might be an sql injection attack or an invalid state.
-								wp_die( esc_attr__( 'ERROR: Table not found', 'wp-data-access' ) );
-							}
-						}
-					} else {
-						$table_access_selected_new_value_checked = '';
-					}
-
-					if ( $is_wp_database ) {
-						WPDA::set_option(
-							WPDA::OPTION_FE_TABLE_ACCESS_SELECTED,
-							$table_access_selected_new_value_checked
-						);
-					} else {
-						update_option(
-							WPDA::FRONTEND_OPTIONNAME_DATABASE_SELECTED . $database,
-							$table_access_selected_new_value_checked
-						);
-					}
-
 					WPDA::set_option(
 						WPDA::OPTION_FE_ADD_PROJECTS_TO_TOOLBAR,
 						isset( $_REQUEST['add_projects_to_toolbar'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['add_projects_to_toolbar'] ) ) : 'off' // input var okay.
 					);
 				} elseif ( 'setdefaults' === $action ) {
 					// Set all front-end settings back to default
-					if ( $is_wp_database ) {
-						WPDA::set_option( WPDA::OPTION_FE_TABLE_ACCESS );
-						WPDA::set_option( WPDA::OPTION_FE_TABLE_ACCESS_SELECTED );
-					} else {
-						update_option(
-							WPDA::FRONTEND_OPTIONNAME_DATABASE_ACCESS . $database,
-							'select'
-						);
-						update_option(
-							WPDA::FRONTEND_OPTIONNAME_DATABASE_SELECTED . $database,
-							''
-						);
-					}
 					WPDA::set_option( WPDA::OPTION_FE_ADD_PROJECTS_TO_TOOLBAR );
 				}
 
@@ -112,108 +46,11 @@ namespace WPDataAccess\Settings {
 			}
 
 			// Get options
-			if ( $is_wp_database ) {
-				$table_access          = WPDA::get_option( WPDA::OPTION_FE_TABLE_ACCESS );
-				$table_access_selected = WPDA::get_option( WPDA::OPTION_FE_TABLE_ACCESS_SELECTED );
-			} else {
-				$table_access = get_option( WPDA::FRONTEND_OPTIONNAME_DATABASE_ACCESS . $database );
-				if ( false === $table_access ) {
-					$table_access = 'select';
-				}
-				$table_access_selected = get_option( WPDA::FRONTEND_OPTIONNAME_DATABASE_SELECTED . $database );
-				if ( false === $table_access_selected ) {
-					$table_access_selected = '';
-				}
-			}
-
-			if ( is_array( $table_access_selected ) ) {
-				// Convert table for simple access.
-				$table_access_selected_by_name = array();
-				foreach ( $table_access_selected as $key => $value ) {
-					$table_access_selected_by_name[ $value ] = true;
-				}
-			}
-
 			$add_projects_to_toolbar = WPDA::get_option( WPDA::OPTION_FE_ADD_PROJECTS_TO_TOOLBAR );
 			?>
 			<form id="wpda_settings_frontend" method="post"
 				  action="?page=<?php echo esc_attr( $this->page ); ?>&tab=frontend">
 				<table class="wpda-table-settings">
-					<tr>
-						<th><?php esc_html_e( 'Table access', 'wp-data-access' ); ?></th>
-						<td>
-							<select name="database" id="schema_name">
-								<?php
-								$schema_names = WPDA_Dictionary_Lists::get_db_schemas();
-								foreach ( $schema_names as $schema_name ) {
-									$selected = $database === $schema_name['schema_name'] ? ' selected' : '';
-									echo "<option value='{$schema_name['schema_name']}'$selected>{$schema_name['schema_name']}</option>"; // phpcs:ignore WordPress.Security.EscapeOutput
-								}
-								?>
-							</select>
-							<br/><br/>
-							<label>
-								<input
-									type="radio"
-									name="table_access"
-									value="show"
-									<?php echo 'show' === $table_access ? 'checked' : ''; ?>
-								><?php echo $is_wp_database ? esc_attr__( 'Show WordPress tables', 'wp-data-access' ) : esc_attr__( 'Show all tables', 'wp-data-access' ); ?>
-							</label>
-							<br/>
-							<?php
-							if ( $is_wp_database ) {
-								?>
-								<label>
-									<input
-										type="radio"
-										name="table_access"
-										value="hide"
-										<?php echo 'hide' === $table_access ? 'checked' : ''; ?>
-									><?php esc_html_e( 'Hide WordPress tables', 'wp-data-access' ); ?>
-								</label>
-								<br/>
-								<?php
-							}
-							?>
-							<label>
-								<input
-									type="radio"
-									name="table_access"
-									value="select"
-									<?php echo 'select' === $table_access ? 'checked' : ''; ?>
-								><?php esc_html_e( 'Show only selected tables', 'wp-data-access' ); ?>
-							</label>
-							<div id="tables_selected" <?php echo 'select' === $table_access ? '' : 'style="display:none"'; ?>>
-								<br/>
-								<select name="table_access_selected[]" multiple size="10">
-									<?php
-									$tables = WPDA_Dictionary_Lists::get_tables( true, $database );
-									foreach ( $tables as $table ) {
-										$table_name = $table['table_name'];
-										?>
-										<option value="<?php echo esc_attr( $table_name ); ?>" <?php echo isset( $table_access_selected_by_name[ $table_name ] ) ? 'selected' : ''; ?>><?php echo esc_attr( $table_name ); ?></option>
-										<?php
-									}
-									?>
-								</select>
-							</div>
-							<script type='text/javascript'>
-								jQuery(function () {
-									jQuery("input[name='table_access']").on("click", function () {
-										if (this.value == 'select') {
-											jQuery("#tables_selected").show();
-										} else {
-											jQuery("#tables_selected").hide();
-										}
-									});
-									jQuery('#schema_name').on('change', function() {
-										window.location = '?page=<?php echo esc_attr( $this->page ); ?>&tab=frontend&database=' + jQuery(this).val();
-									});
-								});
-							</script>
-						</td>
-					</tr>
 					<tr>
 						<th><?php esc_html_e( 'Admin toolbar', 'wp-data-access' ); ?></th>
 						<td>

@@ -68,9 +68,13 @@ namespace WPDataAccess\Simple_Form {
 				}
             }
 
-			$placeholder = esc_attr__( 'Start typing', 'wp-data-access' ) . ' ' . esc_attr( strtolower( $this->get_item_label() ) ) . '...';
-			$item_name   = esc_attr( $this->get_item_name() );
-			echo "<input type='text' id='wpda_autocomplete_{$item_name}' class='wpda_autocomplete' placeholder='{$placeholder}' value='{$lookup_value}'/>"; // phpcs:ignore WordPress.Security.EscapeOutput
+			echo '<input
+			    type="text"
+			    id="wpda_autocomplete_' . esc_attr( $this->get_item_name() ) . '"
+			    class="wpda_autocomplete" 
+			    placeholder="' . esc_attr( __( 'Start typing', 'wp-data-access' ) . ' ' . strtolower( $this->get_item_label() ) . '...' ) . '"
+			    value="' . esc_attr( $lookup_value ) . '"
+            />';
 
 			$this->add_js();
 		}

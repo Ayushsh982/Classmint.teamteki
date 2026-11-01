@@ -1474,10 +1474,6 @@ EOT;
 						   value="<?php 
         echo ( isset( $_REQUEST['wpda_main_db_schema'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_REQUEST['wpda_main_db_schema'] ) ) ) : '' );
         ?>"/>
-					<input id="wpda_main_favourites" type="hidden" name="wpda_main_favourites"
-						   value="<?php 
-        echo ( isset( $_REQUEST['wpda_main_favourites'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_REQUEST['wpda_main_favourites'] ) ) ) : '' );
-        ?>"/>
 					<?php 
         wp_nonce_field( 'wpda-export-' . wp_json_encode( $this->table_name ), '_wpnonce', false );
         ?>

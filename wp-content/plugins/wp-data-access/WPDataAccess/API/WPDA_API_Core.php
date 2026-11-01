@@ -626,14 +626,14 @@ abstract class WPDA_API_Core {
         $query = $wpdadb->prepare( "\n\t\t\t\t\tselect table_type,\n\t\t\t\t\t       engine,\n\t\t\t\t\t       table_rows\n\t\t\t\t\t  from information_schema.tables\n\t\t\t\t\t where table_schema = %s\n\t\t\t\t\t   and table_name   = %s\n\t\t\t\t", array($wpdadb->dbname, $tbl) );
         $resultset = $wpdadb->get_results( $query, 'ARRAY_N' );
         if ( count( $resultset ) === 1 ) {
-            if ( null !== $resultset[0][2] ) {
+            if ( null !== $resultset[0][2] && '' === $default_where ) {
                 return array(
                     'type'   => $resultset[0][0],
                     'engine' => $resultset[0][1],
-                    'count'  => ( '' === $default_where ? ( $resultset[0][2] == 0 ? null : $resultset[0][2] ) : null ),
+                    'count'  => ( $resultset[0][2] == 0 ? null : $resultset[0][2] ),
                 );
             } else {
-                $count = $this->get_row_count_estimate( $dbs, $tbl );
+                $count = $this->get_row_count_estimate( $dbs, $tbl, $default_where );
                 return array(
                     'type'   => $resultset[0][0],
                     'engine' => $resultset[0][1],
@@ -649,12 +649,15 @@ abstract class WPDA_API_Core {
         }
     }
 
-    protected function get_row_count_estimate( $dbs, $tbl ) {
+    protected function get_row_count_estimate( $dbs, $tbl, $default_where = '' ) {
+        if ( strpos( $default_where, ';' ) !== false ) {
+            return -1;
+        }
         $wpdadb = WPDADB::get_db_connection( $dbs );
         if ( null === $wpdadb ) {
             return -1;
         }
-        $explain = $wpdadb->get_results( 'explain select count(*) from `' . str_replace( '`', '', $tbl ) . '`', 'ARRAY_A' );
+        $explain = $wpdadb->get_results( $wpdadb->prepare( "explain select count(*) from %i {$default_where}", array($tbl) ), 'ARRAY_A' );
         if ( isset( $explain[0]['rows'] ) ) {
             return $explain[0]['rows'];
         } else {

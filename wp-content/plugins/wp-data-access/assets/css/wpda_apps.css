@@ -269,6 +269,11 @@ div[role=presentation].MuiDialog-root.MuiModal-root input[type=checkbox]:disable
     line-height: 2;
 }
 
+#pp-setting-drawer-root .MuiButtonBase-root.MuiCheckbox-root input[type=checkbox].PrivateSwitchBase-input {
+    width: 40px;
+    height: 40px;
+}
+
 #wpwrap .wrap.wpda-explorer-backend input[type=checkbox] {
     min-height: unset;
     line-height: unset;
@@ -321,7 +326,7 @@ div[role=presentation].MuiDialog-root.MuiModal-root input[type=checkbox]:disable
     outline: none;
 }
 
-.wrap.wpda-explorer-backend .MuiSelect-select {
+.wrap.wpda-explorer-backend .pp-form .MuiSelect-select {
     padding: 22px 14px;
 }
 

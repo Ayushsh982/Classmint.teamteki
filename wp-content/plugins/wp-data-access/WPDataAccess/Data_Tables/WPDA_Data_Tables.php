@@ -1049,7 +1049,7 @@ class WPDA_Data_Tables {
                             $hyperlink_label = ( isset( $hyperlinks[$value]['hyperlink_label'] ) ? $hyperlinks[$value]['hyperlink_label'] : '' );
                             $hyperlink_target = ( isset( $hyperlinks[$value]['hyperlink_target'] ) ? $hyperlinks[$value]['hyperlink_target'] : false );
                             $target = ( true === $hyperlink_target ? "target='_blank'" : '' );
-                            $row[$key] = "<a href='" . str_replace( ' ', '+', $hyperlink_html ) . "' {$target}>{$hyperlink_label}</a>";
+                            $row[$key] = "<a href='" . esc_url_raw( str_replace( ' ', '+', $hyperlink_html ) ) . "' {$target}>" . esc_attr( $hyperlink_label ) . "</a>";
                         }
                     } else {
                         $row[$key] = '';
@@ -1059,7 +1059,7 @@ class WPDA_Data_Tables {
                 }
             }
             for ($i = 0; $i < count( $imagesurl_array ); $i++) {
-                $row[$imagesurl_array[$i]] = '<img src="' . $row[$imagesurl_array[$i]] . '" width="100%">';
+                $row[$imagesurl_array[$i]] = '<img src="' . esc_url_raw( $row[$imagesurl_array[$i]] ) . '" width="100%">';
             }
             for ($i = 0; $i < count( $images_array ); $i++) {
                 $image_ids = explode( ',', (string) $row[$images_array[$i]] );
@@ -1068,7 +1068,7 @@ class WPDA_Data_Tables {
                     $url = wp_get_attachment_url( esc_attr( $image_id ) );
                     if ( false !== $url ) {
                         $image_src .= ( '' !== $image_src ? '<br/>' : '' );
-                        $image_src .= '<img src="' . $url . '" width="100%">';
+                        $image_src .= '<img src="' . esc_url_raw( $url ) . '" width="100%">';
                     }
                 }
                 $row[$images_array[$i]] = $image_src;
@@ -1165,7 +1165,7 @@ class WPDA_Data_Tables {
             }
             // Remove script tags if available
             for ($i = 0; $i < count( $row ); $i++) {
-                $row[$i] = str_replace( array('<script>', '</script>'), array('&lt;script&gt;', '&lt;/script&gt;'), (string) $row[$i] );
+                $row[$i] = wp_kses_post( (string) $row[$i] );
             }
             array_push( $rows_final, $row );
         }

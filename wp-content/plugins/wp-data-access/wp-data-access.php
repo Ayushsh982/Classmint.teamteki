@@ -4,7 +4,7 @@
  * Plugin Name:       WP Data Access
  * Plugin URI:        https://wpdataaccess.com/
  * Description:       A powerful data-driven App Builder with an intuitive Table Builder, a highly customizable Form Builder and interactive Chart support in 35 languages
- * Version:           5.5.85
+ * Version:           5.5.90
  * Author:            Passionate Programmers B.V.
  * Author URI:        https://wpdataaccess.com/
  * Text Domain:       wp-data-access
@@ -56,6 +56,7 @@ if ( !function_exists( 'wpda_freemius' ) ) {
                     'contact' => false,
                     'network' => true,
                 ),
+                'has_affiliation'  => 'all',
                 'is_live'          => true,
                 'is_org_compliant' => true,
             ) );

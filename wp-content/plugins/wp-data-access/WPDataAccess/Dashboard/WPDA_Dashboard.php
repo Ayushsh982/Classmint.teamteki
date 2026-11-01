@@ -566,13 +566,21 @@ Customize forms using templates"
                             <?php 
         if ( wpda_freemius()->is_free_plan() && !wpda_freemius()->is_trial() && !wpda_freemius()->is_trial_utilized() ) {
             ?>
-                                <a class="wpda-dashboard-item wpda_tooltip_icons" href="https://wpdataaccess.com/order/?l=0&b=trial" title="Get your 14-day free trial" target="_blank">
+                                <a class="wpda-dashboard-item wpda_tooltip_icons" target="_blank" href="https://wpdataaccess.com/order/?l=0&b=trial" title="Get your 14-day free trial" target="_blank">
                                     <div class="fa-solid fa-star"></div>
                                     <div class="label">Free Trial</div>
                                 </a>
                                 <?php 
         }
         ?>
+                            <a class="wpda-dashboard-item wpda_tooltip_icons" href="<?php 
+        echo esc_url( admin_url( 'admin.php' ) );
+        ?>?page=<?php 
+        echo esc_attr( WP_Data_Access_Admin::MAIN_PAGE_SLUG );
+        ?>-affiliation" title="Become our ambassador and earn on every referral">
+                                <div class="fa-solid fa-handshake"></div>
+                                <div class="label">Affiliation</div>
+                            </a>
                         </div>
 						<div class="subject">Plugin & User Management</div>
 					</div>
@@ -612,35 +620,38 @@ Customize forms using templates"
 					<div class="wpda_nav_title">WP Data Access</div>
 				</div>
 				<ul>
-					<li class="menu-item"><a href="<?php 
+                    <li class="menu-item"><a href="<?php 
         echo esc_url( admin_url( 'admin.php' ) );
-        ?>?page=wpda"><i class="fas fa-database"></i> Explorer</a></li>
-					<li class="menu-item"><a href="<?php 
-        echo esc_url( admin_url( 'admin.php' ) );
-        ?>?page=wpda_query_builder"><i class="fas fa-code"></i> SQL</a></li>
-					<li class="menu-item wpda-separator"><a href="<?php 
-        echo esc_url( admin_url( 'admin.php' ) );
-        ?>?page=wpda_designer"><i class="fas fa-drafting-compass"></i> Designer</a></li>
-					<li class="menu-item wpda-separator"><a href="<?php 
+        ?>?page=wpda_navi"><i class="fas fa-house"></i> Tool Guide</a></li>
+                    <li class="menu-item"><a href="<?php 
         echo esc_url( admin_url( 'admin.php' ) );
         ?>?page=wpda_apps"><span style="display: inline-block; width: 20px"><svg xmlns="http://www.w3.org/2000/svg" height="12px" width="12px" viewBox="4 4 16 16" fill="inherit">
-								<path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
-							</svg></span> Apps</a></li>
-					<?php 
-        ?>
+                        <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+                    </svg></span> App Builder</a></li>
+					<li class="menu-item"><a href="<?php 
+        echo esc_url( admin_url( 'admin.php' ) );
+        ?>?page=wpda"><i class="fas fa-database"></i> Data Explorer</a></li>
+					<li class="menu-item wpda-separator"><a href="<?php 
+        echo esc_url( admin_url( 'admin.php' ) );
+        ?>?page=wpda_query_builder"><i class="fas fa-code"></i> SQL Query Builder</a></li>
+                    <li class="menu-item"><a href="<?php 
+        echo esc_url( admin_url( 'admin.php' ) );
+        ?>?page=wpda_publisher"><i class="fas fa-table"></i> Data Tables - Legacy</a></li>
+                    <li class="menu-item"><a href="<?php 
+        echo esc_url( admin_url( 'admin.php' ) );
+        ?>?page=wpda_wpdp"><i class="fas fa-wand-magic-sparkles"></i> Forms - Legacy</a></li>
+                    <li class="menu-item"><a href="<?php 
+        echo esc_url( admin_url( 'admin.php' ) );
+        ?>?page=wpda_templates"><i class="fas fa-desktop"></i> Templates - Legacy</a></li>
 					<li class="menu-item <?php 
         echo esc_attr( $premium_separator );
         ?>"><a href="<?php 
         echo esc_url( admin_url( 'admin.php' ) );
-        ?>?page=wpda_publisher"><i class="fas fa-address-card"></i> Tables</a></li>
+        ?>?page=wpda_designer"><i class="fas fa-drafting-compass"></i> Data Designer - Legacy</a></li>
 					<?php 
         ?>
-					<li class="menu-item"><a href="<?php 
-        echo esc_url( admin_url( 'admin.php' ) );
-        ?>?page=wpda_wpdp"><i class="fas fa-magic"></i> Forms</a></li>
-					<li class="menu-item wpda-separator"><a href="<?php 
-        echo esc_url( admin_url( 'admin.php' ) );
-        ?>?page=wpda_templates"><i class="fas fa-desktop"></i> Templates</a></li>
+					<?php 
+        ?>
 					<li class="menu-item"><a href="<?php 
         echo esc_url( admin_url( 'options-general.php' ) );
         ?>?page=wpdataaccess"><i class="fas fa-cog"></i> Settings</a></li>
@@ -655,33 +666,25 @@ Customize forms using templates"
 						<?php 
         }
         ?>
-					<?php 
-        $menufound = false;
-        global $submenu;
-        if ( isset( $submenu[WPDA::get_option( WP_Data_Access_Admin::PAGE_MAIN )] ) ) {
-            foreach ( $submenu[WPDA::get_option( WP_Data_Access_Admin::PAGE_MAIN )] as $pluginmenu ) {
-                if ( WP_Data_Access_Admin::MAIN_PAGE_SLUG . '-pricing' === $pluginmenu[2] ) {
-                    $menufound = true;
-                    break;
-                }
-            }
-        }
-        ?>
-					<li class="menu-item <?php 
-        echo ( $menufound ? '' : 'wpda-separator' );
-        ?>"><a href="https://wpdataaccess.com/pricing/" target="_blank"><i class="fas fa-hand-holding-usd"></i> Pricing</a></li>
-					<?php 
-        if ( $menufound ) {
+					<li class="menu-item"><a target="_blank" href="https://wpdataaccess.com/pricing/" target="_blank"><i class="fas fa-hand-holding-usd"></i> Pricing</a></li>
+					<li class="menu-item"><a href="<?php 
+        echo esc_url( admin_url( 'admin.php' ) );
+        ?>?page=<?php 
+        echo esc_attr( WP_Data_Access_Admin::MAIN_PAGE_SLUG );
+        ?>-pricing"><i class="fas fa-gem"></i> Upgrade</a></li>
+                    <?php 
+        if ( wpda_freemius()->is_free_plan() && !wpda_freemius()->is_trial() && !wpda_freemius()->is_trial_utilized() ) {
             ?>
-						<li class="menu-item wpda-separator"><a href="<?php 
-            echo esc_url( admin_url( 'admin.php' ) );
-            ?>?page=<?php 
-            echo esc_attr( WP_Data_Access_Admin::MAIN_PAGE_SLUG );
-            ?>-pricing"><i class="fas fa-gem"></i> Upgrade</a></li>
-						<?php 
+                        <li class="menu-item"><a target="_blank" href="https://wpdataaccess.com/order/?l=0&b=trial" target="_blank"><i class="fas fa-star"></i> Free Trial</a></li>
+                        <?php 
         }
         ?>
-					<li class="menu-item"><a target="_blank" href="https://docs.wpdataaccess.com/"><i class="fas fa-question"></i> Online Documentation</a></li>
+                    <li class="menu-item wpda-separator"><a href="<?php 
+        echo esc_url( admin_url( 'admin.php' ) );
+        ?>?page=<?php 
+        echo esc_attr( WP_Data_Access_Admin::MAIN_PAGE_SLUG );
+        ?>-affiliation"><i class="fas fa-handshake"></i> Affiliation</a></li>
+					<li class="menu-item"><a target="_blank" href="https://docs.wpdataaccess.com/"><i class="fas fa-question-circle"></i> Online Documentation</a></li>
 					<li class="menu-item"><a target="_blank" href="https://wordpress.org/support/plugin/wp-data-access/"><i class="fas fa-life-ring"></i> Support Forum</a></li>
 					<?php 
         ?>

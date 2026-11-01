@@ -74,7 +74,6 @@ abstract class WPDA_Settings {
         $this->tabs = array(
             'plugin'     => 'Plugin',
             'apps'       => 'Apps',
-            'backend'    => 'Back-end',
             'frontend'   => 'Front-end',
             'uninstall'  => 'Uninstall',
             'repository' => 'Repository',

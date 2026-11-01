@@ -39,15 +39,6 @@ namespace WPDataAccess\Cookies {
 		 * Handle plugin cookies
 		 *
 		 * Cookies are use to remember values during navigation: (max 1 hour)
-		 * 1) SCHEMA NAME
-		 * The schema name is saved as a cookie when changed in the Data Explorer. As long as the user stays within the
-		 * page the saved schema is used. When the user moves to another page the value is destroyed. The user gets the
-		 * default value on the next visit.
-		 * 2) FAVOURITE SELECTION
-		 * The favourite selection is saved as cookie when changed in the Data Explorer. As long as the user stays within
-		 * the page the saved selection is used. When the user moves to another page the value is destroyed. The user gets
-		 * the default value on the next visit.
-		 * 3) SEARCH ARGUMENT
 		 * Search arguments are saved as cookies per table. As long as the user stays within the same page the saved
 		 * search value is used. When the user moves to another page the value is destroyed. This allows users to navigate
 		 * between pages without losing the search value.
@@ -56,53 +47,6 @@ namespace WPDataAccess\Cookies {
 		 */
 		public function handle_plugin_cookies() {
 			$panel_cookies = WPDA::get_option( WPDA::OPTION_PLUGIN_PANEL_COOKIES );
-
-			if ( \WP_Data_Access_Admin::PAGE_MAIN === $this->page ) {
-				// Handle Data Explorer cookies (search cookie is handled in next section).
-				// Handle cookie to remember active schema.
-				$cookie_name = \WP_Data_Access_Admin::PAGE_MAIN . '_schema_name';
-				if ( isset( $_REQUEST['wpda_main_db_schema'] ) && '' !== $_REQUEST['wpda_main_db_schema'] ) { // phpcs:ignore WordPress.Security.NonceVerification
-					$requested_db_schema = sanitize_text_field( wp_unslash( $_REQUEST['wpda_main_db_schema'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
-					$this->set_cookie( $cookie_name, $requested_db_schema, time() + self::COOKIE_TIME_EXPIRATION );
-				} else {
-					if ( 'clear' === $panel_cookies ) {
-						// Check referer: clear cookie on new page request.
-						$url = wp_parse_url( wp_get_referer() );
-						if ( isset( $url['query'] ) ) {
-							parse_str( $url['query'], $path );
-							if ( isset( $path['page'] ) ) {
-								$page = $path['page'];
-								if ( $this->page !== $page ) {
-									// New page request: reset cookie.
-									$this->set_cookie( $cookie_name, '', time() - self::COOKIE_TIME_EXPIRATION );
-								}
-							}
-						}
-					}
-				}
-
-				// Handle cookie to remember favourite selection.
-				$cookie_name = $this->page . '_favourites';
-				if ( isset( $_REQUEST['wpda_main_favourites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					$favourites = sanitize_text_field( wp_unslash( $_REQUEST['wpda_main_favourites'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
-					$this->set_cookie( $cookie_name, $favourites, time() + self::COOKIE_TIME_EXPIRATION );
-				} else {
-					if ( 'clear' === $panel_cookies ) {
-						// Check referer: clear cookie on new page request.
-						$url = wp_parse_url( wp_get_referer() );
-						if ( isset( $url['query'] ) ) {
-							parse_str( $url['query'], $path );
-							if ( isset( $path['page'] ) ) {
-								$page = $path['page'];
-								if ( $this->page !== $page ) {
-									// New page request: reset cookie.
-									$this->set_cookie( $cookie_name, '', time() - self::COOKIE_TIME_EXPIRATION );
-								}
-							}
-						}
-					}
-				}
-			}
 
 			// Handle cookie for search value.
 			if ( 'wpda_wpdp_' === substr( $this->page, 0, 10 ) ) {

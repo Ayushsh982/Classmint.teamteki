@@ -939,6 +939,7 @@ class WPDA_Remote_Database {
     }
 
     private function js() {
+        $test_remote_db_wp_nonce = wp_create_nonce( 'wpda-test-remote-database-' . WPDA::get_current_user_login() );
         ?>
 
 			<script>
@@ -1037,7 +1038,10 @@ class WPDA_Remote_Database {
 							ssl_cert: ssl_cert,
 							ssl_ca: ssl_ca,
 							ssl_path: ssl_path,
-							ssl_cipher: ssl_cipher
+							ssl_cipher: ssl_cipher,
+                            _wpnonce: '<?php 
+        echo esc_attr( $test_remote_db_wp_nonce );
+        ?>',
 						}
 					}).done(
 						function (msg) {

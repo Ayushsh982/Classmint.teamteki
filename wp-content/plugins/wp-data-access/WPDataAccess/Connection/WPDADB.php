@@ -455,10 +455,17 @@ namespace WPDataAccess\Connection {
 
 		/**
 		 * Check if a connection with a remote database can be established
-		 *
-		 * @return \wpdb
 		 */
 		public function check_remote_database_connection() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+
+			$wp_nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : ''; // input var okay.
+			if ( ! wp_verify_nonce( $wp_nonce, 'wpda-test-remote-database-' . WPDA::get_current_user_login() ) ) {
+				return;
+			}
+
 			echo 'Preparing connection...<br/>';
 
 			$host = isset( $_REQUEST['host'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['host'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
@@ -478,7 +485,7 @@ namespace WPDataAccess\Connection {
 			$ssl_cipher = isset( $_REQUEST['ssl_cipher'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['ssl_cipher'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
 			if ( '' === $host || '' === $user || '' === $passwd || '' === $schema ) {
-				return false;
+				return;
 			}
 
 			if ( '' !== $port && '3306' !== $port ) {

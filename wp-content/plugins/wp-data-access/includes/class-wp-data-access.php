@@ -11,7 +11,6 @@ use WPDataAccess\Data_Dictionary\WPDA_Dictionary_Lists;
 use WPDataAccess\Data_Tables\WPDA_Data_Tables;
 use WPDataAccess\Plugin_Table_Models\WPDA_Table_Settings_Model;
 use WPDataAccess\Utilities\WPDA_Export;
-use WPDataAccess\Utilities\WPDA_Favourites;
 use WPDataAccess\WPDA;
 use WPDataProjects\Utilities\WPDP_Export_Project;
 use WPDataAccess\Backup\WPDA_Data_Export;
@@ -218,11 +217,6 @@ class WP_Data_Access {
         $this->loader->add_action( 'wp_ajax_wpda_widget_pub_add', WPDA_Widget_Publication::class, 'ajax_widget' );
         $this->loader->add_action( 'wp_ajax_wpda_widget_chart_add', WPDA_Widget_Google_Chart::class, 'ajax_widget' );
         $this->loader->add_action( 'wp_ajax_wpda_widget_chart_refresh', WPDA_Widget_Google_Chart::class, 'ajax_refresh' );
-        // Add/remove favourites.
-        // ???
-        $plugin_favourites = new WPDA_Favourites();
-        $this->loader->add_action( 'admin_action_wpda_add_favourite', $plugin_favourites, 'add' );
-        $this->loader->add_action( 'admin_action_wpda_rem_favourite', $plugin_favourites, 'rem' );
         $plugin_dictionary_list = new WPDA_Dictionary_Lists();
         // Get tables for a specific database.
         $this->loader->add_action( 'admin_action_wpda_get_tables', $plugin_dictionary_list, 'get_tables_ajax' );
@@ -369,6 +363,76 @@ class WP_Data_Access {
             10,
             2
         );
+        // Add WP Data Access dashboard to freemius pages
+        add_action( 'admin_enqueue_scripts', function () {
+            if ( 'wpda_navi-account' === $this->page || 'wpda_navi-pricing' === $this->page || 'wpda_navi-affiliation' === $this->page ) {
+                wp_enqueue_script( 'jquery-ui-sortable' );
+                wp_enqueue_script( 'jquery-ui-tooltip' );
+                wp_enqueue_style(
+                    'wpdataaccess_dashboard',
+                    plugins_url( '../assets/css/wpda_dashboard.css', __FILE__ ),
+                    array(),
+                    WPDA::get_option( WPDA::OPTION_WPDA_VERSION )
+                );
+                wp_enqueue_script(
+                    'wpdataaccess_dashboard',
+                    plugins_url( '../assets/js/wpda_dashboard.js', __FILE__ ),
+                    array(),
+                    WPDA::get_option( WPDA::OPTION_WPDA_VERSION ),
+                    false
+                );
+                wp_localize_script( 'wpdataaccess_dashboard', 'wpda_dashboard_vars', array(
+                    'wpda_ajaxurl' => admin_url( 'admin-ajax.php' ),
+                ) );
+                // SAVING SPACE - According to the plugin guidelines it is allowed to include external fonts:
+                // https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/#8-plugins-may-not-send-executable-code-via-third-party-systems .
+                // Load fontawesome icons.
+                // phpcs:disable WordPress.WP.EnqueuedResourceParameters.MissingVersion
+                wp_enqueue_style(
+                    'wpda_fontawesome_icons',
+                    WPDA::CDN_FONTAWESOME . 'all.min.css',
+                    array(),
+                    null,
+                    false
+                );
+                // phpcs:enable WordPress.WP.EnqueuedResourceParameters.MissingVersion
+                // Add dashboards to freemius pages
+                wp_enqueue_style(
+                    'wpda_add_dashboard_freemius',
+                    plugins_url( '../assets/css/wpda_freemius.css', __FILE__ ),
+                    array(),
+                    WPDA::get_option( WPDA::OPTION_WPDA_VERSION )
+                );
+                wp_enqueue_script(
+                    'wpda_add_dashboard_freemius',
+                    plugins_url( '../assets/js/wpda_freemius.js', __FILE__ ),
+                    array(),
+                    WPDA::get_option( WPDA::OPTION_WPDA_VERSION ),
+                    false
+                );
+                ob_start();
+                WPDA_Dashboard::add_dashboard();
+                $freemius_dashboard = ob_get_clean();
+                $freemius_title = '';
+                if ( 'wpda_navi-affiliation' === $this->page ) {
+                    $freemius_title = '<h1 class="wp-heading-inline" style="padding-top: 10px">WP Data Access Affiliate Program</h1>';
+                } else {
+                    if ( 'wpda_navi-pricing' === $this->page ) {
+                        $freemius_title = '<h1 class="wp-heading-inline" style="padding-top: 10px">WP Data Access Plans and Pricing</h1><h2>Choose your plan and upgrade in minutes!</h2>';
+                    } else {
+                        if ( 'wpda_navi-account' === $this->page ) {
+                            $freemius_title = '<h1 class="wp-heading-inline" style="padding-top: 10px">WP Data Access Account</h1>';
+                        }
+                    }
+                }
+                wp_localize_script( 'wpda_add_dashboard_freemius', 'dashboard', array(
+                    'content' => $freemius_dashboard . $freemius_title,
+                ) );
+                // Remove notices
+                remove_all_actions( 'admin_notices' );
+                remove_all_actions( 'all_admin_notices' );
+            }
+        }, 9 );
     }
 
     /**

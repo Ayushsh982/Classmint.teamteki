@@ -6,12 +6,6 @@ namespace WPDataAccess\WPDA_Navi {
 
     class WPDA_Navi {
 
-        private $option_legacy_tools;
-
-        public function __construct() {
-            $this->option_legacy_tools = WPDA::get_option( WPDA::OPTION_PLUGIN_LEGACY_TOOLS );
-        }
-
 		public function show() {
 			?>
 			<div class="wpda-navi-container">
@@ -48,30 +42,6 @@ namespace WPDataAccess\WPDA_Navi {
 			WPDA::load_wp_tables();
 		}
 
-        /**
-         * @param $tool
-         *
-         * @return string
-         */
-        private function tool_status( $tool ) {
-            ?>
-            <div onclick="setLegacyToolStatus(this)" class="tool_status_icon">
-                <?php
-                if ( true === $tool[0] ) {
-                    ?>
-                    <i class="fas fa-toggle-on" style="font-size: 28px;"></i>
-                    <?php
-                } else {
-                    ?>
-                    <i class="fas fa-toggle-off" style="font-size: 28px;"></i>
-                    <?php
-                }
-                ?>
-            </div>
-            <?php
-            return '';
-        }
-
 		private function tool_guide() {
 			?>
             <div class="wpda-navi-container-content"
@@ -80,95 +50,6 @@ namespace WPDataAccess\WPDA_Navi {
                 <h2>
                     Tool Guide
                 </h2>
-
-                <div id="wpda-legacy-tool-settings">
-                    <a href="javascript:void(0)" onclick="setLegacyTools()">
-                        <?php
-                        if (
-                                !$this->option_legacy_tools['tables'][0] &&
-                                !$this->option_legacy_tools['forms'][0] &&
-                                !$this->option_legacy_tools['templates'][0] &&
-                                !$this->option_legacy_tools['designer'][0] &&
-                                !$this->option_legacy_tools['dashboards'][0] &&
-                                !$this->option_legacy_tools['charts'][0]
-                        ) {
-                            ?>
-                            <i class="fas fa-toggle-off" style="font-size: 28px;"></i>
-                            <?php
-                        } else {
-                            ?>
-                            <i class="fas fa-toggle-on" style="font-size: 28px;"></i>
-                            <?php
-                        }
-                        ?>
-                        &nbsp;&nbsp;
-                        <span>
-                            LEGACY TOOL USAGE
-                        </span>
-                    </a>
-                    <div id="wpda-legacy-tool-settings-panel">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th class="label">LEGACY TOOL</th>
-                                    <th class="items">ACTIVE ITEMS</th>
-                                    <th class="status">STATUS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Tables</td>
-                                    <td class="items"><?php echo esc_attr( $this->option_legacy_tools['tables'][1] ); ?></td>
-                                    <td class="status" data-tool="tables"><?php echo $this->tool_status( $this->option_legacy_tools['tables'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Forms</td>
-                                    <td class="items"><?php echo esc_attr( $this->option_legacy_tools['forms'][1] ); ?></td>
-                                    <td class="status" data-tool="forms"><?php echo $this->tool_status( $this->option_legacy_tools['forms'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Templates</td>
-                                    <td class="items"><?php echo esc_attr( $this->option_legacy_tools['templates'][1] ); ?></td>
-                                    <td class="status" data-tool="templates"><?php echo $this->tool_status( $this->option_legacy_tools['templates'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Designer</td>
-                                    <td class="items"><?php echo esc_attr( $this->option_legacy_tools['designer'][1] ); ?></td>
-                                    <td class="status" data-tool="designer"><?php echo $this->tool_status( $this->option_legacy_tools['designer'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Dashboards</td>
-                                    <td class="items"><?php echo esc_attr( $this->option_legacy_tools['dashboards'][1] ); ?></td>
-                                    <td class="status" data-tool="dashboards"><?php echo $this->tool_status( $this->option_legacy_tools['dashboards'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Charts</td>
-                                    <td class="items"><?php echo esc_attr( $this->option_legacy_tools['charts'][1] ); ?></td>
-                                    <td class="status" data-tool="charts"><?php echo $this->tool_status( $this->option_legacy_tools['charts'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div id="wpda-legacy-tool-settings-submit">
-                            <button type="submit" onclick="updateLegacyTools()">UPDATE STATUS</button>
-                            <button type="button" onclick="setLegacyTools()">CANCEL</button>
-                        </div>
-
-                        <div style="display: none">
-                            <form
-                                id="wpda-legacy-tool-settings-form-data"
-                                action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>?page=wpda_navi"
-                                method="POST"
-                            >
-                                <label for="wpda-legacy-tool-settings-legacy-tool-data"></label><input
-                                    type="text"
-                                    name="wpda-legacy-tool-status"
-                                    id="wpda-legacy-tool-settings-legacy-tool-data"
-                                />
-                            </form>
-                        </div>
-                    </div>
-                </div>
             </div>
 
 			<div class="wpda-navi-container-content">
@@ -275,6 +156,14 @@ namespace WPDataAccess\WPDA_Navi {
                                 <li>Global search and replace.</li>
 							</ul>
 						</div>
+
+                        <div class="wpda-navi-container-content-item-facts">
+                            <ul>
+                                <li>
+                                    Old Data Explorer no longer available.
+                                </li>
+                            </ul>
+                        </div>
 					</div>
 
 					<div class="wpda-navi-container-content-item">
@@ -314,6 +203,14 @@ namespace WPDataAccess\WPDA_Navi {
                                 <li>Build SQL queries visually with our Visual Query Builder.</li>
                             </ul>
 						</div>
+
+                        <div class="wpda-navi-container-content-item-facts">
+                            <ul>
+                                <li>
+                                    Old SQL Query Builder no longer available.
+                                </li>
+                            </ul>
+                        </div>
 					</div>
 
 					<div class="wpda-navi-container-content-item wpda-featured"
@@ -337,18 +234,27 @@ namespace WPDataAccess\WPDA_Navi {
 						<div class="wpda-navi-container-content-item-facts whats-new">
 							<ul>
                                 <li>
-                                    <a href="https://docs.rad.wpdataaccess.com/table-builder/menu/columns/column-settings.html#%E2%9A%99%EF%B8%8F-pin-column-to" target="_blank" class="whatsnew">
-                                        Added column pinning to Table Builder.
+                                    <a href="https://docs.legacy.wpdataaccess.com/docs/from-legacy-to-apps/"
+                                       target="_blank"
+                                       class="wpda_tooltip whatsnew"
+                                       title="Contact us if you need assistance"
+                                    >
+                                        Removed legacy tool activation and deactivation.
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="https://docs.rad.wpdataaccess.com/table-builder/menu/columns/column-settings.html#%F0%9F%93%8C-notes" target="_blank" class="whatsnew">
-                                        Show hidden columns on tablets and mobiles.
+                                    <a href="?page=wpda_navi-affiliation" class="whatsnew">
+                                        ⭐⭐⭐ Affiliates Program ⭐⭐⭐<br/>Become our ambassador and earn on every referral.
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="https://docs.rad.wpdataaccess.com/table-builder/menu/table/bulk-actions.html#predefined-pdf-export" target="_blank" class="whatsnew">
+                                        Creating predefined PDF table exports.
                                     </a>
                                 </li>
                                 <li>
                                     <a href="https://docs.rad.wpdataaccess.com/app-manager/running-apps/progressive-web-apps.html" target="_blank" class="whatsnew">
-                                        Run a WP Data Access app as a Progressive Web App. ⭐⭐⭐
+                                        Run a WP Data Access app as a Progressive Web App.
                                     </a>
                                 </li>
 								<li>
@@ -363,17 +269,6 @@ namespace WPDataAccess\WPDA_Navi {
                                 </li>
 							</ul>
 						</div>
-
-                        <div class="wpda-navi-container-content-item-facts whats-new">
-                            <ul>
-                                <li style="font-weight:bold">
-                                    Old Query Builder no longer available.
-                                </li>
-                                <li style="font-weight:bold">
-                                    Old Data Explorer no longer available.
-                                </li>
-                            </ul>
-                        </div>
 
                         <div class="wpda-navi-container-content-item-facts whats-new">
                             <h4 style="margin-top:0;margin-bottom:5px;font-weight:bold;">Now available to FREE USERS</h4>
@@ -400,7 +295,7 @@ namespace WPDataAccess\WPDA_Navi {
                                 </li>
                             </ul>
                         </div>
-					</div>
+                    </div>
 				</div>
 			</div>
 			<?php
