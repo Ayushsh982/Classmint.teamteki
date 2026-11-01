@@ -3,7 +3,7 @@
  * Plugin Name:       Hostinger Smart Auto Updates
  * Plugin URI:        https://www.hostinger.com
  * Description:       Faster and more secure updates for your themes, plugins, and core files. Managed entirely by Hostinger.
- * Version:           1.0.8
+ * Version:           1.0.9
  * Author:            Hostinger
  * Author URI:        https://www.hostinger.com
  * License:           GPL-2.0-or-later
@@ -11,7 +11,7 @@
  * Text Domain:       hostinger-auto-updates
  * Domain Path:       /languages
  * Requires at least: 5.0
- * Requires PHP:      7.4
+ * Requires PHP:      7.0
  * Network:           true
  */
 
