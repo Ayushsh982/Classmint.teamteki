@@ -456,16 +456,18 @@ abstract class WPDA_API_Core {
                 'description'       => __( 'Cron job parameters', 'wp-data-access' ),
                 'sanitize_callback' => function ( $param ) {
                     $params = array();
-                    foreach ( $param as $key => $value ) {
-                        if ( 'params' === $key || 'notify' === $key ) {
-                            // Sanitize custom parameters
-                            $custom_params = array();
-                            foreach ( $value as $param_key => $param_value ) {
-                                $custom_params[sanitize_text_field( $param_key )] = sanitize_text_field( $param_value );
+                    if ( is_array( $param ) ) {
+                        foreach ( $param as $key => $value ) {
+                            if ( 'params' === $key || 'notify' === $key ) {
+                                // Sanitize custom parameters
+                                $custom_params = array();
+                                foreach ( $value as $param_key => $param_value ) {
+                                    $custom_params[sanitize_text_field( $param_key )] = sanitize_text_field( $param_value );
+                                }
+                                $params[sanitize_text_field( $key )] = $custom_params;
+                            } else {
+                                $params[sanitize_text_field( $key )] = sanitize_text_field( $value );
                             }
-                            $params[sanitize_text_field( $key )] = $custom_params;
-                        } else {
-                            $params[sanitize_text_field( $key )] = sanitize_text_field( $value );
                         }
                     }
                     return $params;

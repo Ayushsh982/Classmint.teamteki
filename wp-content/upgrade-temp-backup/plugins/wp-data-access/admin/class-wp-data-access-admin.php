@@ -306,7 +306,7 @@ class WP_Data_Access_Admin {
             array(),
             WPDA::get_option( WPDA::OPTION_WPDA_VERSION )
         );
-        if ( self::PAGE_MAIN === $this->page || self::PAGE_APPS === $this->page || self::PAGE_DASHBOARD === $this->page || self::PAGE_QUERY_BUILDER === $this->page || self::PAGE_PUBLISHER === $this->page || self::PAGE_CHARTS === $this->page ) {
+        if ( self::PAGE_MAIN === $this->page || self::PAGE_APPS === $this->page || self::PAGE_DASHBOARD === $this->page || self::PAGE_PUBLISHER === $this->page || self::PAGE_CHARTS === $this->page ) {
             // Load UI smoothness theme.
             wp_enqueue_style(
                 'wpda_ui_smoothness',
@@ -352,21 +352,6 @@ class WP_Data_Access_Admin {
                 array(),
                 WPDA::get_option( WPDA::OPTION_WPDA_VERSION ),
                 false
-            );
-        }
-        if ( self::PAGE_QUERY_BUILDER === $this->page ) {
-            // Add Query Builder resources.
-            wp_enqueue_style(
-                'wpda_query_builder',
-                plugins_url( '../assets/css/wpda_query_builder.css', __FILE__ ),
-                array(),
-                WPDA::get_option( WPDA::OPTION_WPDA_VERSION )
-            );
-            wp_enqueue_style(
-                'wpda_jquery_json_viewer',
-                plugins_url( '../assets/css/jquery.json-viewer.css', __FILE__ ),
-                array(),
-                WPDA::get_option( WPDA::OPTION_WPDA_VERSION )
             );
         }
         if ( !WPDA::current_user_is_admin() ) {
@@ -531,44 +516,6 @@ class WP_Data_Access_Admin {
         if ( self::PAGE_CHARTS === $this->page ) {
             $this->load_google_charts();
         }
-        if ( self::PAGE_QUERY_BUILDER === $this->page ) {
-            // Add Query Builder resources.
-            wp_enqueue_script(
-                'wpda_query_builder',
-                plugins_url( '../assets/js/wpda_query_builder.js', __FILE__ ),
-                array(),
-                WPDA::get_option( WPDA::OPTION_WPDA_VERSION ),
-                false
-            );
-            wp_enqueue_script(
-                'wpda_jquery_xml2json',
-                plugins_url( '../assets/js/jquery.xml2json.js', __FILE__ ),
-                array(),
-                WPDA::get_option( WPDA::OPTION_WPDA_VERSION ),
-                false
-            );
-            wp_enqueue_script(
-                'wpda_jquery_json_viewer',
-                plugins_url( '../assets/js/jquery.json-viewer.js', __FILE__ ),
-                array(),
-                WPDA::get_option( WPDA::OPTION_WPDA_VERSION ),
-                false
-            );
-            // Add codeEditor to query builder.
-            $cm_settings['codeEditor'] = wp_enqueue_code_editor( array(
-                'type'       => 'text/x-sql',
-                'codemirror' => array(
-                    'mode'            => 'sql',
-                    'lineNumbers'     => true,
-                    'autoRefresh'     => true,
-                    'lineWrapping'    => true,
-                    'styleActiveLine' => true,
-                ),
-            ) );
-            wp_enqueue_script( 'wp-theme-plugin-editor' );
-            wp_localize_script( 'wp-theme-plugin-editor', 'cm_settings', $cm_settings );
-            wp_enqueue_style( 'wp-codemirror' );
-        }
         if ( self::PAGE_DASHBOARD === $this->page ) {
             $this->load_google_charts();
             // Load DBMS panels.
@@ -648,20 +595,6 @@ class WP_Data_Access_Admin {
                 // Hide admin menu.
                 return;
             }
-            if ( self::PAGE_MAIN === $this->page && isset( $_REQUEST['de'] ) ) {
-                if ( 'new' === $_REQUEST['de'] ) {
-                    update_user_meta( WPDA::get_current_user_id(), 'wpda_data_explorer', 'new' );
-                } elseif ( 'old' === $_REQUEST['de'] ) {
-                    update_user_meta( WPDA::get_current_user_id(), 'wpda_data_explorer', 'old' );
-                }
-            }
-            if ( self::PAGE_QUERY_BUILDER === $this->page && isset( $_REQUEST['qb'] ) ) {
-                if ( 'new' === $_REQUEST['qb'] ) {
-                    update_user_meta( WPDA::get_current_user_id(), 'wpda_query_builder_version', 'new' );
-                } elseif ( 'old' === $_REQUEST['qb'] ) {
-                    update_user_meta( WPDA::get_current_user_id(), 'wpda_query_builder_version', 'old' );
-                }
-            }
             // Main menu and items are only available to admin users (set capability to 'manage_options').
             add_menu_page(
                 'WP Data Access',
@@ -709,14 +642,13 @@ class WP_Data_Access_Admin {
                 array($this, 'data_explorer_table_page')
             );
             // Add submenu for Query Builder.
-            $current_query_builder_version = get_user_meta( WPDA::get_current_user_id(), 'wpda_query_builder_version', true );
             $this->wpda_data_publisher_menu = add_submenu_page(
                 self::MAIN_PAGE_SLUG,
                 'WP Data Access',
                 'SQL Query Builder',
                 'manage_options',
                 self::PAGE_QUERY_BUILDER,
-                array($this, ( $current_query_builder_version === 'old' ? 'query_builder_old' : 'query_builder' ))
+                array($this, 'query_builder')
             );
             // Add submenu for Data Tables.
             $this->wpda_data_publisher_menu = add_submenu_page(
@@ -1000,12 +932,6 @@ class WP_Data_Access_Admin {
     public function query_builder() {
         WPDA_Dashboard::add_dashboard();
         $query_builder = new \WPDataAccess\Data_Apps\WPDA_Query_Builder();
-        $query_builder->show();
-    }
-
-    public function query_builder_old() {
-        WPDA_Dashboard::add_dashboard();
-        $query_builder = new \WPDataAccess\Query_Builder\WPDA_Query_Builder();
         $query_builder->show();
     }
 

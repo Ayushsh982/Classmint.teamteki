@@ -184,7 +184,7 @@ namespace WPDataAccess\Data_Dictionary {
 		/**
 		 * Return column data type
 		 *
-		 * @param $column_name Database column name
+		 * @param $column_name string Database column name
 		 *
 		 * @return string|null
 		 * @since   2.7.2
@@ -197,7 +197,7 @@ namespace WPDataAccess\Data_Dictionary {
 		/**
 		 * Return column type
 		 *
-		 * @param $column_name Database column name
+		 * @param $column_name string Database column name
 		 *
 		 * @return string|null
 		 * @since   2.7.2

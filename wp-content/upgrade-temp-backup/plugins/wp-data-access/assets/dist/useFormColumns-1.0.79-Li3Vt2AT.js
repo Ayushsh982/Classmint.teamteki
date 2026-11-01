@@ -1,1 +1,0 @@
-import{u}from"./hooks-1.0.79-COuSD73h.js";import{l as e}from"./lib-1.0.79-Cy0Q_9qM.js";const n=r=>{const o=u(m=>{var s;return((s=m.forms[r])==null?void 0:s.columns)??[]});return e.debug("storeColumns",o),o};export{n as u};

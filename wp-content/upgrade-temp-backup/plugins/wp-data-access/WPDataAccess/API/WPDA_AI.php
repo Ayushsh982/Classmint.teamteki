@@ -5,6 +5,7 @@ namespace WPDataAccess\API;
 use WPDataAccess\Connection\WPDADB;
 use WPDataAccess\Data_Dictionary\WPDA_Dictionary_Lists;
 use WPDataAccess\WPDA;
+// phpcs:disable PluginCheck.CodeAnalysis.AIProvider.DirectIntegration
 class WPDA_AI extends WPDA_API_Core {
     const CIPHER = 'AES-256-CBC';
 

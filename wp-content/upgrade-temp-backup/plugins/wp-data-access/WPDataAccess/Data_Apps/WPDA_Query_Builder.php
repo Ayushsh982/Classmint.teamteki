@@ -26,9 +26,27 @@ class WPDA_Query_Builder extends WPDA_Container {
             <div class="wrap wpda-query-builder-backend">
 
                 <h1 class="wp-heading-inline" style="margin-bottom: 18px">
-                    <?php 
+                    <a href="javascript:void(0)"
+                       onclick="ppActionOpenQueriesMenu(event)"
+                       class="button qb-menu-button wpda_tooltip"
+                       title="Query Builder Menu"
+                    >
+                        <i class="fas fa-bars qb-menu-icon"></i>
+                    </a>
+
+                    <span>
+                        <?php 
         ?>
-                    Query Builder
+                        Query Builder
+                    </span>
+
+                    <a href="javascript:void(0)"
+                       onclick="ppActionFullScreen()"
+                       class="button qb-menu-button wpda_tooltip"
+                       title="Toggle full-screen"
+                    >
+                        <i class="fas fa-expand qb-menu-icon"></i>
+                    </a>
                 </h1>
 
                 <?php 

@@ -9,7 +9,6 @@ namespace WPDataProjects\Project;
 
 use WPDataAccess\WPDA;
 use WPDataProjects\Parent_Child\WPDP_Parent_List_Table;
-use WPDataAccess\Utilities\WPDA_Import_Multi;
 /**
  * Class WPDP_Project_Project_List extends WPDP_Parent_List_Table
  *
@@ -29,13 +28,6 @@ class WPDP_Project_Project_List extends WPDP_Parent_List_Table {
         $args['allow_import'] = 'off';
         $args['allow_insert'] = 'on';
         parent::__construct( $args );
-        try {
-            // Instantiate WPDA_Import.
-            $this->wpda_import = new WPDA_Import_Multi("?page={$this->page}", $this->schema_name, array(__( 'IMPORT DATA PROJECTS', 'wp-data-access' ), ''));
-        } catch ( \Exception $e ) {
-            // If import is turned off instantition will fail. Handle is set to null (check in future calls).
-            $this->wpda_import = null;
-        }
     }
 
     /**
@@ -67,9 +59,6 @@ class WPDP_Project_Project_List extends WPDP_Parent_List_Table {
 				</div>
 			</form>
 			<?php 
-        if ( null !== $this->wpda_import ) {
-            $this->wpda_import->add_button( __( 'Import', 'wp-data-access' ) );
-        }
     }
 
     /**

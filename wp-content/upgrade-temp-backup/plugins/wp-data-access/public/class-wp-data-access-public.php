@@ -453,68 +453,18 @@ class WP_Data_Access_Public {
         $atts = array_change_key_case( (array) $atts, CASE_LOWER );
         //phpcs:ignore - 8.1 proof
         $wp_atts = shortcode_atts( array(
-            'project_id'           => '',
-            'page_id'              => '',
-            'schema_name'          => $wpdb->dbname,
-            'table_name'           => '',
-            'title'                => '',
-            'subtitle'             => '',
-            'bulk_actions_enabled' => false,
-            'search_box_enabled'   => false,
-            'bulk_export_enabled'  => false,
-            'show_view_link'       => 'on',
-            'allow_insert'         => 'off',
-            'allow_update'         => 'off',
-            'allow_delete'         => 'off',
-            'allow_import'         => 'off',
+            'project_id' => '',
+            'page_id'    => '',
         ), $atts );
-        if ( '' === $wp_atts['project_id'] && '' === $wp_atts['page_id'] && '' === $wp_atts['table_name'] ) {
-            // Either a Data Project page (project_id and page_id) or a table name must be provided.
-            return __( 'ERROR: Missing argument(s) [(project_id and page_id) or table_name]', 'wp-data-access' );
+        if ( '' === $wp_atts['project_id'] && '' === $wp_atts['page_id'] ) {
+            // Dashboard menu feature was removed. Parameter table_name no longer valid.
+            return __( 'ERROR: Missing argument(s) [project_id and page_id]', 'wp-data-access' );
         }
         // Sanitize database values.
         $wp_atts['project_id'] = sanitize_text_field( wp_unslash( $wp_atts['project_id'] ) );
         // input var okay.
         $wp_atts['page_id'] = sanitize_text_field( wp_unslash( $wp_atts['page_id'] ) );
         // input var okay.
-        $wp_atts['schema_name'] = sanitize_text_field( wp_unslash( $wp_atts['schema_name'] ) );
-        // input var okay.
-        $wp_atts['table_name'] = sanitize_text_field( wp_unslash( $wp_atts['table_name'] ) );
-        // input var okay.
-        // Set default parameter values.
-        $bulk_actions_enabled = false;
-        $search_box_enabled = false;
-        $bulk_export_enabled = false;
-        $show_view_link = 'on';
-        $allow_insert = 'off';
-        $allow_update = 'off';
-        $allow_delete = 'off';
-        $allow_import = 'off';
-        // Check arguments.
-        if ( 'true' === $wp_atts['bulk_actions_enabled'] ) {
-            $bulk_actions_enabled = true;
-        }
-        if ( 'true' === $wp_atts['search_box_enabled'] ) {
-            $search_box_enabled = true;
-        }
-        if ( 'true' === $wp_atts['bulk_export_enabled'] ) {
-            $bulk_export_enabled = true;
-        }
-        if ( 'false' === $wp_atts['show_view_link'] ) {
-            $show_view_link = 'off';
-        }
-        if ( 'true' === $wp_atts['allow_insert'] ) {
-            $allow_insert = 'on';
-        }
-        if ( 'true' === $wp_atts['allow_update'] ) {
-            $allow_update = 'on';
-        }
-        if ( 'true' === $wp_atts['allow_delete'] ) {
-            $allow_delete = 'on';
-        }
-        if ( 'true' === $wp_atts['allow_import'] ) {
-            $allow_import = 'on';
-        }
         $default_where = '';
         if ( isset( $atts['filter_field_name'] ) && isset( $atts['filter_field_value'] ) ) {
             $filter_field_name = str_replace( '`', '', sanitize_text_field( wp_unslash( $atts['filter_field_name'] ) ) );
@@ -533,29 +483,6 @@ class WP_Data_Access_Public {
                     $default_where .= (( '' === $default_where ? '' : ' and ' )) . $wpdb->prepare( ' `%1s` like %s ', array(WPDA::remove_backticks( $filter_field_name_array[$i] ), $filter_field_value_array[$i]) );
                 }
                 // phpcs:enable Generic.CodeAnalysis.ForLoopWithTestFunctionCall, Squiz.PHP.DisallowSizeFunctionsInLoops, WordPress.DB.PreparedSQLPlaceholders
-            }
-        }
-        // Is this a Data Projects page or a table administration page?
-        if ( '' !== $wp_atts['project_id'] && '' !== $wp_atts['page_id'] ) {
-            // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
-            // Request for Data Projects page (check is performed in WPDP_List_Page).
-        } else {
-            // Request for table administration page.
-            // Check schema name.
-            if ( 'sys' === $wp_atts['schema_name'] || 'mysql' === $wp_atts['schema_name'] || 'information_schema' === $wp_atts['schema_name'] ) {
-                // No access to MySQL databases (meta data)!
-                return __( 'ERROR: No access to MySQL meta data', 'wp-data-access' );
-            }
-            // Check database table name.
-            if ( '' === $wp_atts['table_name'] ) {
-                // Table name must be provided! No database administration in the public area!
-                return __( 'ERROR: Missing argument [table_name]', 'wp-data-access' );
-            }
-            // Check if table exists (to prevent sql injection) and access is granted.
-            $wpda_dictionary_checks = new WPDA_Dictionary_Exist($wp_atts['schema_name'], $wp_atts['table_name']);
-            if ( !$wpda_dictionary_checks->table_exists( true, false ) ) {
-                // Table not found.
-                return '<p>' . __( 'ERROR: Invalid table name or not authorized', 'wp-data-access' ) . '</p>';
             }
         }
         // Make sure user has access to necessary (fake) classes and functions in the frontend.
@@ -586,134 +513,107 @@ class WP_Data_Access_Public {
         ob_start();
         // Set page argument to allow public access.
         $_REQUEST['page'] = 'diehard';
-        if ( '' !== $wp_atts['project_id'] && '' !== $wp_atts['page_id'] ) {
-            // Show Data Projects page (check is performed in WPDP_List_Page).
-            // Get page values.
-            // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- plugin table
-            $project_page = $wpdb->get_results( $wpdb->prepare( "\n                    select * from {$wpdb->prefix}wpda_project_page\n                    where project_id = %d\n                      and page_id    = %d\n                \t", array($wp_atts['project_id'], $wp_atts['page_id']) ), 'ARRAY_A' );
-            // db call ok; no-cache ok.
-            // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            if ( 0 === $wpdb->num_rows ) {
-                // This should never happen as it was already tested before.
-                return __( 'ERROR: Data Project page not found [need a valid project_id and page_id]', 'wp-data-access' );
-            }
-            if ( 'off' !== WPDA::get_option( WPDA::OPTION_WPDA_USE_ROLES_IN_SHORTCODE ) ) {
-                // Check if user has role.
-                $user_roles = WPDA::get_current_user_roles();
-                if ( false === $user_roles ) {
-                    // Cannot determine the user role(s). Not able to show project menus.
-                    return __( 'ERROR: No access [could not determine user role]', 'wp-data-access' );
-                }
-                $user_has_role = false;
-                if ( '' === $project_page[0]['page_role'] || null === $project_page[0]['page_role'] ) {
-                    $user_has_role = in_array( 'administrator', $user_roles, true );
-                    //phpcs:ignore - 8.1 proof
-                } else {
-                    $user_role_array = explode( ',', $project_page[0]['page_role'] );
-                    //phpcs:ignore - 8.1 proof
-                    foreach ( $user_role_array as $user_role_array_item ) {
-                        $user_has_role = in_array( $user_role_array_item, $user_roles, true );
-                        //phpcs:ignore - 8.1 proof
-                        if ( $user_has_role ) {
-                            break;
-                        }
-                    }
-                }
-                if ( !$user_has_role ) {
-                    return __( 'ERROR: No access [missing role]', 'wp-data-access' );
-                }
-            }
-            // Determine plugin classes to be used.
-            if ( 'static' === $project_page[0]['page_type'] ) {
-                return '';
-            } elseif ( 'table' === $project_page[0]['page_type'] ) {
-                $list_view_class = 'WPDataProjects\\List_Table\\WPDP_List_View';
-                $list_table_class = 'WPDataProjects\\List_Table\\WPDP_List_Table';
-                $edit_form_class = 'WPDataProjects\\Simple_Form\\WPDP_Simple_Form';
-            } else {
-                $list_view_class = 'WPDataProjects\\Parent_Child\\WPDP_Parent_List_View';
-                $list_table_class = 'WPDataProjects\\Parent_Child\\WPDP_Parent_List_Table';
-                $edit_form_class = 'WPDataProjects\\Parent_Child\\WPDP_Parent_Form';
-            }
-            if ( null !== $project_page[0]['page_where'] && '' !== $project_page[0]['page_where'] ) {
-                if ( 'where' === substr( str_replace( ' ', '', $project_page[0]['page_where'] ), 0, 5 ) ) {
-                    $where_clause = " {$project_page[0]['page_where']}";
-                } else {
-                    $where_clause = " where {$project_page[0]['page_where']} ";
-                }
-                $where_clause = WPDA::substitute_environment_vars( $where_clause );
-            } else {
-                $where_clause = '';
-            }
-            if ( '' === $default_where ) {
-                $default_where = $where_clause;
-            } else {
-                if ( '' === $where_clause ) {
-                    $default_where = " where {$default_where} ";
-                } else {
-                    $default_where = " {$where_clause} and {$default_where} ";
-                }
-            }
-            $default_orderby = $project_page[0]['page_orderby'];
-            // Prepare arguments.
-            $args = array(
-                'page_hook_suffix' => 'WPDA_WPDP',
-                'wpdaschema_name'  => $project_page[0]['page_schema_name'],
-                'table_name'       => $project_page[0]['page_table_name'],
-                'list_table_class' => $list_table_class,
-                'edit_form_class'  => $edit_form_class,
-                'project_id'       => $wp_atts['project_id'],
-                'page_id'          => $wp_atts['page_id'],
-                'default_where'    => $default_where,
-                'where_clause'     => $default_where,
-                'orderby_clause'   => $default_orderby,
-            );
-            if ( 'view' === $project_page[0]['page_mode'] ) {
-                $args['allow_update'] = 'off';
-                $args['allow_import'] = 'off';
-            }
-            if ( 'no' === $project_page[0]['page_allow_insert'] ) {
-                $args['allow_insert'] = 'off';
-                $args['allow_import'] = 'off';
-            }
-            if ( 'no' === $project_page[0]['page_allow_delete'] ) {
-                $args['allow_delete'] = 'off';
-            }
-            if ( 'only' === $project_page[0]['page_allow_insert'] ) {
-                $args['action'] = 'new';
-                $args['allow_insert'] = 'only';
-                $args['allow_update'] = 'off';
-                $args['allow_import'] = 'off';
-                $args['allow_delete'] = 'off';
-            }
-            if ( 'no' === $project_page[0]['page_allow_import'] ) {
-                $args['allow_import'] = 'off';
-            }
-            if ( 'no' === $project_page[0]['page_allow_bulk'] ) {
-                $args['bulk_actions_enabled'] = false;
-            }
-            // Show page.
-            $project_page_view = new $list_view_class($args);
-            $project_page_view->show();
-        } else {
-            // Show table administration page.
-            $media_manager = new WPDA_List_View(array(
-                'wpdaschema_name'      => $wp_atts['schema_name'],
-                'table_name'           => $wp_atts['table_name'],
-                'title'                => $wp_atts['title'],
-                'subtitle'             => $wp_atts['subtitle'],
-                'bulk_actions_enabled' => $bulk_actions_enabled,
-                'search_box_enabled'   => $search_box_enabled,
-                'bulk_export_enabled'  => $bulk_export_enabled,
-                'show_view_link'       => $show_view_link,
-                'allow_insert'         => $allow_insert,
-                'allow_update'         => $allow_update,
-                'allow_delete'         => $allow_delete,
-                'allow_import'         => $allow_import,
-                'default_where'        => $default_where,
-            ));
-            $media_manager->show();
+        // Show Data Projects page (check is performed in WPDP_List_Page).
+        // Get page values.
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- plugin table
+        $project_page = $wpdb->get_results( $wpdb->prepare( "\n                    select * from {$wpdb->prefix}wpda_project_page\n                    where project_id = %d\n                      and page_id    = %d\n                \t", array($wp_atts['project_id'], $wp_atts['page_id']) ), 'ARRAY_A' );
+        // db call ok; no-cache ok.
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        if ( 0 === $wpdb->num_rows ) {
+            // This should never happen as it was already tested before.
+            return __( 'ERROR: Data Project page not found [need a valid project_id and page_id]', 'wp-data-access' );
         }
+        // Check if user has role.
+        $user_roles = WPDA::get_current_user_roles();
+        if ( false === $user_roles ) {
+            // Cannot determine the user role(s). Not able to show project menus.
+            return __( 'ERROR: No access [could not determine user role]', 'wp-data-access' );
+        }
+        $user_has_role = in_array( 'administrator', $user_roles, true );
+        if ( !$user_has_role && '' !== $project_page[0]['page_role'] && null !== $project_page[0]['page_role'] ) {
+            $user_role_array = explode( ',', $project_page[0]['page_role'] );
+            foreach ( $user_role_array as $user_role_array_item ) {
+                $user_has_role = in_array( $user_role_array_item, $user_roles, true );
+                if ( $user_has_role ) {
+                    break;
+                }
+            }
+        }
+        if ( !$user_has_role ) {
+            return __( 'ERROR: No access [missing role]', 'wp-data-access' );
+        }
+        // Determine plugin classes to be used.
+        if ( 'static' === $project_page[0]['page_type'] ) {
+            return '';
+        } elseif ( 'table' === $project_page[0]['page_type'] ) {
+            $list_view_class = 'WPDataProjects\\List_Table\\WPDP_List_View';
+            $list_table_class = 'WPDataProjects\\List_Table\\WPDP_List_Table';
+            $edit_form_class = 'WPDataProjects\\Simple_Form\\WPDP_Simple_Form';
+        } else {
+            $list_view_class = 'WPDataProjects\\Parent_Child\\WPDP_Parent_List_View';
+            $list_table_class = 'WPDataProjects\\Parent_Child\\WPDP_Parent_List_Table';
+            $edit_form_class = 'WPDataProjects\\Parent_Child\\WPDP_Parent_Form';
+        }
+        if ( null !== $project_page[0]['page_where'] && '' !== $project_page[0]['page_where'] ) {
+            if ( 'where' === substr( str_replace( ' ', '', $project_page[0]['page_where'] ), 0, 5 ) ) {
+                $where_clause = " {$project_page[0]['page_where']}";
+            } else {
+                $where_clause = " where {$project_page[0]['page_where']} ";
+            }
+            $where_clause = WPDA::substitute_environment_vars( $where_clause );
+        } else {
+            $where_clause = '';
+        }
+        if ( '' === $default_where ) {
+            $default_where = $where_clause;
+        } else {
+            if ( '' === $where_clause ) {
+                $default_where = " where {$default_where} ";
+            } else {
+                $default_where = " {$where_clause} and {$default_where} ";
+            }
+        }
+        $default_orderby = $project_page[0]['page_orderby'];
+        // Prepare arguments.
+        $args = array(
+            'page_hook_suffix' => 'WPDA_WPDP',
+            'wpdaschema_name'  => $project_page[0]['page_schema_name'],
+            'table_name'       => $project_page[0]['page_table_name'],
+            'list_table_class' => $list_table_class,
+            'edit_form_class'  => $edit_form_class,
+            'project_id'       => $wp_atts['project_id'],
+            'page_id'          => $wp_atts['page_id'],
+            'default_where'    => $default_where,
+            'where_clause'     => $default_where,
+            'orderby_clause'   => $default_orderby,
+        );
+        if ( 'view' === $project_page[0]['page_mode'] ) {
+            $args['allow_update'] = 'off';
+            $args['allow_import'] = 'off';
+        }
+        if ( 'no' === $project_page[0]['page_allow_insert'] ) {
+            $args['allow_insert'] = 'off';
+            $args['allow_import'] = 'off';
+        }
+        if ( 'no' === $project_page[0]['page_allow_delete'] ) {
+            $args['allow_delete'] = 'off';
+        }
+        if ( 'only' === $project_page[0]['page_allow_insert'] ) {
+            $args['action'] = 'new';
+            $args['allow_insert'] = 'only';
+            $args['allow_update'] = 'off';
+            $args['allow_import'] = 'off';
+            $args['allow_delete'] = 'off';
+        }
+        if ( 'no' === $project_page[0]['page_allow_import'] ) {
+            $args['allow_import'] = 'off';
+        }
+        if ( 'no' === $project_page[0]['page_allow_bulk'] ) {
+            $args['bulk_actions_enabled'] = false;
+        }
+        // Show page.
+        $project_page_view = new $list_view_class($args);
+        $project_page_view->show();
         ?>
 		<script type='text/javascript'>
 			// JS variable commonL10n is used in loaded scripts, copied from wp_default_scripts for responsive support

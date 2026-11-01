@@ -160,23 +160,6 @@ class WP_Data_Access_Switch {
     }
 
     private static function flush_rewrite_rules() {
-        // Unscheduled all WP Data Access events
-        self::unschedule_event( 'wpda_data_backup' );
-        self::unschedule_event( \WPDataAccess\Query_Builder\WPDA_Query_Builder_Scheduler::SCHEDULER_HOOK_NAME );
-        self::unschedule_event( \WPDataAccess\Utilities\WPDA_Export_Scheduler::SCHEDULER_HOOK_NAME );
-    }
-
-    private static function unschedule_event( $hook ) {
-        $crons = _get_cron_array();
-        foreach ( $crons as $timestamp => $cron ) {
-            if ( isset( $cron[$hook] ) ) {
-                foreach ( $cron[$hook] as $event ) {
-                    if ( isset( $event['args'] ) ) {
-                        wp_unschedule_event( $timestamp, $hook, $event['args'] );
-                    }
-                }
-            }
-        }
     }
 
     private static function set_legacy_tools() {

@@ -52,12 +52,6 @@ namespace WPDataAccess\Design_Table {
 						<i class="fas fa-plus-circle wpda_icon_on_button"></i>
 						<?php echo esc_attr__( 'Design new table', 'wp-data-access' ); ?>
 					</button>
-					<?php
-					// Add import button to title.
-					if ( null !== $this->wpda_import ) {
-						$this->wpda_import->add_button();
-					}
-					?>
 				</div>
 			</form>
 			<?php

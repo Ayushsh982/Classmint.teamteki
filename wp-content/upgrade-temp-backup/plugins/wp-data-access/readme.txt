@@ -4,7 +4,7 @@ Contributors: wpdataaccess, peterschulznl, maxxschulz, kimmyx, freemius
 Tags: table builder, data table, datatable, app builder, dashboard
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 5.5.81
+Stable tag: 5.5.85
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,70 @@ WP Data Access is designed as a **true no-code builder**: everything works out o
 And you're all set! 🚀
 
 == Changelog ==
+
+= 5.5.85 =
+* Released 2026-09-23
+* Removed unsed code
+* Added: Exclude columns from export
+* Added: Aggregation translations
+* Fixed: Default values not applied to M:M relationships
+* Fixed: Enum and set drop-down height
+* Fixed: Removed column still available for export
+* Fixed: Access parameter validation
+* Fixed: Cannot open hooks menu for relation table
+
+= 5.5.84 =
+* Released 2026-09-17
+* Restructured table column renderer
+* Removed unsed code
+* Added: Column pinning to data tables
+* Added: Rename database to app menu
+* Added: Class name to lookup popup
+* Added: Data label to lookup items
+* Added: Show hidden columns on tablets and mobiles
+* Fixed: setColumnStyle on lookup columns
+* Fixed: Map markers not working in Data Table and Data Admin apps
+* Fixed: Scheduled tasks deleted on version update
+
+= 5.5.83 =
+* Released 2026-09-09
+* Added: Default column name based class names to form fields
+* Removed old Query Builder
+* Removed import from legacy list table
+* Fixed: Query Builder fails rebuilding multiple tabs
+* Fixed: WPDAVAR not working in Query Builder
+* Fixed: Chart legend position top wrapped
+* Fixed: Initial "skip relation table pre-search step" setting not processed correctly
+* Fixed: Auto increment column value missing in insert m:m relationship
+* Fixed: Custom classes not applied in forms
+* Fixed: App not correct exported when regexp is used in a hook
+* Fixed: Confirm dialog alignment
+* Fixed: Unicode characters not imported correct on app transfer
+* Fixed: Lookup value not synchronized on update with client side processing enabled
+* Fixed: Cannot zoom in|out in maps
+* Fixed: Null values added to unselected columns on insert
+* Fixed: CSS Form Editor help link
+* Fixed: Shortcode parameter vulnerability in legacy data tables
+
+= 5.5.82 =
+* Released 2026-08-26
+* Added: App context to computed form fields
+* Added: Localize WordPress standard date format
+* Added: Skip relation table pre-search step
+* Changed: Query Builder tab styling
+* Fixed: Class name not added to computed field
+* Fixed: Disable media action buttons for anonymous users
+* Fixed: Media library not launched in fullscreen mode
+* Fixed: Removed unused columns from response
+* Fixed: Reevaluation of already substituted placeholders
+* Fixed: Table settings crash when changing media to secure document
+* Fixed: Theme font size does not size table cells
+* Fixed: Media columns missing class names
+* Fixed: Dynamic lookup over multiple columns not populated in insert mode
+* Fixed: Query not scheduled
+* Fixed: Numeric columns labels not processed correctly in Query Builder
+* Fixed: Numeric columns labels not processed correctly in charts
+* Fixed: Inline editing global save not working
 
 = 5.5.81 =
 * Released 2026-08-18

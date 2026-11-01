@@ -20,7 +20,7 @@ namespace WPDataAccess {
 	 *
 	 * Plugin default values and settings are managed through this class. Every plugin option has a default value
 	 * which is maintained in an array together with the option name. Options are only saved in $wpdb->options when
-	 * they are changed. Otherwise the default values are used. After reading option values from $wpdb->options the
+	 * they are changed. Otherwise, the default values are used. After reading option values from $wpdb->options the
 	 * values are cached as many of them are used in multiple
 	 * values are cached as many of them are used in multiple
 	 * places during the processing of a request.
@@ -28,7 +28,9 @@ namespace WPDataAccess {
 	 * @author  Peter Schulz
 	 * @since   1.0.0
 	 */
-	class WPDA {
+
+    // phpcs:disable PluginCheck.CodeAnalysis.Offloading.OffloadedContent
+    class WPDA {
 
 		// SAVING SPACE - According to the plugin guidelines it is allowed to include external fonts:
 		// https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/#8-plugins-may-not-send-executable-code-via-third-party-systems
@@ -51,8 +53,8 @@ namespace WPDataAccess {
 		/**
 		 * Option wpda_version and it's default value
 		 */
-		const OPTION_WPDA_VERSION         = array( 'wpda_version', '5.5.81' );
-		const OPTION_WPDA_CLIENT_VERSION  = array( 'wpda_client_version', '1.0.79' );
+		const OPTION_WPDA_VERSION         = array( 'wpda_version', '5.5.85' );
+		const OPTION_WPDA_CLIENT_VERSION  = array( 'wpda_client_version', '1.0.83' );
 		const OPTION_WPDA_UPGRADED        = array( 'wpda_upgraded', false );
 		/**
 		 * Option wpda_setup_error and it's default value
@@ -473,6 +475,8 @@ namespace WPDataAccess {
 				}
 			}
 
+            return false;
+
 		}
 
 		/**
@@ -820,6 +824,7 @@ namespace WPDataAccess {
 					return $matches[1] * 1024;
 				}
 			}
+            return '';
 		}
 
 		public static function get_current_user_id() {
@@ -927,7 +932,7 @@ namespace WPDataAccess {
 		 *
 		 * @param string $schema_name Schema name (optional)
 		 * @param string $table_name Table name (optional)
-		 * @param string $columns Array containing table columns
+		 * @param array $columns Array containing table columns
 		 * @param string $search Search string entered by user
 		 * @param boolean $is_case_sensitive Case-sensitive search (default = false)
 		 * @param boolean $is_dt_request Always skip filter for DataTable requests (default = false)
@@ -1148,20 +1153,25 @@ namespace WPDataAccess {
 				});
 			</script>
 			<style>
+                /* noinspection CssUnusedSymbol */
 				.wpda_shortcode_content {
 					padding: 0 20px;
 				}
+                /* noinspection CssUnusedSymbol */
                 .wpda_shortcode_text {
                     text-align: center;
                     font-size: 105%;
 					white-space: nowrap;
                 }
+                /* noinspection CssUnusedSymbol */
                 .wpda_shortcode_buttons {
                     text-align: center;
                 }
+                /* noinspection CssUnusedSymbol */
                 .button.wpda_shortcode_button {
                     width: 100px !important;
                 }
+                /* noinspection CssUnusedSymbol */
 				.wpda_shortcode_link {
 					text-decoration: none;
 					font-weight: bold;
@@ -1242,7 +1252,7 @@ namespace WPDataAccess {
 		 * @param $table_name string Table name
          * @param $wpda_table_settings string Table settings (query WPDA_Table_Settings_Model)
 		 *
-		 * @return int row count estimate or -1 if no estimate available
+		 * @return array row count estimate or -1 if no estimate available
 		 */
 		public static function get_row_count_estimate( $schema_name, $table_name, $wpda_table_settings ) {
 			$row_count     = null;
@@ -1704,7 +1714,16 @@ namespace WPDataAccess {
 		}
 
         public static function current_user_is_admin() {
-            return current_user_can( 'manage_options' ) || is_super_admin();
+            if (current_user_can( 'manage_options' ) || is_super_admin()) {
+                return true;
+            }
+
+            $user = wp_get_current_user();
+            if ( in_array( 'administrator', $user->roles ) ) {
+                return true;
+            }
+
+            return false;
         }
 
 	}

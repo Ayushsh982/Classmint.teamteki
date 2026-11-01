@@ -10,7 +10,6 @@ use WPDataAccess\Cookies\WPDA_Cookies;
 use WPDataAccess\Data_Dictionary\WPDA_Dictionary_Lists;
 use WPDataAccess\Data_Tables\WPDA_Data_Tables;
 use WPDataAccess\Plugin_Table_Models\WPDA_Table_Settings_Model;
-use WPDataAccess\Utilities\WPDA_Table_Actions;
 use WPDataAccess\Utilities\WPDA_Export;
 use WPDataAccess\Utilities\WPDA_Favourites;
 use WPDataAccess\WPDA;
@@ -21,7 +20,6 @@ use WPDataRoles\WPDA_Roles;
 use WPDataAccess\Utilities\WPDA_Autocomplete;
 use WPDataAccess\Premium\WPDAPRO_Geo_Location\WPDAPRO_Geo_Location_WS;
 use WPDataAccess\Premium\WPDAPRO_Geo_Location\WPDAPRO_Geo_Location;
-use WPDataAccess\Query_Builder\WPDA_Query_Builder;
 use WPDataAccess\Dashboard\WPDA_Dashboard;
 use WPDataAccess\Dashboard\WPDA_Widget_Code;
 use WPDataAccess\Dashboard\WPDA_Widget_Publication;
@@ -161,15 +159,6 @@ class WP_Data_Access {
         $this->loader->add_action( 'admin_head', $plugin_admin, 'remove_icons' );
         // Add settings page.
         $this->loader->add_action( 'admin_menu', $this, 'wpdataaccess_register_settings_page' );
-        // Query Builder.
-        $query_builder = new WPDA_Query_Builder();
-        $this->loader->add_action( 'admin_action_wpda_query_builder_execute_sql', $query_builder, 'execute' );
-        $this->loader->add_action( 'admin_action_wpda_query_builder_save_sql', $query_builder, 'save' );
-        $this->loader->add_action( 'admin_action_wpda_query_builder_open_sql', $query_builder, 'open' );
-        $this->loader->add_action( 'admin_action_wpda_query_builder_delete_sql', $query_builder, 'delete' );
-        $this->loader->add_action( 'admin_action_wpda_query_builder_get_db_hints', $query_builder, 'get_db_hints' );
-        $this->loader->add_action( 'admin_action_wpda_query_builder_set_db_hints', $query_builder, 'set_db_hints' );
-        $this->loader->add_action( 'admin_action_wpda_query_builder_get_vqb', $query_builder, 'get_visual_query_ajax' );
         // Run unattended scheduled export
         $this->loader->add_action( \WPDataAccess\Utilities\WPDA_Export_Scheduler::SCHEDULER_HOOK_NAME, \WPDataAccess\Utilities\WPDA_Export_Scheduler::class, 'run_scheduled_export' );
         // Mail service.

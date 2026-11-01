@@ -269,9 +269,6 @@ namespace WPDataProjects\Parent_Child {
 					</div>
 				</form>
 				<?php
-				if ( null !== $this->wpda_import ) {
-					$this->wpda_import->add_button( __( 'Import', 'wp-data-access' ) );
-				}
 			}
 		}
 
