@@ -180,6 +180,9 @@ function learn_press_add_course_review( $args = array() ) {
 			'force'     => 0,
 		)
 	);
+	$args['title']   = sanitize_text_field( wp_unslash( $args['title'] ) );
+	$args['content'] = wp_kses_post( wp_unslash( $args['content'] ) );
+	$args['rate']    = min( 5, max( 0, absint( $args['rate'] ) ) );
 	$user_id     = $args['user_id'];
 	$course_id   = $args['course_id'];
 	$user_review = learn_press_get_user_rate( $course_id, $user_id, $args['force'] );
@@ -196,7 +199,6 @@ function learn_press_add_course_review( $args = array() ) {
 				'comment_content'      => $args['content'],
 				'comment_parent'       => 0,
 				'user_id'              => $user->ID,
-				'comment_approved'     => 1,
 				'comment_type'         => 'review', // let filter to not display it as comments
 			),
 			true
@@ -209,7 +211,7 @@ function learn_press_add_course_review( $args = array() ) {
 
 		// Clear cache
 		$CourseReviewCache = new CourseReviewCache( true );
-		$CourseReviewCache->clean_rating( $course_id, $user_id );
+		$CourseReviewCache->clean_rating( $course_id );
 	}
 
 	return $comment_id;

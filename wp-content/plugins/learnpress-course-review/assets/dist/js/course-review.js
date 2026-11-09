@@ -1,15 +1,72 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./assets/src/js/utils.js":
-/*!********************************!*\
-  !*** ./assets/src/js/utils.js ***!
-  \********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+/***/ "./assets/src/js/lpToastify.js"
+/*!*************************************!*\
+  !*** ./assets/src/js/lpToastify.js ***!
+  \*************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   show: () => (/* binding */ show)
+/* harmony export */ });
+/* harmony import */ var toastify_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! toastify-js */ "./node_modules/toastify-js/src/toastify.js");
+/* harmony import */ var toastify_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(toastify_js__WEBPACK_IMPORTED_MODULE_0__);
+/**
+ * Utils functions
+ *
+ * @param url
+ * @param data
+ * @param functions
+ * @since 4.3.0
+ * @version 1.0.0
+ */
+
+const argsToastify = {
+  text: '',
+  gravity: lpData.toast.gravity,
+  // `top` or `bottom`
+  position: lpData.toast.position,
+  // `left`, `center` or `right`
+  className: `${lpData.toast.classPrefix}`,
+  close: lpData.toast.close == 1,
+  stopOnFocus: lpData.toast.stopOnFocus == 1,
+  duration: lpData.toast.duration
+};
+const show = (message, status = 'success', argsCustom) => {
+  let args = argsToastify;
+  if (argsCustom) {
+    args = {
+      ...args,
+      ...argsCustom
+    };
+  }
+  const toastify = new (toastify_js__WEBPACK_IMPORTED_MODULE_0___default())({
+    ...args,
+    text: message,
+    className: `${lpData.toast.classPrefix} ${status}`
+  });
+  toastify.showToast();
+};
+
+/***/ },
+
+/***/ "./assets/src/js/utils.js"
+/*!********************************!*\
+  !*** ./assets/src/js/utils.js ***!
+  \********************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   debounce: () => (/* binding */ debounce),
+/* harmony export */   eventHandlers: () => (/* binding */ eventHandlers),
+/* harmony export */   fullScreenView: () => (/* binding */ fullScreenView),
+/* harmony export */   getDataOfForm: () => (/* binding */ getDataOfForm),
+/* harmony export */   getFieldKeysOfForm: () => (/* binding */ getFieldKeysOfForm),
 /* harmony export */   listenElementCreated: () => (/* binding */ listenElementCreated),
 /* harmony export */   listenElementViewed: () => (/* binding */ listenElementViewed),
 /* harmony export */   lpAddQueryArgs: () => (/* binding */ lpAddQueryArgs),
@@ -19,7 +76,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpGetCurrentURLNoParam: () => (/* binding */ lpGetCurrentURLNoParam),
 /* harmony export */   lpOnElementReady: () => (/* binding */ lpOnElementReady),
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
-/* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl)
+/* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
+/* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
+/* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
 /**
  * Utils functions
@@ -28,11 +88,17 @@ __webpack_require__.r(__webpack_exports__);
  * @param data
  * @param functions
  * @since 4.2.5.1
- * @version 1.0.3
+ * @version 1.0.7
  */
 const lpClassName = {
   hidden: 'lp-hidden',
-  loading: 'loading'
+  loading: 'loading',
+  elCollapse: 'lp-collapse',
+  elSectionToggle: '.lp-section-toggle',
+  elTriggerToggle: '.lp-trigger-toggle',
+  elBtnFullScreen: '.lp-btn-full-screen-view',
+  elFullScreen: 'lp-full-screen-view',
+  elBtnFullScreenClose: 'lp-full-screen-view__close'
 };
 const lpFetchAPI = (url, data = {}, functions = {}) => {
   if ('function' === typeof functions.before) {
@@ -190,14 +256,308 @@ const lpSetLoadingEl = (el, status) => {
   }
 };
 
+// Toggle collapse section
+const toggleCollapse = (e, target, elTriggerClassName = '', elsExclude = [], callback) => {
+  if (!elTriggerClassName) {
+    elTriggerClassName = lpClassName.elTriggerToggle;
+  }
 
-/***/ }),
+  // Exclude elements, which should not trigger the collapse toggle
+  if (elsExclude && elsExclude.length > 0) {
+    for (const elExclude of elsExclude) {
+      if (target.closest(elExclude)) {
+        return;
+      }
+    }
+  }
+  const elTrigger = target.closest(elTriggerClassName);
+  if (!elTrigger) {
+    return;
+  }
 
-/***/ "./node_modules/toastify-js/src/toastify.js":
+  //console.log( 'elTrigger', elTrigger );
+
+  const elSectionToggle = elTrigger.closest(`${lpClassName.elSectionToggle}`);
+  if (!elSectionToggle) {
+    return;
+  }
+  elSectionToggle.classList.toggle(`${lpClassName.elCollapse}`);
+  if ('function' === typeof callback) {
+    callback(elSectionToggle);
+  }
+};
+
+// Get data of form
+const getDataOfForm = form => {
+  const dataSend = {};
+  const formData = new FormData(form);
+  for (const pair of formData.entries()) {
+    const key = pair[0];
+    const value = formData.getAll(key);
+    if (!dataSend.hasOwnProperty(key)) {
+      // Convert value array to string.
+      dataSend[key] = value.join(',');
+    }
+  }
+  return dataSend;
+};
+
+// Get field keys of form
+const getFieldKeysOfForm = form => {
+  const keys = [];
+  const elements = form.elements;
+  for (let i = 0; i < elements.length; i++) {
+    const name = elements[i].name;
+    if (name && !keys.includes(name)) {
+      keys.push(name);
+    }
+  }
+  return keys;
+};
+
+// Merge data handle with data form.
+const mergeDataWithDatForm = (elForm, dataHandle) => {
+  const dataForm = getDataOfForm(elForm);
+  const keys = getFieldKeysOfForm(elForm);
+  keys.forEach(key => {
+    if (!dataForm.hasOwnProperty(key)) {
+      delete dataHandle[key];
+    } else if (dataForm[key][0] === '') {
+      delete dataForm[key];
+      delete dataHandle[key];
+    }
+  });
+  dataHandle = {
+    ...dataHandle,
+    ...dataForm
+  };
+  return dataHandle;
+};
+
+/**
+ * Event trigger
+ * For each list of event handlers, listen event on document.
+ *
+ * eventName: 'click', 'change', ...
+ * eventHandlers = [ { selector: '.lp-button', callBack: function(){}, class: object } ]
+ *
+ * @param eventName
+ * @param eventHandlers
+ */
+const eventHandlers = (eventName, eventHandlers) => {
+  document.addEventListener(eventName, e => {
+    const target = e.target;
+    let args = {
+      e,
+      target
+    };
+    eventHandlers.forEach(eventHandler => {
+      args = {
+        ...args,
+        ...eventHandler
+      };
+
+      //console.log( args );
+
+      // Check condition before call back
+      if (eventHandler.conditionBeforeCallBack) {
+        if (eventHandler.conditionBeforeCallBack(args) !== true) {
+          return;
+        }
+      }
+
+      // Special check for keydown event with checkIsEventEnter = true
+      if (eventName === 'keydown' && eventHandler.checkIsEventEnter) {
+        if (e.key !== 'Enter') {
+          return;
+        }
+      }
+      if (target.closest(eventHandler.selector)) {
+        if (eventHandler.class) {
+          // Call method of class, function callBack will understand exactly {this} is class object.
+          eventHandler.class[eventHandler.callBack](args);
+        } else {
+          // For send args is objected, {this} is eventHandler object, not class object.
+          eventHandler.callBack(args);
+        }
+      }
+    });
+  });
+};
+
+/**
+ * Debounce - delays function execution until after `wait` ms of inactivity.
+ *
+ * Each call resets the timer. Only the last call in a burst executes.
+ *
+ * USE CASES:
+ * - Search inputs, form validation, window resize
+ * - Multiple elements need independent timers
+ * - When you need to call with different arguments
+ *
+ * EXAMPLES:
+ * const debouncedSearch = debounce( (query) => fetchResults(query), 300 );
+ * searchInput.addEventListener('input', (e) => debouncedSearch(e.target.value));
+ *
+ * const debouncedResize = debounce( recalculateLayout, 250 );
+ * window.addEventListener('resize', debouncedResize);
+ *
+ * ⚠️ Create ONCE outside event handlers, not inside.
+ *
+ * @param {Function} func - Function to debounce (can be anonymous)
+ * @param {number}   wait - Milliseconds to wait (default: 500)
+ * @return {Function} Debounced wrapper function
+ * @since 4.3.7
+ * @version 1.0.0
+ */
+const debounce = (func, wait = 500) => {
+  let timer;
+  return args => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func(args), wait);
+  };
+};
+
+/**
+ * Initialize lp-toggle-enable components.
+ *
+ * Finds all `.lp-toggle-enable` elements and wires up toggle behavior.
+ * Reads initial state from `data-enabled` attribute ("true"/"false").
+ * Calls `data-on-toggle` callback (if provided via options) on state change.
+ *
+ * HTML structure:
+ * <label class="lp-toggle-enable" data-enabled="true">
+ *   <input type="checkbox" class="lp-toggle-enable__input" />
+ *   <span class="lp-toggle-enable__track"></span>
+ * </label>
+ *
+ * @param {string}   selector CSS selector for toggle elements (default: '.lp-toggle-enable')
+ * @param {Function} onToggle Optional callback( el, isEnabled ) called on state change
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpToggleEnableInit = 0;
+const toggleEnable = (onToggle = null) => {
+  if (window.lpToggleEnableInit) {
+    return;
+  }
+  window.lpToggleEnableInit = 1;
+  const selector = '.lp-toggle-enable';
+  const updateUI = (toggle, isEnabled) => {
+    toggle.classList.toggle('is-enabled', isEnabled);
+    const input = toggle.querySelector('.lp-toggle-enable__input');
+    if (input) {
+      input.checked = isEnabled;
+      input.value = isEnabled ? '1' : '0';
+    }
+  };
+
+  // Delegate click handling via eventHandlers.
+  eventHandlers('click', [{
+    selector,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const toggle = target.closest(selector);
+      if (!toggle || toggle.classList.contains('is-disabled')) {
+        return;
+      }
+      e.preventDefault();
+      const isEnabled = !toggle.classList.contains('is-enabled');
+      updateUI(toggle, isEnabled);
+      if ('function' === typeof onToggle) {
+        onToggle(toggle, isEnabled);
+      }
+    }
+  }]);
+};
+
+/**
+ * Initialize custom fullscreen view buttons.
+ *
+ * Delegates clicks on `.lp-btn-full-screen-view` buttons to
+ * `lpToggleFullscreenView`. Reads the `data-target` attribute to find the
+ * target element. Falls back to the button's parent element when
+ * `data-target` is not provided.
+ *
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpFullScreenViewInit = 0;
+const fullScreenView = () => {
+  if (window.lpFullScreenViewInit) {
+    return;
+  }
+  window.lpFullScreenViewInit = 1;
+  let lastScrollY = 0;
+  const lpToggleFullscreenView = (elTarget, elBtnFullScreen = null) => {
+    const isFullscreen = elTarget.classList.contains(lpClassName.elFullScreen);
+    if (isFullscreen) {
+      elTarget.classList.remove(lpClassName.elFullScreen);
+      document.documentElement.classList.remove('lp-full-screen-active');
+      window.scrollTo(0, lastScrollY);
+    } else {
+      lastScrollY = window.scrollY;
+      elTarget.classList.add(lpClassName.elFullScreen);
+      document.documentElement.classList.add('lp-full-screen-active');
+    }
+    if (!isFullscreen) {
+      if (!elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`)) {
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = lpClassName.elBtnFullScreenClose;
+        closeButton.setAttribute('aria-label', 'Close');
+        closeButton.innerHTML = lpData.i18n.closeButtonFullScreen || 'Close &times;';
+        closeButton.addEventListener('click', e => {
+          e.preventDefault();
+          lpToggleFullscreenView(elTarget);
+        });
+        elTarget.appendChild(closeButton);
+      }
+    } else {
+      const closeButton = elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`);
+      if (closeButton) {
+        closeButton.remove();
+      }
+    }
+  };
+  eventHandlers('click', [{
+    selector: lpClassName.elBtnFullScreen,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const elBtnFullScreen = target.closest(lpClassName.elBtnFullScreen);
+      if (!elBtnFullScreen) {
+        console.log('No full screen button found');
+        return;
+      }
+      e.preventDefault();
+      let elTarget = null;
+      const targetSelector = elBtnFullScreen.dataset.targetFullscreen;
+      console.log(targetSelector);
+      if (targetSelector) {
+        elTarget = document.querySelector(targetSelector);
+      }
+      if (!elTarget) {
+        console.log('No target element found');
+        return;
+      }
+      lpToggleFullscreenView(elTarget, elBtnFullScreen);
+    }
+  }]);
+};
+
+/***/ },
+
+/***/ "./node_modules/toastify-js/src/toastify.js"
 /*!**************************************************!*\
   !*** ./node_modules/toastify-js/src/toastify.js ***!
   \**************************************************/
-/***/ (function(module) {
+(module) {
 
 /*!
  * Toastify js 1.12.0
@@ -646,28 +1006,34 @@ const lpSetLoadingEl = (el, status) => {
 });
 
 
-/***/ })
+/***/ }
 
 /******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
+/******/ 	const __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		const cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
 /******/ 			return cachedModule.exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 		const module = __webpack_module_cache__[moduleId] = {
 /******/ 			// no module.id needed
 /******/ 			// no module.loaded needed
 /******/ 			exports: {}
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
+/******/ 		if (!(moduleId in __webpack_modules__)) {
+/******/ 			delete __webpack_module_cache__[moduleId];
+/******/ 			const e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			e.code = 'MODULE_NOT_FOUND';
+/******/ 			throw e;
+/******/ 		}
 /******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
@@ -676,47 +1042,37 @@ const lpSetLoadingEl = (el, status) => {
 /******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = (module) => {
+/******/ 		const getter = module && module.__esModule ?
+/******/ 			() => (module['default']) :
+/******/ 			() => (module);
+/******/ 		__webpack_require__.d(getter, { a: getter });
+/******/ 		return getter;
+/******/ 	};
 /******/ 	
 /******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
+/******/ 	// define getter/value functions for harmony exports
+/******/ 	__webpack_require__.d = (exports, definition) => {
+/******/ 		for(var key in definition) {
+/******/ 			if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 			}
-/******/ 		};
-/******/ 	})();
+/******/ 		}
+/******/ 	};
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
+/******/ 	__webpack_require__.o = (obj, prop) => (Object.hasOwn(obj, prop));
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = (exports) => {
+/******/ 		Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
+let __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
 (() => {
 "use strict";
@@ -725,216 +1081,251 @@ var __webpack_exports__ = {};
   \****************************************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils.js */ "./assets/src/js/utils.js");
-/* harmony import */ var toastify_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! toastify-js */ "./node_modules/toastify-js/src/toastify.js");
-/* harmony import */ var toastify_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(toastify_js__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _lpToastify_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./lpToastify.js */ "./assets/src/js/lpToastify.js");
 /**
  * JS handle course review
  *
  * @since 4.0.0
- * @version 1.0.2
+ * @version 1.0.3
  */
 
 
-const classLoadMore = 'course-review-load-more';
-const classLPTarget = '.lp-target';
-const classCourseReviewsList = '.course-reviews-list';
-const classReviewStars = '.review-stars';
-const classChooseStar = '.choose-star';
-const loadMoreReview = (e, target) => {
-  const btnLoadMore = target.closest(`.${classLoadMore + ':not(.loading)'}`);
-  if (!btnLoadMore) {
-    return;
-  }
-  _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(btnLoadMore, true);
-  const elLPTarget = btnLoadMore.closest(`${classLPTarget}`);
-  if (!elLPTarget) {
-    return;
-  }
-  const dataObj = JSON.parse(elLPTarget.dataset.send);
-  const dataSend = {
-    ...dataObj
+class CourseReview {
+  static selectors = {
+    classLoadMore: 'course-review-load-more',
+    classLPTarget: '.lp-target',
+    classCourseReviewsList: '.course-reviews-list',
+    classReviewStars: '.review-stars',
+    classChooseStar: '.choose-star',
+    classWriteReview: '.write-a-review',
+    classCourseReviewWrapper: '.course-review-wrapper',
+    classClose: '.close',
+    classSubmitReview: '.submit-review',
+    classReviewForm: 'form.review-form',
+    classReviewFields: '.review-fields'
   };
-  if (!dataSend.args.hasOwnProperty('paged')) {
-    dataSend.args.paged = 1;
-  } else {
-    dataSend.args.paged++;
+  init() {
+    this.events();
   }
-  elLPTarget.dataset.send = JSON.stringify(dataSend);
-  const callBack = {
-    success: response => {
-      const {
-        data
-      } = response;
-      const paged = parseInt(data.paged);
-      const totalPages = parseInt(data.total_pages);
-      const newEl = document.createElement('div');
-      newEl.innerHTML = data.content || '';
-      const elListCourse = elLPTarget.querySelector(`${classCourseReviewsList}`);
-      elListCourse.insertAdjacentHTML('beforeend', newEl.querySelector(`${classCourseReviewsList}`).innerHTML);
-      if (paged >= totalPages - 1) {
-        btnLoadMore.remove();
-      }
-    },
-    error: error => {
-      console.log(error);
-    },
-    completed: () => {
-      _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(btnLoadMore, false);
+  events() {
+    if (CourseReview._loadedEvents) {
+      return;
     }
-  };
-  window.lpAJAXG.fetchAJAX(dataSend, callBack);
-};
-const showFormReview = (e, target) => {
-  const elBtnShowForm = target.closest('.write-a-review');
-  if (!elBtnShowForm) {
-    return;
+    CourseReview._loadedEvents = true;
+    _utils_js__WEBPACK_IMPORTED_MODULE_0__.eventHandlers('click', [{
+      selector: `.${CourseReview.selectors.classLoadMore}:not(.loading)`,
+      class: this,
+      callBack: this.loadMoreReview.name
+    }, {
+      selector: CourseReview.selectors.classWriteReview,
+      class: this,
+      callBack: this.showFormReview.name
+    }, {
+      selector: CourseReview.selectors.classChooseStar,
+      class: this,
+      callBack: this.choiceStar.name
+    }, {
+      selector: CourseReview.selectors.classClose,
+      class: this,
+      callBack: this.closeFormReview.name
+    }, {
+      selector: CourseReview.selectors.classSubmitReview,
+      class: this,
+      callBack: this.submitFormReview.name
+    }]);
+    document.addEventListener('mouseover', e => {
+      this.handleStarHover(e.target);
+    });
   }
-  const form = document.querySelector('.course-review-wrapper');
-  if (!form) {
-    return;
-  }
-  form.classList.add('active');
-};
-const choiceStar = (e, target) => {
-  const elChoiceStar = target.closest(`${classChooseStar}`);
-  if (!elChoiceStar) {
-    return;
-  }
-  const form = target.closest('form');
-  const elRatingChose = form.querySelector('input[name="rating"]');
-  if (elRatingChose) {
-    elRatingChose.value = elChoiceStar.dataset.star;
-  }
-};
-const closeFormReview = (e, target) => {
-  const elClose = target.closest('.close');
-  if (!elClose) {
-    return;
-  }
-  const elFormWrapper = elClose.closest('.course-review-wrapper');
-  if (!elFormWrapper) {
-    return;
-  }
-  e.preventDefault();
-  elFormWrapper.classList.remove('active');
-};
-const submitFormReview = (e, target) => {
-  const elBtnSubmit = target.closest('.submit-review');
-  if (!elBtnSubmit) {
-    return;
-  }
-  const form = elBtnSubmit.closest('form.review-form');
-  if (!form) {
-    return;
-  }
-  e.preventDefault();
-  _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elBtnSubmit, 1);
-  const elLPTarget = elBtnSubmit.closest(`${classLPTarget}`);
-  if (!elLPTarget) {
-    return;
-  }
-  const dataObj = JSON.parse(elLPTarget.dataset.send);
-  const dataSend = {
-    ...dataObj
-  };
-  const formData = new FormData(form);
-  for (const pair of formData.entries()) {
-    const key = pair[0];
-    const value = formData.getAll(key);
-    if (!dataSend.args.hasOwnProperty(key)) {
-      let value_convert = value;
-      if ('object' === typeof value) {
-        value_convert = value.join(',');
+  loadMoreReview(args) {
+    const {
+      target
+    } = args;
+    const btnLoadMore = target.closest(`.${CourseReview.selectors.classLoadMore}:not(.loading)`);
+    if (!btnLoadMore) {
+      return;
+    }
+    _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(btnLoadMore, true);
+    const elLPTarget = btnLoadMore.closest(CourseReview.selectors.classLPTarget);
+    if (!elLPTarget) {
+      return;
+    }
+    const dataObj = JSON.parse(elLPTarget.dataset.send);
+    const dataSend = {
+      ...dataObj
+    };
+    if (!dataSend.args.hasOwnProperty('paged')) {
+      dataSend.args.paged = 1;
+    } else {
+      dataSend.args.paged++;
+    }
+    elLPTarget.dataset.send = JSON.stringify(dataSend);
+    const callBack = {
+      success: response => {
+        const {
+          data
+        } = response;
+        const paged = parseInt(data.paged);
+        const totalPages = parseInt(data.total_pages);
+        const newEl = document.createElement('div');
+        newEl.innerHTML = data.content || '';
+        const elListCourse = elLPTarget.querySelector(CourseReview.selectors.classCourseReviewsList);
+        elListCourse.insertAdjacentHTML('beforeend', newEl.querySelector(CourseReview.selectors.classCourseReviewsList).innerHTML);
+        if (paged >= totalPages - 1) {
+          btnLoadMore.remove();
+        }
+      },
+      error: error => {
+        console.log(error);
+      },
+      completed: () => {
+        _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(btnLoadMore, false);
       }
-      dataSend.args[key] = value_convert;
+    };
+    window.lpAJAXG.fetchAJAX(dataSend, callBack);
+  }
+  showFormReview(args) {
+    const {
+      target
+    } = args;
+    const elBtnShowForm = target.closest(CourseReview.selectors.classWriteReview);
+    if (!elBtnShowForm) {
+      return;
+    }
+    const form = document.querySelector(CourseReview.selectors.classCourseReviewWrapper);
+    if (!form) {
+      return;
+    }
+    form.classList.add('active');
+  }
+  choiceStar(args) {
+    const {
+      target
+    } = args;
+    const elChoiceStar = target.closest(CourseReview.selectors.classChooseStar);
+    if (!elChoiceStar) {
+      return;
+    }
+    const form = target.closest('form');
+    const elRatingChose = form ? form.querySelector('input[name="rating"]') : null;
+    if (elRatingChose) {
+      elRatingChose.value = elChoiceStar.dataset.star;
     }
   }
-  const callBack = {
-    success: response => {
-      const {
-        data
-      } = response;
-      const {
-        status,
-        content
-      } = data;
-      toastify_js__WEBPACK_IMPORTED_MODULE_1___default()({
-        text: content,
-        gravity: lpData.toast.gravity,
-        // `top` or `bottom`
-        position: lpData.toast.position,
-        // `left`, `center` or `right`
-        className: `${lpData.toast.classPrefix} ${status}`,
-        close: lpData.toast.close == 1,
-        stopOnFocus: lpData.toast.stopOnFocus == 1,
-        duration: lpData.toast.duration
-      }).showToast();
-      if ('success' === status) {
-        window.location.reload();
-      }
-    },
-    error: error => {
-      console.log(error);
-    },
-    completed: () => {
-      _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elBtnSubmit, false);
+  closeFormReview(args) {
+    const {
+      e,
+      target
+    } = args;
+    const elClose = target.closest(CourseReview.selectors.classClose);
+    if (!elClose) {
+      return;
     }
-  };
-  window.lpAJAXG.fetchAJAX(dataSend, callBack);
-};
+    const elFormWrapper = elClose.closest(CourseReview.selectors.classCourseReviewWrapper);
+    if (!elFormWrapper) {
+      return;
+    }
+    e.preventDefault();
+    elFormWrapper.classList.remove('active');
+  }
+  submitFormReview(args) {
+    const {
+      e,
+      target
+    } = args;
+    const elBtnSubmit = target.closest(CourseReview.selectors.classSubmitReview);
+    if (!elBtnSubmit) {
+      return;
+    }
+    const form = elBtnSubmit.closest(CourseReview.selectors.classReviewForm);
+    if (!form) {
+      return;
+    }
+    e.preventDefault();
+    _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elBtnSubmit, 1);
+    const elLPTarget = elBtnSubmit.closest(CourseReview.selectors.classLPTarget);
+    if (!elLPTarget) {
+      return;
+    }
+    const dataObj = JSON.parse(elLPTarget.dataset.send);
+    const dataSend = {
+      ...dataObj
+    };
+    const courseId = dataSend.args.course_id;
+    dataSend.args = _utils_js__WEBPACK_IMPORTED_MODULE_0__.mergeDataWithDatForm(form, dataSend.args);
+    if (courseId) {
+      dataSend.args.course_id = courseId;
+    }
+    const callBack = {
+      success: response => {
+        const {
+          data,
+          status,
+          message
+        } = response;
+        _lpToastify_js__WEBPACK_IMPORTED_MODULE_1__.show(message, status);
+        if ('success' === status) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      },
+      error: error => {
+        _lpToastify_js__WEBPACK_IMPORTED_MODULE_1__.show(error.message || error, 'error');
+      },
+      completed: () => {
+        _utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elBtnSubmit, false);
+      }
+    };
+    window.lpAJAXG.fetchAJAX(dataSend, callBack);
+  }
 
-// Events click
-document.addEventListener('click', e => {
-  const target = e.target;
-  loadMoreReview(e, target);
-  showFormReview(e, target);
-  choiceStar(e, target);
-  closeFormReview(e, target);
-  submitFormReview(e, target);
-});
-
-/**
- * Event mouseover
- *
- * Show rating when hover on star
- * Show rating choice when click on star
- */
-document.addEventListener('mouseover', e => {
-  const target = e.target;
-  const elChooseStar = target.closest(`${classChooseStar}`);
-  if (elChooseStar) {
-    const starNumber = parseInt(elChooseStar.dataset.star);
-    const elReviewStars = elChooseStar.closest(`${classReviewStars}`);
+  /**
+   * Show rating when hover on star
+   * Show rating choice when click on star
+   */
+  handleStarHover(target) {
+    const elChooseStar = target.closest(CourseReview.selectors.classChooseStar);
+    if (elChooseStar) {
+      const starNumber = parseInt(elChooseStar.dataset.star);
+      const elReviewStars = elChooseStar.closest(CourseReview.selectors.classReviewStars);
+      this.updateStarHover(elReviewStars, starNumber);
+    } else {
+      const elReviewFields = document.querySelectorAll(CourseReview.selectors.classReviewFields);
+      if (!elReviewFields.length) {
+        return;
+      }
+      elReviewFields.forEach(elReviewField => {
+        const elRatingChoice = elReviewField.querySelector('input[name="rating"]');
+        const starChoice = elRatingChoice ? elRatingChoice.value : 0;
+        const elReviewStars = elReviewField.querySelector(CourseReview.selectors.classReviewStars);
+        this.updateStarHover(elReviewStars, starChoice);
+      });
+    }
+  }
+  updateStarHover(elReviewStars, starNumber) {
+    if (!elReviewStars) {
+      return;
+    }
     for (let i = 1; i < 6; i++) {
-      const elReviewStar = elReviewStars.querySelector('li[data-star="' + i + '"]');
+      const elReviewStar = elReviewStars.querySelector(`li[data-star="${i}"]`);
+      if (!elReviewStar) {
+        continue;
+      }
       const elReviewStarSpan = elReviewStar.querySelector('span');
+      if (!elReviewStarSpan) {
+        continue;
+      }
       if (i <= starNumber) {
         elReviewStarSpan.classList.add('hover');
       } else {
         elReviewStarSpan.classList.remove('hover');
       }
     }
-  } else {
-    const elReviewFields = document.querySelectorAll('.review-fields');
-    if (!elReviewFields.length) {
-      return;
-    }
-    elReviewFields.forEach(elReviewField => {
-      const elRatingChoice = elReviewField.querySelector('input[name="rating"]');
-      const starChoice = elRatingChoice.value || 0;
-      const elReviewStars = elReviewField.querySelector(`${classReviewStars}`);
-      for (let i = 1; i < 6; i++) {
-        const elReviewStar = elReviewStars.querySelector('li[data-star="' + i + '"]');
-        const elReviewStarSpan = elReviewStar.querySelector('span');
-        if (i <= starChoice) {
-          elReviewStarSpan.classList.add('hover');
-        } else {
-          elReviewStarSpan.classList.remove('hover');
-        }
-      }
-    });
   }
-});
+}
+const courseReview = new CourseReview();
+courseReview.init();
 })();
 
 /******/ })()

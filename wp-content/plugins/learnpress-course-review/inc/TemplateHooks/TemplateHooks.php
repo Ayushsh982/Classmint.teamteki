@@ -60,16 +60,27 @@ class TemplateHooks {
 			add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ), 10, 2 );
 			add_action( 'edit_comment', [ $this, 'save_review' ], 10, 2 );
 			// Add submenu Course Review to learnpress menu
-			add_action(
-				'admin_menu',
-				function () {
-					add_submenu_page(
-						'learn_press',
-						__( 'Course Reviews', 'learnpress-course-review' ),
-						__( 'Course Reviews', 'learnpress-course-review' ),
-						'manage_options',
-						home_url( '/wp-admin/edit-comments.php?comment_type=review' )
+			add_filter(
+				'learn-press/wp-menus',
+				function ( array $menu_items ): array {
+					$menu_items['course-reviews'] = array(
+						'id'         => home_url( '/wp-admin/edit-comments.php?comment_type=review' ),
+						'menu_title' => __( 'Course Reviews', 'learnpress-course-review' ),
+						'page_title' => __( 'Course Reviews', 'learnpress-course-review' ),
+						'capability' => 'manage_options',
+						'callback'   => false,
 					);
+
+					return $menu_items;
+				}
+			);
+			// Add course reviews to the admin menu content group.
+			add_filter(
+				'learn-press/wp-admin/menu-group',
+				function ( array $group_menus ): array {
+					$group_menus['operations']['course-reviews'] = home_url( '/wp-admin/edit-comments.php?comment_type=review' );
+
+					return $group_menus;
 				}
 			);
 		}
@@ -355,7 +366,7 @@ class TemplateHooks {
 
 			// Clear cache
 			$CourseReviewCache = new CourseReviewCache( true );
-			$CourseReviewCache->clean_rating( $comment->comment_post_ID, $comment->user_id );
+			$CourseReviewCache->clean_rating( $comment->comment_post_ID );
 		} catch ( Throwable $e ) {
 			LP_Debug::error_log( $e );
 		}

@@ -27,7 +27,7 @@ class CourseRatingTemplate {
 
 	public $addon;
 
-	public function init() {
+	public function init(): void {
 		$this->addon = LP_Addon_Course_Review_Preload::$addon;
 		add_action( 'learn-press/course-review/rating-reviews', array( $this, 'layout_rating_reviews' ), 10, 2 );
 		add_filter( 'lp/rest/ajax/allow_callback', [ $this, 'allow_callback' ] );
@@ -308,7 +308,7 @@ class CourseRatingTemplate {
 					'<li>
 						<label>%s<span class="required">*</span></label>
 						%s',
-					esc_html__( 'Rating (click to choice)', 'learnpress-course-review' ),
+					esc_html__( 'Rating (click to choose)', 'learnpress-course-review' ),
 					$html_stars
 				),
 				'field_actions' => sprintf(
@@ -394,7 +394,7 @@ class CourseRatingTemplate {
 						'wrapper-info_end'         => '</div>',
 						'title'                    => sprintf(
 							'<h5 class="course-review-title">%s</h5>',
-							wp_kses_post( $review->title ?? '' )
+							esc_html( $review->title ?? '' )
 						),
 						'content'                  => sprintf(
 							'<div class="review-content">%s</div>',
@@ -635,7 +635,7 @@ class CourseRatingTemplate {
 	 *
 	 * @return stdClass
 	 * @since 4.1.6
-	 * @version 1.0.0
+	 * @version 1.0.1
 	 */
 	public static function submit_review( array $settings = [] ) {
 		$content             = new stdClass();
@@ -644,10 +644,23 @@ class CourseRatingTemplate {
 		$settings['user_id'] = get_current_user_id();
 		$submit_rs           = LP_Addon_Course_Review_Preload::$addon->submit_review( $settings );
 		if ( $submit_rs instanceof WP_Error ) {
-			$content->content = $submit_rs->get_error_message();
+			$content->message = $submit_rs->get_error_message();
 		} else {
-			$content->status  = 'success';
-			$content->content = __( 'Your review has been submitted and is awaiting approve.', 'learnpress-course-review' );
+			$comment = get_comment( $submit_rs );
+
+			if ( $comment && '1' === $comment->comment_approved ) {
+				$content->status  = 'success';
+				$content->message = __(
+					'Your review has been approved.',
+					'learnpress-course-review'
+				);
+			} else {
+				$content->status  = 'success';
+				$content->message = __(
+					'Your review has been submitted and is awaiting approve.',
+					'learnpress-course-review'
+				);
+			}
 		}
 
 		return $content;

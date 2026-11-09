@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the LearnPress - Course Review plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: LearnPress - Course Review 4.2.0\n"
+"Project-Id-Version: LearnPress - Course Review 4.2.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/learnpress-course-review\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-01-16T07:28:06+03:00\n"
+"POT-Creation-Date: 2026-11-02T08:57:50+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: learnpress-course-review\n"
@@ -64,46 +64,46 @@ msgstr ""
 msgid "Course ID:"
 msgstr ""
 
-#: inc/load.php:128
+#: inc/load.php:126
 msgid "Enable reviews"
 msgstr ""
 
-#: inc/load.php:129
+#: inc/load.php:127
 msgid "Show reviews for this course"
 msgstr ""
 
-#: inc/load.php:282
+#: inc/load.php:280
 msgid "Course review"
 msgstr ""
 
-#: inc/load.php:298
+#: inc/load.php:296
 #: inc/TemplateHooks/CourseRatingTemplate.php:560
 #: inc/TemplateHooks/CourseRatingTemplate.php:612
 #: templates/list-reviews.php:33
 msgid "Reviews"
 msgstr ""
 
-#: inc/load.php:583
+#: inc/load.php:581
 msgid "Course is invalid!"
 msgstr ""
 
-#: inc/load.php:588
+#: inc/load.php:586
 msgid "User is invalid!"
 msgstr ""
 
-#: inc/load.php:592
+#: inc/load.php:590
 msgid "Rating is requirement!"
 msgstr ""
 
-#: inc/load.php:596
+#: inc/load.php:594
 msgid "Title is not empty!"
 msgstr ""
 
-#: inc/load.php:600
+#: inc/load.php:598
 msgid "Content is not empty!"
 msgstr ""
 
-#: inc/load.php:604
+#: inc/load.php:602
 msgid "You can not submit review."
 msgstr ""
 
@@ -153,7 +153,7 @@ msgstr ""
 
 #: inc/rest-api/jwt/class-lp-rest-review-v1-controller.php:158
 #: inc/TemplateHooks/CourseRatingTemplate.php:489
-#: inc/TemplateHooks/CourseRatingTemplate.php:650
+#: inc/TemplateHooks/CourseRatingTemplate.php:659
 #: templates/item-review-wait-approve.php:27
 msgid "Your review has been submitted and is awaiting approve."
 msgstr ""
@@ -174,7 +174,7 @@ msgid "Write a review"
 msgstr ""
 
 #: inc/TemplateHooks/CourseRatingTemplate.php:311
-msgid "Rating (click to choice)"
+msgid "Rating (click to choose)"
 msgstr ""
 
 #: inc/TemplateHooks/CourseRatingTemplate.php:321
@@ -199,6 +199,10 @@ msgid_plural "Ratings"
 msgstr[0] ""
 msgstr[1] ""
 
+#: inc/TemplateHooks/CourseRatingTemplate.php:653
+msgid "Your review has been approved."
+msgstr ""
+
 #: inc/TemplateHooks/FilterCourseRatingTemplate.php:67
 #: inc/TemplateHooks/TemplateHooks.php:68
 #: inc/TemplateHooks/TemplateHooks.php:69
@@ -217,20 +221,25 @@ msgstr ""
 msgid "Average Ratings"
 msgstr ""
 
-#: inc/TemplateHooks/TemplateHooks.php:211
+#: inc/TemplateHooks/TemplateHooks.php:222
 msgid "Review"
 msgstr ""
 
-#: inc/TemplateHooks/TemplateHooks.php:271
+#: inc/TemplateHooks/TemplateHooks.php:282
 msgid "Course Rating"
 msgstr ""
 
-#: inc/TemplateHooks/TemplateHooks.php:279
+#: inc/TemplateHooks/TemplateHooks.php:290
 msgid "Review rated"
 msgstr ""
 
-#: inc/TemplateHooks/TemplateHooks.php:286
+#: inc/TemplateHooks/TemplateHooks.php:297
 msgid "Review title"
+msgstr ""
+
+#: learnpress-course-review.php:151
+#, php-format
+msgid "Addon Course Review require install LearnPress version %s or later"
 msgstr ""
 
 #: templates/form-submit-review.php:63

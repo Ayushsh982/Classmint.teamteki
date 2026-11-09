@@ -39,14 +39,14 @@ if ( ! isset( $review ) ) {
 		?>
 		<p class="review-title">
 			<?php do_action( 'learn_press_before_review_title' ); ?>
-			<?php echo $review->title ?? ''; ?>
+			<?php echo esc_html( $review->title ?? '' ); ?>
 			<?php do_action( 'learn_press_after_review_title' ); ?>
 		</p>
 	</div>
 	<div class="review-text">
 		<div class="review-content">
 			<?php do_action( 'learn_press_before_review_content' ); ?>
-			<?php echo $review->content ?? ''; ?>
+			<?php echo wp_kses_post( $review->content ?? '' ); ?>
 			<?php do_action( 'learn_press_after_review_content' ); ?>
 		</div>
 	</div>

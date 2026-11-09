@@ -31,7 +31,7 @@ class CourseReviewWidget extends WP_Widget {
 		);
 	}
 
-	public function init() {
+	public function init(): void {
 	}
 
 	/**
