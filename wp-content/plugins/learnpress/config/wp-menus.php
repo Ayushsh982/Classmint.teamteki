@@ -99,7 +99,7 @@ $menu_items = apply_filters(
 		],
 		// Taxonomy sub-menus - no callback, only the URL as the slug.
 		'categories'       => [
-			'id'         => 'edit-tags.php?taxonomy=course_category',
+			'id'         => 'edit-tags.php?taxonomy=course_category&post_type=' . LP_COURSE_CPT,
 			'menu_title' => __( 'Categories', 'learnpress' ),
 			'page_title' => __( 'Categories', 'learnpress' ),
 			'capability' => 'manage_options',
@@ -107,7 +107,7 @@ $menu_items = apply_filters(
 			'callback'   => false,
 		],
 		'tags'             => [
-			'id'         => 'edit-tags.php?taxonomy=course_tag',
+			'id'         => 'edit-tags.php?taxonomy=course_tag&post_type=' . LP_COURSE_CPT,
 			'menu_title' => __( 'Tags', 'learnpress' ),
 			'page_title' => __( 'Tags', 'learnpress' ),
 			'capability' => 'manage_options',
@@ -125,8 +125,8 @@ $group_menus = apply_filters(
 			'lessons'         => 'edit.php?post_type=' . LP_LESSON_CPT,
 			'quizzes'         => 'edit.php?post_type=' . LP_QUIZ_CPT,
 			'questions'       => 'edit.php?post_type=' . LP_QUESTION_CPT,
-			'course_category' => 'edit-tags.php?taxonomy=course_category',
-			'course_tag'      => 'edit-tags.php?taxonomy=course_tag',
+			'course_category' => 'edit-tags.php?taxonomy=course_category&post_type=lp_course',
+			'course_tag'      => 'edit-tags.php?taxonomy=course_tag&post_type=lp_course',
 		],
 		'operations' => [
 			'orders'     => 'edit.php?post_type=' . LP_ORDER_CPT,

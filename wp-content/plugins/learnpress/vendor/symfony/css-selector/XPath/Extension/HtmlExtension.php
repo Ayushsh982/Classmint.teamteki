@@ -28,13 +28,6 @@ use Symfony\Component\CssSelector\XPath\XPathExpr;
  */
 class HtmlExtension extends AbstractExtension
 {
-    // Each disabled fieldset ancestor disables the element, except the one whose first legend
-    // child the element sits in. Those excepted fieldsets are exactly the parents of the
-    // ancestors-or-self that are a first legend child of a disabled fieldset, one for one, so
-    // the element is disabled as soon as the first count exceeds the second one. Counting keeps
-    // this to two cheap ancestor walks instead of a predicate run on every ancestor.
-    private const DISABLING_FIELDSET = 'count(ancestor::fieldset[@disabled]) > count(ancestor-or-self::legend[not(preceding-sibling::legend)][parent::fieldset[@disabled]])';
-
     public function __construct(Translator $translator)
     {
         $translator
@@ -43,24 +36,30 @@ class HtmlExtension extends AbstractExtension
             ->setFlag(NodeExtension::ATTRIBUTE_NAME_IN_LOWER_CASE, true);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getPseudoClassTranslators(): array
     {
         return [
-            'checked' => $this->translateChecked(...),
-            'link' => $this->translateLink(...),
-            'disabled' => $this->translateDisabled(...),
-            'enabled' => $this->translateEnabled(...),
-            'selected' => $this->translateSelected(...),
-            'invalid' => $this->translateInvalid(...),
-            'hover' => $this->translateHover(...),
-            'visited' => $this->translateVisited(...),
+            'checked' => [$this, 'translateChecked'],
+            'link' => [$this, 'translateLink'],
+            'disabled' => [$this, 'translateDisabled'],
+            'enabled' => [$this, 'translateEnabled'],
+            'selected' => [$this, 'translateSelected'],
+            'invalid' => [$this, 'translateInvalid'],
+            'hover' => [$this, 'translateHover'],
+            'visited' => [$this, 'translateVisited'],
         ];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getFunctionTranslators(): array
     {
         return [
-            'lang' => $this->translateLang(...),
+            'lang' => [$this, 'translateLang'],
         ];
     }
 
@@ -98,10 +97,10 @@ class HtmlExtension extends AbstractExtension
                 ." or name(.) = 'button'"
                 ." or name(.) = 'select'"
                 ." or name(.) = 'textarea'"
-                ." or name(.) = 'fieldset'"
             .')'
-            .' and '.self::DISABLING_FIELDSET
+            .' and ancestor::fieldset[@disabled]'
         );
+        // todo: in the second half, add "and is not a descendant of that fieldset element's first legend element child, if any."
     }
 
     public function translateEnabled(XPathExpr $xpath): XPathExpr
@@ -116,6 +115,7 @@ class HtmlExtension extends AbstractExtension
             .') or ('
                 .'('
                     ."name(.) = 'command'"
+                    ." or name(.) = 'fieldset'"
                     ." or name(.) = 'optgroup'"
                 .')'
                 .' and not(@disabled)'
@@ -126,9 +126,8 @@ class HtmlExtension extends AbstractExtension
                     ." or name(.) = 'select'"
                     ." or name(.) = 'textarea'"
                     ." or name(.) = 'keygen'"
-                    ." or name(.) = 'fieldset'"
                 .')'
-                .' and not(@disabled or '.self::DISABLING_FIELDSET.')'
+                .' and not (@disabled or ancestor::fieldset[@disabled])'
             .') or ('
                 ."name(.) = 'option' and not("
                     .'@disabled or ancestor::optgroup[@disabled]'
@@ -149,7 +148,7 @@ class HtmlExtension extends AbstractExtension
             }
         }
 
-        return $xpath->addCondition(\sprintf(
+        return $xpath->addCondition(sprintf(
             'ancestor-or-self::*[@lang][1][starts-with(concat('
             ."translate(@%s, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '-')"
             .', %s)]',
@@ -178,6 +177,9 @@ class HtmlExtension extends AbstractExtension
         return $xpath->addCondition('0');
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getName(): string
     {
         return 'html';

@@ -1878,10 +1878,6 @@ button.learnpress_avatar__button + button {
  *
  * @since 4.3.3
  */
-.lp-enrolled-students h1.wp-heading-inline {
-  margin-bottom: 24px;
-}
-
 .lp-enrolled-students-table-wrap {
   margin-top: 15px;
 }
@@ -2190,12 +2186,39 @@ button.learnpress_avatar__button + button {
 }
 
 .lp-btn-view-students {
-  margin-top: 10px;
   white-space: nowrap;
   display: block;
   padding: 0;
   border: none;
   background: none;
+}
+
+.lp-course-student-counter {
+  margin-top: 10px;
+  display: inline-block;
+  height: 20px;
+  padding: 0 10px;
+  border-radius: 20px;
+  color: #94a3b8;
+  background: #f8fafc;
+  font-weight: bold;
+  line-height: 1.25rem;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.08);
+}
+.lp-course-student-counter.disabled {
+  background: #ddd;
+}
+
+a .lp-course-student-counter {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+a .lp-course-student-counter:hover {
+  background: #2563eb;
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1.5px);
 }
 
 .wrapper-profile-header {
@@ -5068,6 +5091,141 @@ body.twentyseventeen.learnpress-page #primary article.page .lp-entry-content {
   content: "";
 }
 
+/**
+ * Tooltip - pure CSS, no JavaScript.
+ *
+ * USAGE
+ *   <span class="lp-tooltip" data-tip="message">?</span>
+ *
+ * CONFIG (all in HTML)
+ *   data-tip="..."        Text shown in the bubble (required).
+ *   data-pos="..."        Side of the trigger: top (default), bottom, left, right.
+ *   style="--lp-tip-width: 300px"   Max width of the bubble (default 200px).
+ *   style="--lp-tip-bg: #0073aa"    Bubble and arrow color (default dark gray).
+ *   style="--lp-tip-color: #fff"    Text color.
+ *
+ * EXAMPLE
+ *   <span class="lp-tooltip" data-tip="Hiện ở dưới" data-pos="bottom">?</span>
+ *   <span class="lp-tooltip" data-tip="Dài hơn" style="--lp-tip-width: 320px" tabindex="0">?</span>
+ *
+ * NOTES
+ *   - Shows on hover. Add tabindex="0" to make it show on keyboard focus too.
+ *   - Do not put it inside an element with overflow: hidden, or the bubble gets clipped.
+ *   - Text wraps automatically inside --lp-tip-width.
+ */
+.lp-tooltip {
+  --lp-tip-bg: #333333;
+  --lp-tip-color: #fff;
+  --lp-tip-width: 200px;
+  --lp-tip-gap: 8px;
+  position: relative;
+  display: inline-block;
+}
+.lp-tooltip::after, .lp-tooltip::before {
+  position: absolute;
+  z-index: 99999;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.lp-tooltip::after {
+  content: attr(data-tip);
+  width: max-content;
+  max-width: var(--lp-tip-width);
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: var(--lp-tip-bg);
+  color: var(--lp-tip-color);
+  font-size: 12px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.4;
+  text-align: right;
+  white-space: normal;
+}
+.lp-tooltip::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+}
+.lp-tooltip::after {
+  bottom: calc(100% + var(--lp-tip-gap));
+  right: 50%;
+  transform: translate(50%, 4px);
+}
+.lp-tooltip::before {
+  bottom: calc(100% + var(--lp-tip-gap) - 6px);
+  right: 50%;
+  margin-right: -6px;
+  border-top-color: var(--lp-tip-bg);
+  border-bottom-width: 0;
+}
+.lp-tooltip[data-pos=bottom]::after {
+  top: calc(100% + var(--lp-tip-gap));
+  bottom: auto;
+  transform: translate(50%, -4px);
+}
+.lp-tooltip[data-pos=bottom]::before {
+  top: calc(100% + var(--lp-tip-gap) - 6px);
+  bottom: auto;
+  border-top-width: 0;
+  border-bottom-color: var(--lp-tip-bg);
+  border-bottom-width: 6px;
+}
+.lp-tooltip[data-pos=left]::after {
+  left: calc(100% + var(--lp-tip-gap));
+  bottom: auto;
+  right: auto;
+  top: 50%;
+  transform: translate(-4px, -50%);
+}
+.lp-tooltip[data-pos=left]::before {
+  left: calc(100% + var(--lp-tip-gap) - 6px);
+  bottom: auto;
+  right: auto;
+  top: 50%;
+  margin: -6px 0 0;
+  border-top-width: 6px;
+  border-bottom-width: 6px;
+  border-right-width: 6px;
+  border-left-width: 0;
+  border-right-color: var(--lp-tip-bg);
+}
+.lp-tooltip[data-pos=right]::after {
+  right: calc(100% + var(--lp-tip-gap));
+  bottom: auto;
+  left: auto;
+  top: 50%;
+  transform: translate(4px, -50%);
+}
+.lp-tooltip[data-pos=right]::before {
+  right: calc(100% + var(--lp-tip-gap) - 6px);
+  bottom: auto;
+  left: auto;
+  top: 50%;
+  margin: -6px 0 0;
+  border-top-width: 6px;
+  border-bottom-width: 6px;
+  border-left-width: 6px;
+  border-right-width: 0;
+  border-left-color: var(--lp-tip-bg);
+}
+.lp-tooltip:hover::after, .lp-tooltip:hover::before, .lp-tooltip:focus-visible::after, .lp-tooltip:focus-visible::before {
+  opacity: 1;
+  visibility: visible;
+}
+.lp-tooltip:hover::after, .lp-tooltip:focus-visible::after {
+  transform: translate(50%, 0);
+}
+.lp-tooltip:hover[data-pos=bottom]::after, .lp-tooltip:focus-visible[data-pos=bottom]::after {
+  transform: translate(50%, 0);
+}
+.lp-tooltip:hover[data-pos=left]::after, .lp-tooltip:hover[data-pos=right]::after, .lp-tooltip:focus-visible[data-pos=left]::after, .lp-tooltip:focus-visible[data-pos=right]::after {
+  transform: translate(0, -50%);
+}
+
 body.lp-preview.admin-bar #learn-press-content-item {
   top: 32px !important;
 }
@@ -7375,6 +7533,7 @@ input[type=radio]:nth-child(19):checked ~ .switch-btn:nth-child(20)::before {
   display: block;
   margin-bottom: 4px;
   font-weight: 600;
+  line-height: 1.3;
 }
 .popup-header__inner .course-title .curriculum-info {
   display: flex;
@@ -9225,7 +9384,9 @@ table.lp-list-table.profile-list-quizzes tfoot td {
 * @version 1.0.0
 */
 .lp-form-filter {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -9263,8 +9424,10 @@ table.lp-list-table.profile-list-quizzes tfoot td {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-height: 40px;
 }
 .lp-form-filter__actions {
+  flex: 0 0 auto;
   display: flex;
   gap: 8px;
   align-items: center;

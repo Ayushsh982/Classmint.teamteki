@@ -187,6 +187,11 @@ class LP_Checkout {
 				break;
 		}
 
+		// Check not enable guest checkout
+		if ( ! is_user_logged_in() && ! $this->is_enable_guest_checkout() ) {
+			throw new Exception( __( 'You must be logged in to checkout.', 'learnpress' ) );
+		}
+
 		// Set session, cart for user have just login/register success.
 		if ( in_array( $this->checkout_action, [ 'login', 'register' ] ) ) {
 			foreach ( $data_session_before_user_login as $key => $item ) {
@@ -455,8 +460,6 @@ class LP_Checkout {
 		);
 
 		try {
-			$lp_session = LearnPress::instance()->session;
-
 			do_action( 'learn-press/before-checkout' );
 
 			$cart = LearnPress::instance()->cart;
@@ -526,15 +529,9 @@ class LP_Checkout {
 				}
 			}
 
-			// Create order if not handle done.
-			$order_id = $lp_session->get( 'order_awaiting_payment', 0 );
-			if ( ! $order_id ) {
-				$order_id = $this->create_order();
-				if ( is_wp_error( $order_id ) ) {
-					throw new Exception( $order_id->get_error_message() );
-				}
-
-				$lp_session->set( 'order_awaiting_payment', $order_id, true );
+			$order_id = $this->create_order();
+			if ( is_wp_error( $order_id ) ) {
+				throw new Exception( $order_id->get_error_message() );
 			}
 
 			// allow Third-party hook: send email and more...

@@ -17262,7 +17262,9 @@ table.lp-list-table.profile-list-quizzes tfoot td {
 * @version 1.0.0
 */
 .lp-form-filter {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -17300,8 +17302,10 @@ table.lp-list-table.profile-list-quizzes tfoot td {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-height: 40px;
 }
 .lp-form-filter__actions {
+  flex: 0 0 auto;
   display: flex;
   gap: 8px;
   align-items: center;
