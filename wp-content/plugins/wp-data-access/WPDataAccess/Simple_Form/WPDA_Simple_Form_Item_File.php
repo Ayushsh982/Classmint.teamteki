@@ -41,11 +41,6 @@ namespace WPDataAccess\Simple_Form {
 		 * Overwrite method
 		 */
 		protected function show_item() {
-			if ( isset( $_FILES[ $this->item_name ] ) && '' !== $_FILES[ $this->item_name ]['name'] ) { // phpcs:ignore
-				// Process uploaded file.
-				// TODO
-				// var_dump($_FILES[ $this->item_name ]);
-			}
 			?>
 			<label>
 				Select file to upload

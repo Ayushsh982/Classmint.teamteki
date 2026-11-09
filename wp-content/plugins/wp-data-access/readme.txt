@@ -4,7 +4,7 @@ Contributors: wpdataaccess, peterschulznl, maxxschulz, kimmyx, freemius
 Tags: table builder, data table, datatable, app builder, dashboard
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 5.5.90
+Stable tag: 5.5.92
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,20 @@ WP Data Access is designed as a **true no-code builder**: everything works out o
 And you're all set! 🚀
 
 == Changelog ==
+
+= 5.5.92 =
+* Released 2026-11-06
+* Added: Option to disable WHERE clause check on insert
+* Fixed: Table drop-down list stopped working
+
+= 5.5.91 =
+* Released 2026-11-05
+* Fixed: Data Designer missing nonce validation
+* Fixed: Reconcile not processing null values correctly
+* Fixed: Content not properly escaped
+* Fixed: Prepare environment var substitutions
+* Fixed: Verify engine and collation in Dat Designer
+* Fixed: Insert fails when default where is defined
 
 = 5.5.90 =
 * Released 2026-10-28

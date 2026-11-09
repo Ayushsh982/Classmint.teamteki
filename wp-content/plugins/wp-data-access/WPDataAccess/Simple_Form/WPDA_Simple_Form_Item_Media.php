@@ -81,7 +81,7 @@ namespace WPDataAccess\Simple_Form {
 			} else {
 				// Column supports multiple media files
 				if ( null !== $this->item_value && '' !== $this->item_value ) {
-					$media_ids = explode( ',', $this->item_value ); // phpcs:ignore -- 8.1 proof
+					$media_ids = explode( ',', $this->item_value );
 					foreach ( $media_ids as $media_id ) {
 						$url = wp_get_attachment_url( $media_id );
 						if ( false !== $url ) {
@@ -157,7 +157,7 @@ namespace WPDataAccess\Simple_Form {
 						"<?php echo esc_attr( $this->data_type ); ?>",
 						"<?php echo esc_attr( $this->media_frame_title ); ?>",
 						"<?php echo esc_attr( $this->media_frame_button ); ?>",
-						['<?php echo implode( '\',\'', explode( ',', $this->media_types ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?>']
+                        <?php echo wp_json_encode( array_map( 'trim', explode( ',', $this->media_types ) ) ); ?>
 					);
 				});
 			</script>

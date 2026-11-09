@@ -9,12 +9,12 @@ class WPDA_Tree extends WPDA_API_Core {
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'tree/dbs', array(
             'methods'             => array('POST'),
             'callback'            => array($this, 'tree_dbs'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'admins_only'),
         ) );
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'tree/tbl', array(
             'methods'             => array('POST'),
             'callback'            => array($this, 'tree_tbl'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'admins_only'),
             'args'                => array(
                 'dbs' => $this->get_param( 'dbs' ),
             ),
@@ -22,7 +22,7 @@ class WPDA_Tree extends WPDA_API_Core {
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'tree/vws', array(
             'methods'             => array('POST'),
             'callback'            => array($this, 'tree_vws'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'admins_only'),
             'args'                => array(
                 'dbs' => $this->get_param( 'dbs' ),
             ),
@@ -30,7 +30,7 @@ class WPDA_Tree extends WPDA_API_Core {
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'tree/cls', array(
             'methods'             => array('POST'),
             'callback'            => array($this, 'tree_cls'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'admins_only'),
             'args'                => array(
                 'dbs' => $this->get_param( 'dbs' ),
                 'tbl' => $this->get_param( 'tbl' ),
@@ -39,7 +39,7 @@ class WPDA_Tree extends WPDA_API_Core {
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'tree/idx', array(
             'methods'             => array('POST'),
             'callback'            => array($this, 'tree_idx'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'admins_only'),
             'args'                => array(
                 'dbs' => $this->get_param( 'dbs' ),
                 'tbl' => $this->get_param( 'tbl' ),
@@ -48,7 +48,7 @@ class WPDA_Tree extends WPDA_API_Core {
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'tree/trg', array(
             'methods'             => array('POST'),
             'callback'            => array($this, 'tree_trg'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'admins_only'),
             'args'                => array(
                 'dbs' => $this->get_param( 'dbs' ),
                 'tbl' => $this->get_param( 'tbl' ),
@@ -57,7 +57,7 @@ class WPDA_Tree extends WPDA_API_Core {
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'tree/frk', array(
             'methods'             => array('POST'),
             'callback'            => array($this, 'tree_frk'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'admins_only'),
             'args'                => array(
                 'dbs' => $this->get_param( 'dbs' ),
                 'tbl' => $this->get_param( 'tbl' ),
@@ -66,7 +66,7 @@ class WPDA_Tree extends WPDA_API_Core {
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'tree/fnc', array(
             'methods'             => array('POST'),
             'callback'            => array($this, 'tree_fnc'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'admins_only'),
             'args'                => array(
                 'dbs' => $this->get_param( 'dbs' ),
             ),
@@ -74,111 +74,57 @@ class WPDA_Tree extends WPDA_API_Core {
         register_rest_route( WPDA_API::WPDA_NAMESPACE, 'tree/prc', array(
             'methods'             => array('POST'),
             'callback'            => array($this, 'tree_prc'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'admins_only'),
             'args'                => array(
                 'dbs' => $this->get_param( 'dbs' ),
             ),
         ) );
     }
 
-    public function tree_dbs( $request ) {
-        if ( !$this->current_user_can_access() ) {
-            return $this->unauthorized();
-        }
-        if ( !$this->current_user_token_valid( $request ) ) {
-            return $this->invalid_nonce();
-        }
+    public function tree_dbs() {
         return $this->get_dbs();
     }
 
     public function tree_tbl( $request ) {
-        if ( !$this->current_user_can_access() ) {
-            return $this->unauthorized();
-        }
-        if ( !$this->current_user_token_valid( $request ) ) {
-            return $this->invalid_nonce();
-        }
         $dbs = $request->get_param( 'dbs' );
         return $this->get_tbl( $dbs );
     }
 
     public function tree_vws( $request ) {
-        if ( !$this->current_user_can_access() ) {
-            return $this->unauthorized();
-        }
-        if ( !$this->current_user_token_valid( $request ) ) {
-            return $this->invalid_nonce();
-        }
         $dbs = $request->get_param( 'dbs' );
         return $this->get_vws( $dbs );
     }
 
     public function tree_cls( $request ) {
-        if ( !$this->current_user_can_access() ) {
-            return $this->unauthorized();
-        }
-        if ( !$this->current_user_token_valid( $request ) ) {
-            return $this->invalid_nonce();
-        }
         $dbs = $request->get_param( 'dbs' );
         $tbl = $request->get_param( 'tbl' );
         return $this->get_cls( $dbs, $tbl );
     }
 
     public function tree_idx( $request ) {
-        if ( !$this->current_user_can_access() ) {
-            return $this->unauthorized();
-        }
-        if ( !$this->current_user_token_valid( $request ) ) {
-            return $this->invalid_nonce();
-        }
         $dbs = $request->get_param( 'dbs' );
         $tbl = $request->get_param( 'tbl' );
         return $this->get_idx( $dbs, $tbl );
     }
 
     public function tree_trg( $request ) {
-        if ( !$this->current_user_can_access() ) {
-            return $this->unauthorized();
-        }
-        if ( !$this->current_user_token_valid( $request ) ) {
-            return $this->invalid_nonce();
-        }
         $dbs = $request->get_param( 'dbs' );
         $tbl = $request->get_param( 'tbl' );
         return $this->get_trg( $dbs, $tbl );
     }
 
     public function tree_frk( $request ) {
-        if ( !$this->current_user_can_access() ) {
-            return $this->unauthorized();
-        }
-        if ( !$this->current_user_token_valid( $request ) ) {
-            return $this->invalid_nonce();
-        }
         $dbs = $request->get_param( 'dbs' );
         $tbl = $request->get_param( 'tbl' );
         return $this->get_frk( $dbs, $tbl );
     }
 
     public function tree_fnc( $request ) {
-        if ( !$this->current_user_can_access() ) {
-            return $this->unauthorized();
-        }
-        if ( !$this->current_user_token_valid( $request ) ) {
-            return $this->invalid_nonce();
-        }
         $dbs = $request->get_param( 'dbs' );
         return $this->get_fnc( $dbs );
     }
 
     public function tree_prc( $request ) {
-        if ( !$this->current_user_can_access() ) {
-            return $this->unauthorized();
-        }
-        if ( !$this->current_user_token_valid( $request ) ) {
-            return $this->invalid_nonce();
-        }
         $dbs = $request->get_param( 'dbs' );
         return $this->get_prc( $dbs );
     }
@@ -215,14 +161,14 @@ class WPDA_Tree extends WPDA_API_Core {
         global $wpdb;
         $context = array(
             'env' => $this->get_env(),
-            'wp'  => [
+            'wp'  => array(
                 'roles'  => $this->get_wp_roles(),
                 'users'  => $this->get_wp_users(),
                 'home'   => admin_url( 'admin.php' ),
                 'tables' => array_values( $wpdb->tables() ),
                 'zip'    => class_exists( '\\ZipArchive' ),
                 'upload' => @ini_get( 'upload_max_filesize' ),
-            ],
+            ),
         );
         if ( 'anonymous' !== WPDA::get_current_user_login() ) {
             $context['wp']['nonce'] = implode( '-', array(wp_create_nonce( 'wpda-export-' . WPDA::get_current_user_login() )) );
@@ -249,7 +195,7 @@ class WPDA_Tree extends WPDA_API_Core {
         if ( $wpdadb === null ) {
             return $this->WPDA_Rest_Response( '', array() );
         }
-        $query = $wpdadb->prepare( "\n\t\t\t\t\tselect table_name as table_name\n\t\t\t\t\t  from information_schema.tables\n\t\t\t\t\t where table_schema = %s\n\t\t\t\t\t   and table_type not in ('VIEW', 'SYSTEM VIEW')\n\t\t\t\t\t order by table_name\n\t\t\t\t", array($wpdadb->dbname) );
+        $query = $wpdadb->prepare( "\n\t\t\t\t\tselect table_name as table_name,\n\t\t\t\t\t       table_type as table_type,\n\t\t\t\t\t       table_rows as table_rows,\n\t\t\t\t\t       auto_increment as auto_increment,\n\t\t\t\t\t       engine as engine,\n\t\t\t\t\t       data_length+index_length as total_size,\n\t\t\t\t\t       create_time as create_time,\n\t\t\t\t\t       table_collation as table_collation\n\t\t\t\t\t  from information_schema.tables\n\t\t\t\t\t where table_schema = %s\n\t\t\t\t\t   and table_type not in ('VIEW', 'SYSTEM VIEW')\n\t\t\t\t\t order by table_name\n\t\t\t\t", array($wpdadb->dbname) );
         $context = null;
         global $wpdb;
         if ( $wpdadb->dbname === $wpdb->dbname ) {
@@ -258,7 +204,7 @@ class WPDA_Tree extends WPDA_API_Core {
                 'wpda_tables' => WPDA::get_wpda_tables(),
             );
         }
-        return $this->WPDA_Rest_Response( '', array_column( $wpdadb->get_results( $query, 'ARRAY_A' ), 'table_name' ), $context );
+        return $this->WPDA_Rest_Response( '', $wpdadb->get_results( $query, 'ARRAY_A' ), $context );
     }
 
     private function get_vws( $dbs ) {

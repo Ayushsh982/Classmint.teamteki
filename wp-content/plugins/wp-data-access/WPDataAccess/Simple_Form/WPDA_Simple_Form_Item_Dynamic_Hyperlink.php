@@ -44,13 +44,13 @@ namespace WPDataAccess\Simple_Form {
 		 * Overwrite method
 		 */
 		protected function show_item() {
-			if ( false !== strpos( ltrim( $this->hyperlink_html ), '&lt;' ) ) {
-				echo html_entity_decode( $this->hyperlink_html ); // phpcs:ignore WordPress.Security.EscapeOutput
+			if ( false !== strpos( (string) $this->hyperlink_html, '&lt;' ) ) {
+				echo wp_kses_post( html_entity_decode( $this->hyperlink_html ) );
 			} else {
-				$target = true === $this->hyperlink_target ? "target='_blank'" : '';
-				echo "<a href='{$this->hyperlink_html}' {$target}>{$this->hyperlink_label}</a>"; // phpcs:ignore WordPress.Security.EscapeOutput
+				echo '<a href="' . esc_url( $this->hyperlink_html ) . '" ' .
+				     (true === $this->hyperlink_target ? 'target="_blank"' : '') .
+				     '>' . esc_attr( $this->hyperlink_label ) . '</a>';
 			}
-
 		}
 
 	}

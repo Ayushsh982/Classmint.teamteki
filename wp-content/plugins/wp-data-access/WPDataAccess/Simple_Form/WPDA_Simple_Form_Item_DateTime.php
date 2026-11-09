@@ -80,9 +80,9 @@ namespace WPDataAccess\Simple_Form {
 				jQuery(function () {
 					jQuery.datetimepicker.setLocale('<?php echo esc_attr( substr( get_locale(), 0, 2 ) ); ?>');
 					jQuery('#<?php echo esc_attr( $this->item_name ); ?>').datetimepicker({
-						format: '<?php echo $this->date_format; // phpcs:ignore WordPress.Security.EscapeOutput ?>',
-						datepicker: <?php echo $this->date_picker; // phpcs:ignore WordPress.Security.EscapeOutput ?>,
-						timepicker: <?php echo $this->time_picker; // phpcs:ignore WordPress.Security.EscapeOutput ?>,
+						format: '<?php echo esc_attr( $this->date_format ); ?>',
+						datepicker: <?php echo esc_attr( $this->date_picker ); ?>,
+						timepicker: <?php echo esc_attr( $this->time_picker ); ?>,
 						scrollMonth: false,
 						scrollInput: false
 					});

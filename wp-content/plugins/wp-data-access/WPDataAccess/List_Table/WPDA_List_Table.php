@@ -930,20 +930,19 @@ class WPDA_List_Table extends Wordpress_Original\WP_List_Table {
                     $macro = new WPDA_Macro($hyperlink_html);
                     $hyperlink_html = $macro->exe_macro();
                     if ( '' !== $hyperlink_html ) {
-                        // Link is not empty AFTER substitution.
                         if ( false !== strpos( ltrim( $hyperlink_html ), '&lt;' ) ) {
                             return html_entity_decode( $hyperlink_html );
                         } else {
-                            $hyperlink_label = ( isset( $hyperlink->hyperlink_label ) ? $hyperlink->hyperlink_label : '' );
-                            $hyperlink_target = ( isset( $hyperlink->hyperlink_target ) ? $hyperlink->hyperlink_target : false );
-                            $target = ( true === $hyperlink_target ? "target='_blank'" : '' );
-                            if ( false === $hyperlink_target ) {
-                                $json = json_decode( $hyperlink_html, true );
-                                if ( isset( $json['url'] ) ) {
-                                    $hyperlink_target = $json['url'];
-                                }
+                            try {
+                                $hyperlink_obj = json_decode( $hyperlink_html, true );
+                            } catch ( \Exception $e ) {
                             }
-                            return "<a href='" . esc_url_raw( $hyperlink_target ) . "' {$target}>" . esc_attr( $hyperlink_label ) . "</a>";
+                            $hyperlink_label = ( isset( $hyperlink_obj['label'] ) ? $hyperlink_obj['label'] : '' );
+                            $hyperlink_url = ( isset( $hyperlink_obj['url'] ) ? $hyperlink_obj['url'] : '' );
+                            if ( '' === $hyperlink_url ) {
+                                return urldecode( esc_attr( $hyperlink_label ) );
+                            }
+                            return '<a href="' . esc_url( $hyperlink_url ) . '"' . (( isset( $hyperlink->hyperlink_target ) && true === $hyperlink->hyperlink_target ? "target='_blank'" : '' )) . '>' . urldecode( esc_attr( $hyperlink_label ) ) . '</a>';
                         }
                     } else {
                         return '';

@@ -547,7 +547,7 @@ class WPDA_Remote_Database {
     private function edit_local_database() {
         ?>
 
-			<div id="edit_local_database_form">
+			<div id="edit_local_database_form" style="display:none">
 				<label for="edit_local_database" class="database_item_label">Database name:</label>
 				<input type="text" name="edit_local_database" id="edit_local_database" readonly>
 				<a href="javascript:void(0)"
@@ -569,6 +569,7 @@ class WPDA_Remote_Database {
         ?>"
 				  onsubmit="return editdb_validate_form();"
 				  id="edit_remote_database_form"
+                  style="display:none"
 			>
 
 				<div>

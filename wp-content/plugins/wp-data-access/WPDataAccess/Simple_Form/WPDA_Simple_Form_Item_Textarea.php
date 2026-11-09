@@ -19,7 +19,7 @@ namespace WPDataAccess\Simple_Form {
 					  <?php echo $this->is_readonly ? ' disabled="disabled"' : ''; ?>
 					  <?php echo esc_attr( $this->show_context_item_events ); ?>
 					  style="vertical-align: top;"
-			><?php echo $this->show_context_column_value; // phpcs:ignore WordPress.Security.EscapeOutput ?></textarea>
+			><?php echo esc_html( $this->show_context_column_value ); ?></textarea>
 			<?php
 		}
 

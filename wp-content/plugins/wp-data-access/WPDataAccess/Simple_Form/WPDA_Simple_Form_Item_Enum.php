@@ -112,7 +112,7 @@ namespace WPDataAccess\Simple_Form {
 						'',
 						substr( substr( (string) $this->column_type, 5 ), 0, - 1 )
 					)
-				); // phpcs:ignore -- 8.1 proof
+				);
 				$value_found    = false;
 				// Check if value is in enum.
 				foreach ( $allowed_values as $allowed_value ) {

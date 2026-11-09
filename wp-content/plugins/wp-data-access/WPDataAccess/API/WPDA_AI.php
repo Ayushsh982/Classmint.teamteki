@@ -89,7 +89,6 @@ class WPDA_AI extends WPDA_API_Core {
         $model = $request['model'];
         $explain = ( $request['explain'] ? 'Write the SQL query first in a code block. After the code block, provide a clear, concise explanation of what the query does.' : 'Provide only the query without further explanation.' );
         $prompt = "\nYou are a professional MySQL consultant helping developers write SQL queries.\nAlways respond with clean, optimized MySQL code.\nPlace the query inside a single Markdown code block using triple backticks (```sql).\nDo not include a semicolon at the end of the query.\nImportant: Do not include a LIMIT clause unless the user specifically requests limiting the number of results.\nAssume the system will handle limits automatically if needed.\n{$explain}\nExample input for a user:\nWrite a join between tables dept and emp and show the average and total salaries per department.\nExpected Output:\n```sql\nSELECT d.dname AS department_name, \n       AVG(e.sal) AS average_salary, \n       SUM(e.sal) AS total_salary\nFROM dept d\nJOIN emp e ON d.deptno = e.deptno\nGROUP BY d.dname\n```\n{$prompt}\n";
-        WPDA::wpda_log_wp_error( $prompt );
         $api_key_saved = get_user_meta( get_current_user_id(), self::AI_API_KEY, true );
         if ( false === $api_key_saved || '' === $api_key_saved ) {
             $api_key = '';

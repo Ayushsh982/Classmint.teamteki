@@ -5,7 +5,7 @@
  *
  * @package WPDataAccess\Simple_Form
  */
-// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- verified on page
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- verified on page
 namespace WPDataAccess\Simple_Form;
 
 use WPDataAccess\Data_Dictionary\WPDA_List_Columns;
@@ -781,9 +781,7 @@ class WPDA_Simple_Form {
                 $id = '';
             }
             $expandable = ( isset( $fieldset['expandable'] ) && true === $fieldset['expandable'] ? true : false );
-            // phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-            $expandable_state = ( isset( $_REQUEST["wpda_fieldset_expand_{$id}"] ) ? sanitize_text_field( $_REQUEST["wpda_fieldset_expand_{$id}"] ) : 'off' );
-            // phpcs:enable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+            $expandable_state = ( isset( $_REQUEST["wpda_fieldset_expand_{$id}"] ) ? sanitize_text_field( wp_unslash( $_REQUEST["wpda_fieldset_expand_{$id}"] ) ) : 'off' );
             $expandable_icons = ( 'on' === $expandable_state ? 'minus-circle' : 'plus-circle' );
             ?>
 							<fieldset class="wpda_fieldset">
@@ -813,8 +811,6 @@ class WPDA_Simple_Form {
 									   <?php 
             echo ( $expandable && 'off' === $expandable_state ? 'style="display: none"' : '' );
             ?>
-									   cellspacing="0"
-									   cellpadding="0"
 								>
 									<?php 
             $fieldset_columns = array_flip( $fieldset['fields'] );
@@ -867,10 +863,9 @@ class WPDA_Simple_Form {
         ?>
 					<?php 
         $this->add_parent_args();
-        // phpcs:disable WordPress.Security.EscapeOutput
-        echo $this->page_number_item;
-        echo $this->add_case_sensitive_search();
-        // phpcs:enable WordPress.Security.EscapeOutput
+        echo esc_attr( $this->page_number_item );
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        $this->add_case_sensitive_search();
         wp_nonce_field( $this->get_nonce_action( false ), '_wpnonce', false );
         ?>
 					<?php 
@@ -947,13 +942,13 @@ class WPDA_Simple_Form {
 					  method="post" style="display:none"
 					  action="<?php 
         echo esc_attr( $url_back );
-        ?>">
+        ?>"
+                >
 					<?php 
         $this->add_parent_args();
-        // phpcs:disable WordPress.Security.EscapeOutput
-        echo $this->page_number_item;
-        echo $this->add_case_sensitive_search();
-        // phpcs:enable WordPress.Security.EscapeOutput
+        echo esc_attr( $this->page_number_item );
+        /** @noinspection PhpExpressionResultUnusedInspection */
+        $this->add_case_sensitive_search();
         ?>
 					<?php 
         if ( is_admin() ) {
@@ -1140,19 +1135,21 @@ class WPDA_Simple_Form {
 					});
 				});
 				<?php 
+        // JavaScript added to support specific features
         // phpcs:disable WordPress.Security.EscapeOutput
         echo $js_code;
         // phpcs:enable WordPress.Security.EscapeOutput
         ?>
+                // ???
 			</script>
 			<?php 
     }
 
     private function add_case_sensitive_search() {
         if ( isset( $_REQUEST['wpda_c'] ) && 'true' === $_REQUEST['wpda_c'] ) {
-            return '<input type="hidden" name="wpda_c" value="true">';
-        } else {
-            return '';
+            ?>
+				<input type="hidden" name="wpda_c" value="true">
+                <?php 
         }
     }
 
@@ -1358,7 +1355,7 @@ class WPDA_Simple_Form {
                     foreach ( $this->form_items as $item ) {
                         $item_name = $item->get_item_name();
                         $item_value = $item->get_item_value();
-                        $hyperlink_html = str_replace( "\$\${$item_name}\$\$", $item_value, $hyperlink_html );
+                        $hyperlink_html = str_replace( "\$\${$item_name}\$\$", (string) $item_value, (string) $hyperlink_html );
                     }
                     $item = new WPDA_Simple_Form_Item_Dynamic_Hyperlink(array(
                         'item_name'        => $hyperlink_label,
@@ -1645,4 +1642,4 @@ class WPDA_Simple_Form {
 
 }
 
-// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing
+// phpcs:enable WordPress.Security.NonceVerification.Recommended

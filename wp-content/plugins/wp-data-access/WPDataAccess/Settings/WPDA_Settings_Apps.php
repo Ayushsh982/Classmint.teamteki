@@ -16,10 +16,10 @@ namespace WPDataAccess\Settings {
         protected function add_content() {
 
             if ( isset( $_REQUEST['action'] ) ) {
-                $action = sanitize_text_field(wp_unslash($_REQUEST['action'])); // input var okay.
+                $action = sanitize_text_field(wp_unslash($_REQUEST['action']));
 
                 // Security check.
-                $wp_nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : ''; // input var okay.
+                $wp_nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
                 if ( ! wp_verify_nonce( $wp_nonce, 'wpda-apps-settings' ) ) {
                     wp_die( esc_attr__( 'ERROR: Not authorized', 'wp-data-access' ) );
                 }
@@ -27,26 +27,57 @@ namespace WPDataAccess\Settings {
                 if ( 'save' === $action ) {
 
                     if (
+                            isset( $_REQUEST['default_density'] ) &&
+                            '' !== $_REQUEST['default_density']
+                    ) {
+                        $default_density = sanitize_text_field( wp_unslash( $_REQUEST['default_density'] ) );
+                        if (
+                            $default_density === 'compact' ||
+                            $default_density === 'comfortable' ||
+                            $default_density === 'spacious'
+                        ) {
+                            update_option( 'wpda_apps_default_density', $default_density );
+                        }
+                    }
+
+                    if (
                         isset( $_REQUEST['scroll_offset'] ) &&
                         '' !== $_REQUEST['scroll_offset']
                     ) {
-                        $scroll_offset = sanitize_text_field( wp_unslash( $_REQUEST['scroll_offset'] ) ); // input var okay.
+                        $scroll_offset = sanitize_text_field( wp_unslash( $_REQUEST['scroll_offset'] ) );
                         update_option( 'wpda_apps_scroll_offset', $scroll_offset );
                     }
 
                 } elseif ( 'setdefaults' === $action ) {
 
+                    WPDA::set_option( WPDA::OPTION_APPS_DEFAULT_DENSITY );
                     WPDA::set_option( WPDA::OPTION_APPS_SCROLL_OFFSET );
 
                 }
             }
 
+            $default_density = WPDA::get_option( WPDA::OPTION_APPS_DEFAULT_DENSITY );
             $scroll_offset = WPDA::get_option( WPDA::OPTION_APPS_SCROLL_OFFSET );
 
             ?>
             <form id="wpda_settings_backend" method="post"
                   action="?page=<?php echo esc_attr( $this->page ); ?>&tab=apps">
                 <table class="wpda-table-settings">
+                    <tr style="display:none">
+                        <th><?php esc_html_e( 'Default Density', 'wp-data-access' ); ?></th>
+                        <td>
+                            <select
+                                name="default_density"
+                            >
+                                <option value="compact" <?php echo 'compact' === $default_density ? 'selected' : ''; ?>>Compact</option>
+                                <option value="comfortable" <?php echo 'comfortable' === $default_density ? 'selected' : ''; ?>>Comfortable</option>
+                                <option value="spacious" <?php echo 'spacious' === $default_density ? 'selected' : ''; ?>>Spacious</option>
+                            </select>
+                            <div style="margin-top:10px">
+                                Default density for apps and Data Explorer. Does not affect saved configurations.
+                            </div>
+                        </td>
+                    </tr>
                     <tr>
                         <th><?php esc_html_e( 'Scroll Offset', 'wp-data-access' ); ?></th>
                         <td>

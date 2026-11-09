@@ -68,7 +68,7 @@ namespace WPDataAccess\Simple_Form {
 			if ( 'new' === $this->show_context_action ) {
 				$get_list_values = array( $this->item_default_value );
 			} else {
-				$get_list_values = explode( ',', ( string ) $this->item_value ); // phpcs:ignore -- 8.1 proof
+				$get_list_values = explode( ',', ( string ) $this->item_value );
 			}
 			foreach ( $get_list_values as $get_list_value ) {
 				$list_values[ $get_list_value ] = true;
@@ -113,8 +113,8 @@ namespace WPDataAccess\Simple_Form {
 						'',
 						substr( substr( (string) $this->column_type, 4 ), 0, - 1 )
 					)
-				); // phpcs:ignore -- 8.1 proof
-				$entered_values = explode( ',', ( string ) $this->item_value ); // phpcs:ignore -- 8.1 proof
+				);
+				$entered_values = explode( ',', ( string ) $this->item_value );
 
 				// Check if all values are in set
 				foreach ( $entered_values as $entered_value ) {

@@ -6,6 +6,7 @@
  * @package WPDataAccess\Design_Table
  */
 
+// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- verified on page
 namespace WPDataAccess\Design_Table {
 
 	use WPDataAccess\Connection\WPDADB;
@@ -243,29 +244,38 @@ namespace WPDataAccess\Design_Table {
 		 * @since 1.1.0
 		 */
 		public function __construct() {
-			if ( isset( $_REQUEST['page'] ) ) { // phpcs:ignore
-				$this->page = sanitize_text_field( wp_unslash( $_REQUEST['page'] ) ); // phpcs:ignore
+            if ( ! current_user_can( 'manage_options' ) ) {
+                wp_die( esc_html__( 'ERROR: Not authorized', 'wp-data-access' ) );
+            }
+
+            // Verify nonce
+            $this->verify_nonce();
+
+            if ( isset( $_REQUEST['page'] ) ) {
+				$this->page = sanitize_text_field( wp_unslash( $_REQUEST['page'] ) );
 			} else {
 				wp_die( esc_attr__( 'ERROR: Wrong arguments [page not found]', 'wp-data-access' ) );
 			}
 
-			if ( isset( $_REQUEST['action'] ) ) { // phpcs:ignore
-				$this->action = sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ); // phpcs:ignore
+			if ( isset( $_POST['action'] ) ) {
+				$this->action = sanitize_text_field( wp_unslash( $_POST['action'] ) );
 			}
 
-			if ( isset( $_REQUEST['action2'] ) ) { // phpcs:ignore
-				$this->action2        = sanitize_text_field( wp_unslash( $_REQUEST['action2'] ) ); // phpcs:ignore
-				$this->action2_posted = $this->action2;
-			}
+            if ( 'edit' === $this->action ) {
+                if ( isset( $_POST['action2'] ) ) {
+                    $this->action2        = sanitize_text_field( wp_unslash( $_POST['action2'] ) );
+                    $this->action2_posted = $this->action2;
+                }
+            }
 
-			if ( isset( $_REQUEST['design_mode'] ) ) { // phpcs:ignore
-				$this->design_mode = sanitize_text_field( wp_unslash( $_REQUEST['design_mode'] ) ); // phpcs:ignore
+			if ( isset( $_POST['design_mode'] ) ) {
+				$this->design_mode = sanitize_text_field( wp_unslash( $_POST['design_mode'] ) );
 			} else {
 				$this->design_mode = WPDA::get_option( WPDA::OPTION_BE_DESIGN_MODE ); // Default design mode.
 			}
 
-			if ( isset( $_REQUEST['caller'] ) ) { // phpcs:ignore
-				$this->caller = sanitize_text_field( wp_unslash( $_REQUEST['caller'] ) ); // phpcs:ignore
+			if ( isset( $_POST['caller'] ) ) {
+				$this->caller = sanitize_text_field( wp_unslash( $_POST['caller'] ) );
 			}
 
 			$this->fulltext_support = get_option( 'wpda_fulltext_support' );
@@ -273,15 +283,16 @@ namespace WPDataAccess\Design_Table {
 			global $wpdb;
 
 			if ( 'init' === $this->action2 ) {
-				if ( isset( $_REQUEST['wpda_table_name'] ) && isset( $_REQUEST['wpda_schema_name'] ) ) { // phpcs:ignore
+				if ( isset( $_POST['wpda_table_name'] ) ) {
+                    global $wpdb;
 					// Check if table is already in repository.
 					$wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 						$wpdb->prepare(
-							'select * from `%1s` where wpda_schema_name = %s and wpda_table_name = %s ', // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders
+							'select * from %i where `wpda_schema_name` = %s and `wpda_table_name` = %s ', // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders
 							array(
 								WPDA::remove_backticks( WPDA_Design_Table_Model::get_base_table_name() ),
-								sanitize_text_field( wp_unslash( $_REQUEST['wpda_schema_name'] ) ), // phpcs:ignore
-								sanitize_text_field( wp_unslash( $_REQUEST['wpda_table_name'] ) ), // phpcs:ignore
+								isset(  $_POST['wpda_schema_name'] ) ? sanitize_text_field( wp_unslash( $_POST['wpda_schema_name'] ) ) : '',
+                                isset( $_POST['wpda_table_name'] ) ? sanitize_text_field( wp_unslash( $_POST['wpda_table_name'] ) ) : ''
 							)
 						)
 					);
@@ -298,9 +309,9 @@ namespace WPDataAccess\Design_Table {
 			}
 
 			if ( 'wpda_reverse_engineering' === $this->action2 || 'wpda_reconcile' === $this->action2 ) {
-				if ( isset( $_REQUEST['wpda_table_name_re'] ) && isset( $_REQUEST['wpda_schema_name_re'] ) ) { // phpcs:ignore
-					$wpda_table_name_re  = sanitize_text_field( wp_unslash( $_REQUEST['wpda_table_name_re'] ) ); // phpcs:ignore
-					$wpda_schema_name_re = sanitize_text_field( wp_unslash( $_REQUEST['wpda_schema_name_re'] ) ); // phpcs:ignore
+				if ( isset( $_POST['wpda_table_name_re'] ) && isset( $_POST['wpda_schema_name_re'] ) ) {
+					$wpda_table_name_re  = sanitize_text_field( wp_unslash( $_POST['wpda_table_name_re'] ) );
+					$wpda_schema_name_re = sanitize_text_field( wp_unslash( $_POST['wpda_schema_name_re'] ) );
 					if ( 'wpda_reconcile' === $this->action2 ) {
 						// Before table can be reconciled old table structure must be deleted.
 						$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -316,16 +327,16 @@ namespace WPDataAccess\Design_Table {
 					}
 					// Start reverse engineering table.
 					$wpda_reverse_engineering = new WPDA_Reverse_Engineering( $wpda_table_name_re, $wpda_schema_name_re );
-					$this->design_mode        = isset( $_REQUEST['design_mode_re'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['design_mode_re'] ) ) : $this->design_mode; // phpcs:ignore
+					$this->design_mode        = isset( $_POST['design_mode_re'] ) ? sanitize_text_field( wp_unslash( $_POST['design_mode_re'] ) ) : $this->design_mode;
 					$table_structure          = $wpda_reverse_engineering->get_designer_format( $this->design_mode );
-					if ( count( $table_structure ) > 0 ) { // phpcs:ignore -- 8.1 proof
-						if ( isset( $_REQUEST['wpda_table_name'] ) && '' !== trim( $_REQUEST['wpda_table_name'] ) ) { // phpcs:ignore
-							$this->wpda_table_name = sanitize_text_field( wp_unslash( $_REQUEST['wpda_table_name'] ) ); // phpcs:ignore
+					if ( count( $table_structure ) > 0 ) {
+						if ( isset( $_POST['wpda_table_name'] ) && '' !== trim( $_POST['wpda_table_name'] ) ) { // phpcs:ignore
+							$this->wpda_table_name = sanitize_text_field( wp_unslash( $_POST['wpda_table_name'] ) );
 						} else {
 							$this->wpda_table_name = $wpda_table_name_re;
 						}
-						if ( isset( $_REQUEST['wpda_schema_name'] ) && '' !== trim( $_REQUEST['wpda_schema_name'] ) ) { // phpcs:ignore
-							$this->wpda_schema_name = sanitize_text_field( wp_unslash( $_REQUEST['wpda_schema_name'] ) ); // phpcs:ignore
+						if ( isset( $_POST['wpda_schema_name'] ) && '' !== trim( $_POST['wpda_schema_name'] ) ) { // phpcs:ignore
+							$this->wpda_schema_name = sanitize_text_field( wp_unslash( $_POST['wpda_schema_name'] ) );
 						} else {
 							$this->wpda_schema_name = $wpda_schema_name_re;
 						}
@@ -333,19 +344,32 @@ namespace WPDataAccess\Design_Table {
 					} else {
 						wp_die( esc_attr__( 'ERROR: Reverse engineering table failed [invalid structure]', 'wp-data-access' ) );
 					}
-					if ( ! WPDA_Design_Table_Model::insert_reverse_engineered( $this->wpda_table_name, $this->wpda_schema_name, $this->wpda_table_design ) ) {
-						wp_die( esc_attr__( 'ERROR: Reverse engineering table failed [insert failed]', 'wp-data-access' ) );
-					} else {
-						// Convert named array to object (needed to display structure).
-						$this->wpda_table_design = json_decode( json_encode( $table_structure ) );
-					}
+                    $do_reverse_engineering = true;
+                    if ( 'dataexplorer' === $this->caller ) {
+                        // Check if table is already in repository.
+                        $row = $this->is_table_in_repository();
+                        if ( 0 < count( $row) ) {
+                            $do_reverse_engineering = false;
+                        }
+                    }
+                    if ( $do_reverse_engineering ) {
+                        if ( ! WPDA_Design_Table_Model::insert_reverse_engineered( $this->wpda_table_name, $this->wpda_schema_name, $this->wpda_table_design ) ) {
+                            wp_die( esc_attr__( 'ERROR: Reverse engineering table failed [insert failed]', 'wp-data-access' ) );
+                        } else {
+                            // Convert named array to object (needed to display structure).
+                            $this->wpda_table_design = json_decode( json_encode( $table_structure ) );
+                        }
+                    }
 					$this->action2 = 'edit';
 				} else {
 					wp_die( esc_attr__( 'ERROR: Wrong arguments [table not found]', 'wp-data-access' ) );
 				}
-			} elseif ( isset( $_REQUEST['wpda_table_name'] ) && isset( $_REQUEST['wpda_schema_name'] ) ) { // phpcs:ignore
-				$this->wpda_table_name  = sanitize_text_field( wp_unslash( $_REQUEST['wpda_table_name'] ) ); // phpcs:ignore
-				$this->wpda_schema_name = sanitize_text_field( wp_unslash( $_REQUEST['wpda_schema_name'] ) ); // phpcs:ignore
+			} elseif ( isset( $_POST['wpda_table_name'] ) ) {
+                $this->wpda_table_name  = sanitize_text_field( wp_unslash( $_POST['wpda_table_name'] ) );
+                global $wpdb;
+                $this->wpda_schema_name = isset( $_POST['wpda_schema_name'] )
+                        ? sanitize_text_field( wp_unslash( $_POST['wpda_schema_name'] ) )
+                        : $wpdb->dbname;
 				$this->model            = new WPDA_Design_Table_Model();
 
 				if ( 'new' === $this->action2 ) {
@@ -407,9 +431,13 @@ namespace WPDataAccess\Design_Table {
 				$this->wpda_table_design = $this->model->get_table_design();
 				$this->design_mode       = $this->wpda_table_design->design_mode;
 
-				$this->action2 = 'edit'; // Editing mode.
+                if ( 'edit' === $this->action ) {
+                    $this->action2 = 'edit'; // Editing mode.
+                }
 			} else {
-				$this->action2 = 'new'; // Design new table from scratch.
+                if ( 'edit' === $this->action ) {
+                    $this->action2 = 'new'; // Design new table from scratch.
+                }
 			}
 
 			// Remove backticks from schema and table name to prevent sql injection
@@ -417,7 +445,8 @@ namespace WPDataAccess\Design_Table {
 			$this->wpda_table_name  = str_replace( '`', '', (string) $this->wpda_table_name );
 
 			if ( null !== $this->wpda_table_name && null !== $this->wpda_schema_name ) {
-				// Check if table name already exists in database.
+
+                // Check if table name already exists in database.
 				if ( $this->wpda_schema_name === $wpdb->dbname ) {
 					$wp_tables = array_flip( $wpdb->tables( 'all', true ) );
 					if ( isset( $wp_tables[ $this->wpda_table_name ] ) ) {
@@ -438,11 +467,13 @@ namespace WPDataAccess\Design_Table {
 					'show_create_table_script' === $this->action2_posted
 				) {
 					// Perform create table (and indexes) script.
-					$this->create_table();
+                    check_admin_referer( "wpda-design-table-form-{$this->wpda_table_name}" );
+                    $this->create_table();
 					$this->does_table_exist();
 					$this->get_table_structure();
 				} elseif ( 'alter_table' === $this->action2_posted ) {
 					// Generate alter table script and perform script.
+                    check_admin_referer( "wpda-design-table-form-{$this->wpda_table_name}" );
 					$this->do_alter_table();
 					$this->get_table_structure();
 				} elseif ( 'show_alter_table_script' === $this->action2_posted ) {
@@ -450,14 +481,17 @@ namespace WPDataAccess\Design_Table {
 					$this->alter_table();
 				} elseif ( 'create_table_index' === $this->action2_posted ) {
 					// Perform create index(es) script.
+                    check_admin_referer( "wpda-design-table-form-{$this->wpda_table_name}" );
 					$this->create_index();
 					$this->get_table_structure();
 				} elseif ( 'drop_table' === $this->action2_posted ) {
 					// Perform drop table script.
+                    check_admin_referer( "wpda-design-table-form-{$this->wpda_table_name}" );
 					$this->drop_table();
 					$this->does_table_exist();
 				} elseif ( 'drop_table_index' === $this->action2_posted ) {
 					// Perform drop table script.
+                    check_admin_referer( "wpda-design-table-form-{$this->wpda_table_name}" );
 					$this->drop_indexes();
 					$this->get_table_structure();
 				}
@@ -475,29 +509,59 @@ namespace WPDataAccess\Design_Table {
 			}
 
 			$this->databases = WPDA_Dictionary_Lists::get_db_schemas();
+		}
 
-			if ( ! isset( $_REQUEST['_wpnonce'] ) ) {
-				wp_die( esc_attr__( 'Not authorized', 'wp-data-access' ) );
-			} else {
-				// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-				if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], "wpda-design-table-form-{$this->wpda_table_name}" )) { // direct form access
+        private function verify_nonce() {
+            // phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if (
+                ! isset( $_POST['_wpnonce'] )
+            ) {
+                wp_die( esc_attr__( 'Not authorized', 'wp-data-access' ) );
+            } else {
+                $wpda_table_name = isset( $_POST['wpda_table_name'] ) ? sanitize_text_field( wp_unslash( $_POST['wpda_table_name'] ) ) : '';
+                if (
+                    ! wp_verify_nonce( $_POST['_wpnonce'], "wpda-design-table-form-{$wpda_table_name}" ))
+                { // direct form access
                     if (
-                        '' === $this->wpda_table_name &&
-                        ! wp_verify_nonce( $_REQUEST['_wpnonce'], "wpda-design-table-form-" . WPDA_Design_Table_Model::get_base_table_name() )
+                        ! wp_verify_nonce( $_POST['_wpnonce'], "wpda-design-table-form-" . WPDA_Design_Table_Model::get_base_table_name() )
                     ) { // insert new table
-                        if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], "wpda-alter-{$this->wpda_table_name}" ) ) { // access from alter table button
-                            $schema_name = isset( $_POST['wpda_schema_name'] ) ? $_POST['wpda_schema_name'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-                            $table_name  = isset( $_POST['wpda_table_name'] ) ? $_POST['wpda_table_name'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-                            $dsg_tbl = 'wpda-query-' . WPDA_Design_Table_Model::get_base_table_name() . '-' . $schema_name . '-' . $table_name;
-                            if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], $dsg_tbl ) ) { // access from list table
-                                wp_die( esc_attr__( 'Not authorized', 'wp-data-access' ) );
+                        if (
+                            ! wp_verify_nonce( $_POST['_wpnonce'], "wpda-alter-{$wpda_table_name}" )
+                        ) { // access from alter table button data explorer
+                            $wpda_schema_name = isset( $_POST['wpda_schema_name'] ) ? sanitize_text_field( wp_unslash( $_POST['wpda_schema_name'] ) ) : '';
+                            $dsg_tbl = 'wpda-query-' . WPDA_Design_Table_Model::get_base_table_name() . '-' . $wpda_schema_name . '-' . $wpda_table_name;
+                            if (
+                                ! wp_verify_nonce( $_POST['_wpnonce'], $dsg_tbl )
+                            ) { // access from list table
+                                $wpda_table_name_re  = isset( $_POST['wpda_table_name_re'] ) ? sanitize_text_field( wp_unslash( $_POST['wpda_table_name_re'] ) ) : '';
+                                if (
+                                    ! wp_verify_nonce( $_POST['_wpnonce'], "wpda-design-table-form-{$wpda_table_name_re}" )
+                                ) { // reverse engineering
+                                    wp_die( esc_attr__( 'Not authorized', 'wp-data-access' ) );
+                                }
                             }
                         }
                     }
-				}
-				// phpcs:enable WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			}
-		}
+                }
+            }
+            // phpcs:enable WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        }
+
+        private function is_table_in_repository() {
+            // Check if table is already in repository.
+            global $wpdb;
+            return $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $wpdb->prepare(
+                'select * from %i where `wpda_schema_name` = %s and `wpda_table_name` = %s ', // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders
+                array(
+                        WPDA::remove_backticks( WPDA_Design_Table_Model::get_base_table_name() ),
+                        isset(  $_POST['wpda_schema_name'] ) ? sanitize_text_field( wp_unslash( $_POST['wpda_schema_name'] ) ) : '',
+                        isset( $_POST['wpda_table_name'] ) ? sanitize_text_field( wp_unslash( $_POST['wpda_table_name'] ) ) : ''
+                    )
+                )
+            );
+
+        }
 
 		public function prepare_form() {}
 
@@ -644,7 +708,6 @@ namespace WPDataAccess\Design_Table {
 
 				if ( ! $real_column_found ) {
 					// Drop column
-					 // phpcs:ignore -- 8.1 proof
 					array_push(
 						$this->alter_table_statement,
 						'DROP COLUMN `' . str_replace( '`', '', $real_column->column_name ) . '`,' . self::NEW_LINE
@@ -656,7 +719,7 @@ namespace WPDataAccess\Design_Table {
 				}
 			}
 
-			if ( 0 < count( $this->alter_table_statement ) ) { // phpcs:ignore -- 8.1 proof
+			if ( 0 < count( $this->alter_table_statement ) ) {
 				$this->create_table_statement .= "ALTER TABLE `{$this->wpda_table_name}` ";
 				foreach ( $this->alter_table_statement as $sql ) {
 					$this->create_table_statement .= $sql;
@@ -665,19 +728,19 @@ namespace WPDataAccess\Design_Table {
 					substr( $this->create_table_statement, 0, strrpos( $this->create_table_statement, ',' ) ) .
 					';' . self::NEW_LINE . self::NEW_LINE;
 
-				$array_difference_1 = array_diff( $create_keys_design, $create_keys_real );  // phpcs:ignore -- 8.1 proof
-				$array_difference_2 = array_diff( $create_keys_real, $create_keys_design );  // phpcs:ignore -- 8.1 proof
-				if ( 0 !== count( $array_difference_1 ) || 0 !== count( $array_difference_2 ) ) {  // phpcs:ignore -- 8.1 proof
-					if ( 0 < count( $create_keys_real ) ) {  // phpcs:ignore -- 8.1 proof
+				$array_difference_1 = array_diff( $create_keys_design, $create_keys_real );
+				$array_difference_2 = array_diff( $create_keys_real, $create_keys_design );
+				if ( 0 !== count( $array_difference_1 ) || 0 !== count( $array_difference_2 ) ) {
+					if ( 0 < count( $create_keys_real ) ) {
 						$this->create_table_statement =
 							"ALTER TABLE `{$this->wpda_table_name}` DROP PRIMARY KEY;" .
 							self::NEW_LINE . self::NEW_LINE . $this->create_table_statement;
 					}
-					if ( 0 < count( $create_keys_design ) ) {  // phpcs:ignore -- 8.1 proof
+					if ( 0 < count( $create_keys_design ) ) {
 						$alter_table_statement =
 							"ALTER TABLE `{$this->wpda_table_name}` ADD PRIMARY KEY  ";
 						foreach ( $create_keys_design as $key ) {
-							$alter_table_statement .= $key === reset( $create_keys_design ) ? '(' : ','; // phpcs:ignore -- 8.1 proof
+							$alter_table_statement .= $key === reset( $create_keys_design ) ? '(' : ',';
 							$alter_table_statement .= '`' . str_replace( '`', '', $key ) . '`';
 						}
 						$alter_table_statement .= ');' . self::NEW_LINE . self::NEW_LINE;
@@ -715,7 +778,7 @@ namespace WPDataAccess\Design_Table {
 							$unique = '';
 						}
 					}
-					$column_names_array            = explode( ',', ( string ) $design_index->column_names ); // phpcs:ignore -- 8.1 proof
+					$column_names_array            = explode( ',', ( string ) $design_index->column_names );
 					$column_names                  = '`' . implode( '`,`', $column_names_array ) . '`';
 					$this->create_table_statement .=
 						"CREATE $unique INDEX `" . str_replace( '`', '', $design_index->index_name ) . "` ON `{$this->wpda_table_name}` ($column_names);" .
@@ -755,7 +818,7 @@ namespace WPDataAccess\Design_Table {
 			array_push(
 				$this->alter_table_statement,
 				$alter_table_statement
-			); // phpcs:ignore -- 8.1 proof
+			);
 		}
 
 		/**
@@ -827,7 +890,7 @@ namespace WPDataAccess\Design_Table {
 
 			$create_keys = array();
 			foreach ( $this->wpda_table_design->table as $row ) {
-				$this->create_table_statement .= $row === reset( $this->wpda_table_design->table ) ? '(' : ','; // phpcs:ignore -- 8.1 proof
+				$this->create_table_statement .= $row === reset( $this->wpda_table_design->table ) ? '(' : ',';
 				$this->create_table_statement .= '`' . str_replace( '`', '', $row->column_name ) . '`';
 				$this->create_table_statement .= ' ';
 				$this->create_table_statement .= $row->data_type;
@@ -871,10 +934,10 @@ namespace WPDataAccess\Design_Table {
 				}
 				$this->create_table_statement .= self::NEW_LINE;
 			}
-			if ( 0 < count( $create_keys ) ) { // phpcs:ignore -- 8.1 proof
+			if ( 0 < count( $create_keys ) ) {
 				$this->create_table_statement .= ',PRIMARY KEY ';
 				foreach ( $create_keys as $key ) {
-					$this->create_table_statement .= $key === reset( $create_keys ) ? '(' : ','; // phpcs:ignore -- 8.1 proof
+					$this->create_table_statement .= $key === reset( $create_keys ) ? '(' : ',';
 					$this->create_table_statement .= '`' . str_replace( '`', '', $key ) . '`';
 				}
 				$this->create_table_statement .= ')';
@@ -885,7 +948,7 @@ namespace WPDataAccess\Design_Table {
 				$this->create_table_statement .= ' ENGINE ' . $this->wpda_table_design->engine;
 			}
 			if ( isset( $this->wpda_table_design->collation ) && '' !== $this->wpda_table_design->collation ) {
-				$collation                     = explode( '_', $this->wpda_table_design->collation ); // phpcs:ignore -- 8.1 proof
+				$collation                     = explode( '_', $this->wpda_table_design->collation );
 				$this->create_table_statement .= ' DEFAULT CHARACTER SET ' . $collation[0] . ' COLLATE=' . $this->wpda_table_design->collation;
 			}
 			$this->create_table_statement .= ';' . self::NEW_LINE . self::NEW_LINE;
@@ -951,6 +1014,7 @@ namespace WPDataAccess\Design_Table {
 
 				function disable_page() {
 					jQuery(".wpda_view").prop("readonly", true).prop("disabled", true).addClass("disabled");
+                    jQuery("#wpda_schema_name").prop("readonly", true).prop("disabled", true).addClass("disabled");
 					disable_table();
 					disable_index();
 					disable_create_buttons();
@@ -1695,7 +1759,9 @@ namespace WPDataAccess\Design_Table {
 						sql_to_clipboard.on('error', function (e) {
 							jQuery.notify('<?php echo esc_attr__( 'Could not copy SQL to clipboard!', 'wp-data-access' ); ?>','error');
 						});
+                        <?php if ( 'edit' === $this->action ) { ?>
 						jQuery('#wpda_table_structure').sortable();
+                        <?php } ?>
 						jQuery( '.wpda_tooltip' ).tooltip();
 					});
 				</script>
@@ -1824,7 +1890,7 @@ namespace WPDataAccess\Design_Table {
 									) {
 										$table_structure = json_decode( json_encode( $this->wpda_table_design ), true );
 										if ( isset( $table_structure['table'] ) ) {
-											$column_names = array_column( (array) $table_structure['table'], 'column_name' );  // phpcs:ignore -- 8.1 proof
+											$column_names = array_column( (array) $table_structure['table'], 'column_name' );
 										} else {
 											$column_names = array();
 										}
@@ -2331,7 +2397,7 @@ default_generated on update current_timestamp" class="fas fa-circle-question poi
 					</div>
 					<?php
 				}
-				if ( null !== $this->create_index_failed && 0 < count( $this->create_index_failed ) ) { // phpcs:ignore -- 8.1 proof
+				if ( null !== $this->create_index_failed && 0 < count( $this->create_index_failed ) ) {
 					?>
 					<br/>
 					<div class="wpda_design_table">
@@ -2737,7 +2803,7 @@ default_generated on update current_timestamp" class="fas fa-circle-question poi
 						$unique = '';
 					}
 				}
-				$column_names_array            = explode( ',', ( string ) $index->column_names ); // phpcs:ignore -- 8.1 proof
+				$column_names_array            = explode( ',', ( string ) $index->column_names );
 				$column_names                  = '`' . implode( '`,`', $column_names_array ) . '`';
 				$create_index_statement        =
 					"CREATE $unique INDEX `" . str_replace( '`', '', $index->index_name ) . "` ON `{$this->wpda_table_name}` ($column_names)";

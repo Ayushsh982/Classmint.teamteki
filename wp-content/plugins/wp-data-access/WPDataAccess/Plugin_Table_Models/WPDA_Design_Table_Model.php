@@ -6,8 +6,10 @@
  * @package WPDataAccess\Plugin_Table_Models
  */
 
+// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- verified on page
 namespace WPDataAccess\Plugin_Table_Models {
 
+	use WPDataAccess\Data_Dictionary\WPDA_Dictionary_Lists;
 	use WPDataAccess\WPDA;
 
 	/**
@@ -187,6 +189,19 @@ namespace WPDataAccess\Plugin_Table_Models {
 					$structure_messages[] = array( 'ERR', 'Index name must be unique within a table' );
 				}
 			}
+
+			if ( isset( $this->wpda_table_design->engine ) ) {
+				if ( ! WPDA_Design_Table_Model::is_engine_valid( $this->wpda_table_design->engine ) ) {
+					$structure_messages[] = array( 'ERR', 'Invalid engine [engine does not exist]' );
+				}
+			}
+
+			if ( isset( $this->wpda_table_design->collation ) ) {
+				if ( ! WPDA_Design_Table_Model::is_collation_valid( $this->wpda_table_design->collation ) ) {
+					$structure_messages[] = array( 'ERR', 'Invalid collation [collation does not exist]' );
+				}
+			}
+
 			return $structure_messages;
 
 		}
@@ -199,20 +214,26 @@ namespace WPDataAccess\Plugin_Table_Models {
 		public function prepare_insert() {
 			$this->wpda_table_design = (object) null;
 
-			if ( isset( $_REQUEST['design_mode'] ) ) { // phpcs:ignore
-				$this->wpda_table_design->design_mode = sanitize_text_field( wp_unslash( $_REQUEST['design_mode'] ) ); // phpcs:ignore
+			if ( isset( $_REQUEST['design_mode'] ) ) {
+				$this->wpda_table_design->design_mode = sanitize_text_field( wp_unslash( $_REQUEST['design_mode'] ) );
 			} else {
 				$this->wpda_table_design->design_mode = WPDA::get_option( WPDA::OPTION_BE_DESIGN_MODE );
 			}
 
-			if ( isset( $_REQUEST['engine'] ) ) { // phpcs:ignore
-				$this->wpda_table_design->engine = sanitize_text_field( wp_unslash( $_REQUEST['engine'] ) ); // phpcs:ignore
+			if ( isset( $_REQUEST['engine'] ) ) {
+				$this->wpda_table_design->engine = sanitize_text_field( wp_unslash( $_REQUEST['engine'] ) );
+				if ( ! WPDA_Design_Table_Model::is_engine_valid( $this->wpda_table_design->engine ) ) {
+					wp_die( 'Invalid engine [engine does not exist]' );
+				}
 			} else {
 				$this->wpda_table_design->engine = '';
 			}
 
-			if ( isset( $_REQUEST['collation'] ) ) { // phpcs:ignore
-				$this->wpda_table_design->collation = sanitize_text_field( wp_unslash( $_REQUEST['collation'] ) ); // phpcs:ignore
+			if ( isset( $_REQUEST['collation'] ) ) {
+				$this->wpda_table_design->collation = sanitize_text_field( wp_unslash( $_REQUEST['collation'] ) );
+				if ( ! WPDA_Design_Table_Model::is_collation_valid( $this->wpda_table_design->collation ) ) {
+					wp_die( 'Invalid collation [collation does not exist]' );
+				}
 			} else {
 				$this->wpda_table_design->collation = '';
 			}
@@ -336,30 +357,36 @@ namespace WPDataAccess\Plugin_Table_Models {
 				$this->wpda_schema_name_original === $this->wpda_schema_name ? null : $this->wpda_schema_name_original
 			);
 
-			if ( isset( $_REQUEST['design_mode'] ) ) { // phpcs:ignore
-				$this->wpda_table_design->design_mode = sanitize_text_field( wp_unslash( $_REQUEST['design_mode'] ) ); // phpcs:ignore
+			if ( isset( $_REQUEST['design_mode'] ) ) {
+				$this->wpda_table_design->design_mode = sanitize_text_field( wp_unslash( $_REQUEST['design_mode'] ) );
 			}
 
-			if ( isset( $_REQUEST['engine'] ) ) { // phpcs:ignore
-				$this->wpda_table_design->engine = sanitize_text_field( wp_unslash( $_REQUEST['engine'] ) ); // phpcs:ignore
+			if ( isset( $_REQUEST['engine'] ) ) {
+				$this->wpda_table_design->engine = sanitize_text_field( wp_unslash( $_REQUEST['engine'] ) );
+				if ( ! WPDA_Design_Table_Model::is_engine_valid( $this->wpda_table_design->engine ) ) {
+					wp_die( 'Invalid engine [engine does not exist]' );
+				}
 			}
 
-			if ( isset( $_REQUEST['collation'] ) ) { // phpcs:ignore
-				$this->wpda_table_design->collation = sanitize_text_field( wp_unslash( $_REQUEST['collation'] ) ); // phpcs:ignore
+			if ( isset( $_REQUEST['collation'] ) ) {
+				$this->wpda_table_design->collation = sanitize_text_field( wp_unslash( $_REQUEST['collation'] ) );
+				if ( ! WPDA_Design_Table_Model::is_collation_valid( $this->wpda_table_design->collation ) ) {
+					wp_die( 'Invalid collation [collation does not exist]' );
+				}
 			}
 
-			if ( isset( $_REQUEST['column_name'] ) ) { // phpcs:ignore
+			if ( isset( $_REQUEST['column_name'] ) ) {
 				$this->wpda_table_design->table = $this->get_table_structure();
 			} else {
-				if ( isset( $_REQUEST['submitted_changes'] ) && 'table' === $_REQUEST['submitted_changes'] ) { // phpcs:ignore
+				if ( isset( $_REQUEST['submitted_changes'] ) && 'table' === $_REQUEST['submitted_changes'] ) {
 					$this->wpda_table_design->table = array();
 				}
 			}
 
-			if ( isset( $_REQUEST['column_names'] ) ) { // phpcs:ignore
+			if ( isset( $_REQUEST['column_names'] ) ) {
 				$this->wpda_table_design->indexes = $this->get_indexes();
 			} else {
-				if ( isset( $_REQUEST['submitted_changes'] ) && 'indexes' === $_REQUEST['submitted_changes'] ) { // phpcs:ignore
+				if ( isset( $_REQUEST['submitted_changes'] ) && 'indexes' === $_REQUEST['submitted_changes'] ) {
 					$this->wpda_table_design->indexes = array();
 				}
 			}
@@ -528,6 +555,28 @@ namespace WPDataAccess\Plugin_Table_Models {
 				default:
 					return 'Text';
 			}
+		}
+
+		private static function is_engine_valid( $engine_param ) {
+			$engines = WPDA_Dictionary_Lists::get_engines();
+			return (
+				1 === count(
+					array_filter( $engines, function( $engine ) use ( $engine_param ) {
+						return $engine['engine'] === $engine_param;
+					})
+				)
+			);
+		}
+
+		private static function is_collation_valid( $collation_param ) {
+			$collations = WPDA_Dictionary_Lists::get_collations();
+			return (
+				1 === count(
+					array_filter( $collations, function( $collation ) use ( $collation_param ) {
+						return $collation['collation_name'] === $collation_param;
+					})
+				)
+			);
 		}
 
 	}

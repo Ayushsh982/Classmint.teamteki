@@ -1046,10 +1046,17 @@ class WPDA_Data_Tables {
                         if ( false !== strpos( ltrim( $hyperlink_html ), '&lt;' ) ) {
                             $row[$key] = html_entity_decode( $hyperlink_html );
                         } else {
-                            $hyperlink_label = ( isset( $hyperlinks[$value]['hyperlink_label'] ) ? $hyperlinks[$value]['hyperlink_label'] : '' );
-                            $hyperlink_target = ( isset( $hyperlinks[$value]['hyperlink_target'] ) ? $hyperlinks[$value]['hyperlink_target'] : false );
-                            $target = ( true === $hyperlink_target ? "target='_blank'" : '' );
-                            $row[$key] = "<a href='" . esc_url_raw( str_replace( ' ', '+', $hyperlink_html ) ) . "' {$target}>" . esc_attr( $hyperlink_label ) . "</a>";
+                            try {
+                                $hyperlink_obj = json_decode( $hyperlink_html, true );
+                            } catch ( \Exception $e ) {
+                            }
+                            $hyperlink_label = ( isset( $hyperlink_obj['label'] ) ? $hyperlink_obj['label'] : '' );
+                            $hyperlink_url = ( isset( $hyperlink_obj['url'] ) ? $hyperlink_obj['url'] : '' );
+                            if ( '' === $hyperlink_url ) {
+                                $row[$key] = urldecode( esc_attr( $hyperlink_label ) );
+                                continue;
+                            }
+                            $row[$key] = '<a href="' . esc_url( $hyperlink_url ) . '"' . (( isset( $hyperlink->hyperlink_target ) && true === $hyperlink->hyperlink_target ? "target='_blank'" : '' )) . '>' . urldecode( esc_attr( $hyperlink_label ) ) . '</a>';
                         }
                     } else {
                         $row[$key] = '';

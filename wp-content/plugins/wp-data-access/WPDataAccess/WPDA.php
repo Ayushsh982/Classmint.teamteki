@@ -53,8 +53,8 @@ namespace WPDataAccess {
 		/**
 		 * Option wpda_version and it's default value
 		 */
-		const OPTION_WPDA_VERSION         = array( 'wpda_version', '5.5.90' );
-		const OPTION_WPDA_CLIENT_VERSION  = array( 'wpda_client_version', '1.0.88' );
+		const OPTION_WPDA_VERSION         = array( 'wpda_version', '5.5.92' );
+		const OPTION_WPDA_CLIENT_VERSION  = array( 'wpda_client_version', '1.0.90' );
 		const OPTION_WPDA_UPGRADED        = array( 'wpda_upgraded', false );
 		/**
 		 * Option wpda_setup_error and it's default value
@@ -130,6 +130,7 @@ namespace WPDataAccess {
 		const OPTION_PLUGIN_SET_FORMAT       = array( 'wpda_plugin_set_format', 'csv');
 
         // App options
+        const OPTION_APPS_DEFAULT_DENSITY = array( 'wpda_apps_default_density', 'compact');
         const OPTION_APPS_SCROLL_OFFSET = array( 'wpda_apps_scroll_offset', '120');
 
 		// Plugin debug mode
@@ -435,7 +436,7 @@ namespace WPDataAccess {
 
 			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				"
-				DELETE FROM wp_options
+				DELETE FROM `wp_options`
 				WHERE option_name LIKE 'wpda_%'
 			"
 			); // db call ok; no-cache ok.
@@ -754,8 +755,8 @@ namespace WPDataAccess {
 
 			$sql =
 				$wpdb->prepare(
-					'INSERT INTO ' . $wpdb->prefix .
-					'wpda_logging (log_time, log_id, log_type, log_msg) VALUES (now(), %s, %s, %s)'
+					'INSERT INTO `' . $wpdb->prefix .
+					'wpda_logging` (log_time, log_id, log_type, log_msg) VALUES (now(), %s, %s, %s)'
 					, $log_id
 					, $log_type
 					, $log_msg
@@ -885,36 +886,61 @@ namespace WPDataAccess {
 		 * @return string
 		 */
 		public static function substitute_environment_vars( $where_clause ) {
-			if ( strpos( $where_clause, '$$USERID$$' ) ) {
+            global $wpdb;
+
+            $cnt = substr_count( $where_clause, '$$USERID$$' );
+            if ( 0 < $cnt ) {
 				$user_id      = WPDA::get_current_user_id();
-				$where_clause = str_replace( '$$USERID$$', $user_id, $where_clause );
+                $where_clause = str_replace( '$$USERID$$', '%d', $where_clause );
+                $args = array();
+                for ( $i = 0; $i < $cnt; $i++ ) {
+                    $args[] = $user_id;
+                }
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $where_clause = $wpdb->prepare( $where_clause, $args );
 			}
 
-			if ( strpos( $where_clause, '"$$USER$$"' ) ) {
+            $where_clause = str_replace(
+                '"$$USER$$"',
+                '$$USER$$',
+                str_replace(
+                    "'" . '$$USER$$' . "'",
+                    '$$USER$$',
+                    $where_clause
+                )
+            );
+            $cnt = substr_count( $where_clause, '$$USER$$' );
+			if ( 0 < $cnt ) {
 				$user_login   = WPDA::get_current_user_login();
-				$where_clause = str_replace( '"$$USER$$"', '"' . $user_login . '"', $where_clause );
-			}
-			if ( strpos( $where_clause, "'" . '$$USER$$' . "'" ) ) {
-				$user_login   = WPDA::get_current_user_login();
-				$where_clause = str_replace( "'" . '$$USER$$' . "'", "'" . $user_login . "'", $where_clause );
-			}
-			if ( strpos( $where_clause, '$$USER$$' ) ) {
-				$user_login   = WPDA::get_current_user_login();
-				$where_clause = str_replace( '$$USER$$', "'" . $user_login . "'", $where_clause );
+                $where_clause = str_replace( '$$USER$$', '%s', $where_clause );
+                $args = array();
+                for ( $i = 0; $i < $cnt; $i++ ) {
+                    $args[] = $user_login;
+                }
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $where_clause = $wpdb->prepare( $where_clause, $args );
 			}
 
-			if ( strpos( $where_clause, '"$$EMAIL$$"' ) ) {
-				$user_email      = WPDA::get_current_user_email();
-				$where_clause = str_replace( '"$$EMAIL$$"', '"' . $user_email . '"', $where_clause );
-			}
-			if ( strpos( $where_clause, "'" . '$$EMAIL$$' . "'" ) ) {
-				$user_email      = WPDA::get_current_user_email();
-				$where_clause = str_replace( "'" . '$$EMAIL$$' . "'", "'" . $user_email . "'", $where_clause );
-			}
-			if ( strpos( $where_clause, '$$EMAIL$$' ) ) {
-				$user_email      = WPDA::get_current_user_email();
-				$where_clause = str_replace( '$$EMAIL$$', "'" . $user_email . "'", $where_clause );
-			}
+            $where_clause = str_replace(
+                    '"$$EMAIL$$"',
+                    '$$EMAIL$$',
+                    str_replace(
+                            "'" . '$$EMAIL$$' . "'",
+                            '$$EMAIL$$',
+                            $where_clause
+                    )
+            );
+            $cnt = substr_count( $where_clause, '$$EMAIL$$' );
+            if ( 0 < $cnt ) {
+                $user_email   = WPDA::get_current_user_email();
+                $where_clause = str_replace( '$$EMAIL$$', '%s', $where_clause );
+                $args = array();
+                for ( $i = 0; $i < $cnt; $i++ ) {
+                    $args[] = $user_email;
+                }
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $where_clause = $wpdb->prepare( $where_clause, $args );
+            }
 
 			return $where_clause;
 		}
@@ -1116,7 +1142,7 @@ namespace WPDataAccess {
 
 			$wpdadb->query(
 				$wpdadb->prepare( '
-							SELECT TRUE FROM information_schema.schemata WHERE schema_name = %s
+							SELECT TRUE FROM `information_schema`.`schemata` WHERE schema_name = %s
 						',
 					[
 						$wpdadb->dbname,
@@ -1232,7 +1258,7 @@ namespace WPDataAccess {
 						select engine as engine,
 							   table_rows as table_rows,
 							   table_type as table_type
-						 from  information_schema.tables
+						 from  `information_schema`.`tables`
 						where  table_schema = %s
 						  and  table_name = %s
 					",

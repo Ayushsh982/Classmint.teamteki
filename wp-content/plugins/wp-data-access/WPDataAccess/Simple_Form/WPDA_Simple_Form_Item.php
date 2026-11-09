@@ -6,6 +6,7 @@
  * @package WPDataAccess\Simple_Form
  */
 
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- verified on page
 namespace WPDataAccess\Simple_Form {
 
 	use WPDataAccess\Utilities\WPDA_Message_Box;
@@ -345,11 +346,11 @@ namespace WPDataAccess\Simple_Form {
 				$this->item_name      = $args['item_name'];
 				$this->data_type      = WPDA::get_type( $args['data_type'] );
 				$this->item_icon_type = $this->data_type;
-				$this->item_label     = (string) $args['item_label'];  // phpcs:ignore -- 8.1 proof
+				$this->item_label     = (string) $args['item_label'];
 				if ( null === $args['item_value'] ) {
 					$this->item_value = null;
 				} else {
-					$this->item_value = (string) $args['item_value'];  // phpcs:ignore -- 8.1 proof
+					$this->item_value = (string) $args['item_value'];
 				}
 				if (
                     'current_timestamp()' !== strtolower( (string) $args['item_default_value'] ) &&
@@ -372,7 +373,7 @@ namespace WPDataAccess\Simple_Form {
 							'',
 							substr( substr( ( string ) $args['item_enum'], 5 ), 0, - 1 )
 						)
-					); // phpcs:ignore -- 8.1 proof
+					);
 				}
 				if ( 'set' === $this->data_type ) {
 					$this->item_enum = explode(
@@ -382,7 +383,7 @@ namespace WPDataAccess\Simple_Form {
 							'',
 							substr( substr( ( string ) $args['item_enum'], 4 ), 0, - 1 )
 						)
-					); // phpcs:ignore -- 8.1 proof
+					);
 				}
 				$this->column_type    = $args['column_type'];
 				$this->item_event     = $args['item_event'];
@@ -449,7 +450,7 @@ namespace WPDataAccess\Simple_Form {
 				<?php
 			}
 
-			$label        = explode( '|', esc_attr( $this->item_label ) ); // phpcs:ignore -- 8.1 proof
+			$label        = explode( '|', esc_attr( $this->item_label ) );
 			$label_before = $label[0];
 			$label_after  = '';
 			if ( isset( $label[1] ) ) {
@@ -475,7 +476,7 @@ namespace WPDataAccess\Simple_Form {
 			<td class="data">
 				<?php
 				// Get column value
-				$this->show_context_column_value = str_replace( '&', '&amp;', (string) $this->item_value );
+				$this->show_context_column_value = htmlspecialchars ( (string) $this->item_value );
 
 				// Set primary key class(es)
 				$this->show_context_class_primary_key = $this->is_key_column ? 'wpda_primary_key' : '';
@@ -975,9 +976,12 @@ namespace WPDataAccess\Simple_Form {
 			if ( 'NO' === $this->is_nullable ) {
 				// Empty values are not allowed for this column: check value.
 				if ( '' === $this->item_value ) {
-					if ( isset( $_REQUEST[ "{$this->item_name}_db_is_null" ] ) && 'false' === strtolower( $_REQUEST[ "{$this->item_name}_db_is_null" ] ) ) { // phpcs:ignore
-						// Allow update if original column already was an empty string
-						return true;
+					if ( isset( $_REQUEST[ "{$this->item_name}_db_is_null" ] ) ) {
+                        $db_is_null = sanitize_text_field( wp_unslash( $_REQUEST[ "{$this->item_name}_db_is_null" ] ) );
+                        if ( 'false' === $db_is_null ) {
+                            // Allow update if original column already was an empty string
+                            return true;
+                        }
 					}
 
 					// No value: inform user and set validation to failed.
@@ -1018,3 +1022,4 @@ namespace WPDataAccess\Simple_Form {
 	}
 
 }
+// phpcs:enable WordPress.Security.NonceVerification.Recommended

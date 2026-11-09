@@ -41,7 +41,7 @@ namespace WPDataAccess\Simple_Form {
 			} else {
 				// Column supports multiple image files.
 				if ( null !== $this->item_value && '' !== $this->item_value ) {
-					$media_ids = explode( ',', $this->item_value ); // phpcs:ignore -- 8.1 proof
+					$media_ids = explode( ',', $this->item_value );
 					foreach ( $media_ids as $media_id ) {
 						$url = wp_get_attachment_url( $media_id );
 						$this->create_item_image( $url );

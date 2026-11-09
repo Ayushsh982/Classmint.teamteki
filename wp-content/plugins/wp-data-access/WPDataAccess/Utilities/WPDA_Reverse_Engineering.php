@@ -149,11 +149,15 @@ namespace WPDataAccess\Utilities {
 
 				$obj->extra = $row['extra'];
 				if ( '' !== $row['column_default'] && null !== $row['column_default'] ) {
-					$simple_data_type = WPDA::get_type( $obj->data_type );
+					$simple_data_type = WPDA::get_type( $obj->data_type ); // ???
 					if ( 'number' === $simple_data_type || 'date' === $simple_data_type ) {
 						$obj->default = $row['column_default'];
 					} else {
-						$obj->default = "'{$row['column_default']}'";
+						if ( "NULL" === $row['column_default'] ) {
+							$obj->default = 'NULL';
+						} else {
+							$obj->default = "'{$row['column_default']}'";
+						}
 					}
 				} else {
 					$obj->default = '';

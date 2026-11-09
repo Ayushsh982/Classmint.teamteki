@@ -610,6 +610,7 @@ abstract class WPDA_API_Core {
             'user'  => WPDA::get_current_user_login(),
             'roles' => WPDA::get_current_user_roles(),
             'login' => 'anonymous' !== WPDA::get_current_user_login(),
+            'dnst'  => WPDA::get_option( WPDA::OPTION_APPS_DEFAULT_DENSITY ),
         );
         return $env;
     }
@@ -754,6 +755,21 @@ abstract class WPDA_API_Core {
         $response->header( 'Pragma', 'no-cache' );
         $response->header( 'Expires', '0' );
         return $response;
+    }
+
+    /**
+     * Allow only administrators.
+     *
+     * @return bool|\WP_Error
+     */
+    public function admins_only() {
+        if ( !$this->current_user_can_access() ) {
+            // Only admins
+            return new \WP_Error('rest_forbidden', 'Forbidden', array(
+                'status' => 403,
+            ));
+        }
+        return true;
     }
 
 }

@@ -5,7 +5,7 @@
  *
  * @package WPDataAccess\Simple_Form
  */
-// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- verified on page
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- verified on page
 namespace WPDataAccess\Simple_Form;
 
 use WPDataAccess\Connection\WPDADB;
@@ -301,7 +301,6 @@ class WPDA_Simple_Form_Data {
                     }
                 }
                 if ( $alternative_keys_found === count( $alternative_keys ) ) {
-                    // phpcs:ignore -- 8.1 proof
                     $alternative_key_found = true;
                 }
             }
@@ -365,14 +364,15 @@ class WPDA_Simple_Form_Data {
         }
         if ( null === $column_values_to_be_updated ) {
             // Nothing to update.
-            // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            if ( $_REQUEST['wpda_message'] && '' !== $_REQUEST['wpda_message'] ) {
+            if ( isset( $_REQUEST['wpda_message'] ) ) {
                 // Happens when inserting new row on parent child page
                 $msgtxt = sanitize_text_field( wp_unslash( $_REQUEST['wpda_message'] ) );
+                if ( '' === $msgtxt ) {
+                    $msgtxt = __( 'Nothing to save', 'wp-data-access' );
+                }
             } else {
                 $msgtxt = __( 'Nothing to save', 'wp-data-access' );
             }
-            // phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $msg = new WPDA_Message_Box(array(
                 'message_text' => $msgtxt,
             ));
@@ -417,7 +417,6 @@ class WPDA_Simple_Form_Data {
                 if ( 0 === $result && '' === $wpdadb->last_error ) {
                     $table_info = WPDA::get_table_values( $this->schema_name, $this->table_name );
                     if ( 1 === count( $table_info ) && 'connect' === strtolower( $table_info[0]['engine'] ) ) {
-                        // phpcs:ignore -- 8.1 proof
                         // Connect engine does not return number of rows updated
                         // Presuming update was successful when no error message was returned
                         $msg = new WPDA_Message_Box(array(
@@ -472,4 +471,4 @@ class WPDA_Simple_Form_Data {
 
 }
 
-// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing
+// phpcs:enable WordPress.Security.NonceVerification.Recommended
