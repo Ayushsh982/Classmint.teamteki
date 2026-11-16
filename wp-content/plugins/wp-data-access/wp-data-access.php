@@ -4,7 +4,7 @@
  * Plugin Name:       WP Data Access
  * Plugin URI:        https://wpdataaccess.com/
  * Description:       A powerful data-driven App Builder with an intuitive Table Builder, a highly customizable Form Builder and interactive Chart support in 35 languages
- * Version:           5.5.92
+ * Version:           5.5.93
  * Author:            Passionate Programmers B.V.
  * Author URI:        https://wpdataaccess.com/
  * Text Domain:       wp-data-access
@@ -257,7 +257,8 @@ if ( !function_exists( 'wpda_freemius' ) ) {
                 // db call ok; no-cache ok.
                 // Get plugin backup tables (if applicable).
                 $backup_tables = $wpdb->get_results( $wpdb->prepare( '
-						select table_name as table_name from information_schema.tables
+						select table_name as table_name
+						from `information_schema`.`tables`
 						where table_schema = %s
 						  and table_name like %s
 					  	', array($wpdb->dbname, "{$plugin_table}_BACKUP_%") ), 'ARRAY_A' );

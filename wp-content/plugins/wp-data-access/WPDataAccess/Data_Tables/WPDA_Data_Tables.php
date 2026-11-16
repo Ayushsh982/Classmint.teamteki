@@ -683,6 +683,7 @@ class WPDA_Data_Tables {
             if ( isset( $publication[0]['pub_default_where'] ) ) {
                 if ( null !== $publication[0]['pub_default_where'] && '' !== trim( $publication[0]['pub_default_where'] ) ) {
                     $where = $publication[0]['pub_default_where'];
+                    $where = WPDA::substitute_environment_vars( $where );
                 }
             }
             // Get server side options.
@@ -885,9 +886,6 @@ class WPDA_Data_Tables {
                 $where .= " and {$where_columns} ";
             }
         }
-        if ( '' !== $where ) {
-            $where = WPDA::substitute_environment_vars( $where );
-        }
         if ( '' !== $search_value ) {
             $_filter['filter_dyn'] = $search_value;
         }
@@ -1046,17 +1044,19 @@ class WPDA_Data_Tables {
                         if ( false !== strpos( ltrim( $hyperlink_html ), '&lt;' ) ) {
                             $row[$key] = html_entity_decode( $hyperlink_html );
                         } else {
-                            try {
-                                $hyperlink_obj = json_decode( $hyperlink_html, true );
-                            } catch ( \Exception $e ) {
+                            $hyperlink_obj = json_decode( $hyperlink_html, true );
+                            if ( !is_array( $hyperlink_obj ) ) {
+                                $hyperlink_label = ( isset( $hyperlinks[$value]['hyperlink_label'] ) ? $hyperlinks[$value]['hyperlink_label'] : '' );
+                                $row[$key] = '<a href="' . esc_url( $hyperlink_html ) . '"' . (( isset( $hyperlink->hyperlink_target ) && true === $hyperlink->hyperlink_target ? 'target="_blank" rel="noopener noreferrer"' : '' )) . '>' . esc_html( $hyperlink_label ) . '</a>';
+                            } else {
+                                $hyperlink_label = ( isset( $hyperlink_obj['label'] ) ? $hyperlink_obj['label'] : '' );
+                                $hyperlink_url = ( isset( $hyperlink_obj['url'] ) ? $hyperlink_obj['url'] : '' );
+                                if ( '' === $hyperlink_url ) {
+                                    $row[$key] = esc_html( $hyperlink_label );
+                                } else {
+                                    $row[$key] = '<a href="' . esc_url( $hyperlink_url ) . '"' . (( isset( $hyperlink->hyperlink_target ) && true === $hyperlink->hyperlink_target ? 'target="_blank" rel="noopener noreferrer"' : '' )) . '>' . esc_html( $hyperlink_label ) . '</a>';
+                                }
                             }
-                            $hyperlink_label = ( isset( $hyperlink_obj['label'] ) ? $hyperlink_obj['label'] : '' );
-                            $hyperlink_url = ( isset( $hyperlink_obj['url'] ) ? $hyperlink_obj['url'] : '' );
-                            if ( '' === $hyperlink_url ) {
-                                $row[$key] = urldecode( esc_attr( $hyperlink_label ) );
-                                continue;
-                            }
-                            $row[$key] = '<a href="' . esc_url( $hyperlink_url ) . '"' . (( isset( $hyperlink->hyperlink_target ) && true === $hyperlink->hyperlink_target ? "target='_blank'" : '' )) . '>' . urldecode( esc_attr( $hyperlink_label ) ) . '</a>';
                         }
                     } else {
                         $row[$key] = '';

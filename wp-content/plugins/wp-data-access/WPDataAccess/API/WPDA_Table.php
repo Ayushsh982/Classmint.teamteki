@@ -670,7 +670,6 @@ class WPDA_Table extends WPDA_API_Core {
             $sql_values = implode( ', ', $select_value_placeholders );
             $sql_columns = implode( ', ', $select_column_placeholders );
             // A terrible query to verify authorization
-            // TODO Does this block valid inserts?
             $check_sql = "\n\t\t\t\t\tSELECT 1 FROM (\n\t\t\t\t\t\tSELECT {$sql_columns}\n\t\t\t\t\t\tFROM %i\n\t\t\t\t\t\tWHERE 1 = 2\n\t\t\t\t\t\tUNION ALL\n\t\t\t\t\t\tSELECT {$sql_values}\n\t\t\t\t\t) AS t\n\t\t        \tWHERE ( {$default_where} )\n\t\t\t\t";
             $allowed = $wpdadb->get_var( $wpdadb->prepare( $check_sql, array_merge( $select_columns, array($tbl), $select_values ) ) );
             if ( null === $allowed ) {

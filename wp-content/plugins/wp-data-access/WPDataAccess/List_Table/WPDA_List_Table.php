@@ -940,9 +940,9 @@ class WPDA_List_Table extends Wordpress_Original\WP_List_Table {
                             $hyperlink_label = ( isset( $hyperlink_obj['label'] ) ? $hyperlink_obj['label'] : '' );
                             $hyperlink_url = ( isset( $hyperlink_obj['url'] ) ? $hyperlink_obj['url'] : '' );
                             if ( '' === $hyperlink_url ) {
-                                return urldecode( esc_attr( $hyperlink_label ) );
+                                return esc_html( rawurldecode( $hyperlink_label ) );
                             }
-                            return '<a href="' . esc_url( $hyperlink_url ) . '"' . (( isset( $hyperlink->hyperlink_target ) && true === $hyperlink->hyperlink_target ? "target='_blank'" : '' )) . '>' . urldecode( esc_attr( $hyperlink_label ) ) . '</a>';
+                            return '<a href="' . esc_url( $hyperlink_url ) . '"' . (( isset( $hyperlink->hyperlink_target ) && true === $hyperlink->hyperlink_target ? "target='_blank'" : '' )) . '>' . esc_html( rawurldecode( $hyperlink_label ) ) . '</a>';
                         }
                     } else {
                         return '';

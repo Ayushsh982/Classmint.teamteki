@@ -53,8 +53,8 @@ namespace WPDataAccess {
 		/**
 		 * Option wpda_version and it's default value
 		 */
-		const OPTION_WPDA_VERSION         = array( 'wpda_version', '5.5.92' );
-		const OPTION_WPDA_CLIENT_VERSION  = array( 'wpda_client_version', '1.0.90' );
+		const OPTION_WPDA_VERSION         = array( 'wpda_version', '5.5.93' );
+		const OPTION_WPDA_CLIENT_VERSION  = array( 'wpda_client_version', '1.0.91' );
 		const OPTION_WPDA_UPGRADED        = array( 'wpda_upgraded', false );
 		/**
 		 * Option wpda_setup_error and it's default value
@@ -886,6 +886,10 @@ namespace WPDataAccess {
 		 * @return string
 		 */
 		public static function substitute_environment_vars( $where_clause ) {
+            if ( '' === $where_clause ) {
+                return '';
+            }
+
             global $wpdb;
 
             $cnt = substr_count( $where_clause, '$$USERID$$' );

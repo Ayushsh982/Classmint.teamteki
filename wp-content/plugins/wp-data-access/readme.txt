@@ -4,7 +4,7 @@ Contributors: wpdataaccess, peterschulznl, maxxschulz, kimmyx, freemius
 Tags: table builder, data table, datatable, app builder, dashboard
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 5.5.92
+Stable tag: 5.5.93
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,17 @@ WP Data Access is designed as a **true no-code builder**: everything works out o
 And you're all set! 🚀
 
 == Changelog ==
+
+= 5.5.93 =
+* Released 2026-11-12
+* Fixed: Apply environment variable to default where only
+* Fixed: Generated value not escaped properly
+* Fixed: Dashboard remembers last activated user mode
+* Fixed: Modal not draggable
+* Fixed: State changed when selecting maps menu in Table Builder
+* Fixed: Dynamic hyperlinks no longer shown in legacy data tables
+* Fixed: Text overflow in editor
+* Improved editor user interface
 
 = 5.5.92 =
 * Released 2026-11-06
