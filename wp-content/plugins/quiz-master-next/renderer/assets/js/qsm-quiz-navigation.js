@@ -124,8 +124,12 @@ if (typeof window.qsmCheckMR !== 'function') {
                 // Find all pages for this quiz
                 let $pages = $quizContainer.find(this.config.selectors.page);
 
-                // Determine if first page is disabled
-                let hasFirstPage = (Number(quizData.disable_first_page) !== 1);
+                // Whether a welcome page was rendered. The server only renders one when
+                // should_show_first_page() is true (welcome text or first-page contact
+                // fields), so use its answer; disable_first_page alone is not enough.
+                let hasFirstPage = (typeof quizData.first_page !== 'undefined')
+                    ? !!quizData.first_page
+                    : (Number(quizData.disable_first_page) !== 1);
 
                 // Question pages count (excluding intro page)
                 let questionPages = hasFirstPage ? $pages.length - 1 : $pages.length;
@@ -1998,7 +2002,9 @@ if (typeof window.qsmCheckMR !== 'function') {
                     $this.append('<div style="color: green" class="quick-question-res-p qsm-correct-answer-info">' + quizData.quick_result_correct_answer_text + '</div>');
                     $this.append('<div class="qsm-inline-correct-info">' + this.qsmCheckShortcode(data.message) + '</div>');
                 } else if (value && value.length > 0 && data.success == 'incorrect') {
-                    $this.find('.qmn_radio_answers input[value="' + data.correct_index + '"], .qsm-answer-options input[value="' + data.correct_index + '"]').parent().addClass('data-correct-answer');
+                    if (String(quizData.highlight_correct_answer) !== '0') {
+                        $this.find('.qmn_radio_answers input[value="' + data.correct_index + '"], .qsm-answer-options input[value="' + data.correct_index + '"]').parent().addClass('data-correct-answer');
+                    }
                     $this.append('<div style="color: red" class="quick-question-res-p qsm-incorrect-answer-info">' + quizData.quick_result_wrong_answer_text + '</div>');
                     $this.append('<div class="qsm-inline-correct-info">' + this.qsmCheckShortcode(data.message) + '</div>');
                 }

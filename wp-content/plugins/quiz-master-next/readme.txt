@@ -4,7 +4,7 @@ Tags: quiz, survey, quiz maker, survey maker, exam
 Requires at least: 5.0
 Tested up to: 7.1
 Requires PHP: 5.4
-Stable tag: 11.2.8
+Stable tag: 11.3.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -117,6 +117,29 @@ Please report security bugs found in the source code of the Quiz And Survey Mast
 18. Database and submission records
 
 == Changelog ==
+
+= 11.3.1 (November 11, 2026) =
+* Feature: Abilities API now lets AI agents create quizzes, update quiz settings, edit and delete questions, and read quiz results and summaries.
+* Feature: Abilities API list-results can now filter results by score range and by pass/fail status.
+* Bug: Fixed an error when a question could not be deleted.
+* Bug: Fixed correct answers containing square brackets being graded as incorrect.
+* Security: Fixed unauthenticated cross-user result disclosure via shortcode injection in quiz answers, contact fields, comments and Polar answers.
+* Security: Fixed result disclosure via logged-in users' profile names in the %FULL_NAME% and %USER_NAME% template variables.
+* Security: Fixed unauthenticated score manipulation via submitted hidden-question data and out-of-range Polar slider values.
+* Security: Fixed unauthenticated cross-quiz question disclosure in lazy-loaded quiz pages.
+* Security: Abilities API now checks quiz ownership, so Contributors can no longer read or change other authors' quizzes.
+
+= 11.3.0 (November 2, 2026) =
+* Bug: Fixed the Start button submitting the quiz in the new render.
+* Bug: Fixed the answer_array error in quick results in the legacy version.
+* Security: Fixed Contributor+ SQL injection via stored quiz page data (qpages).
+
+= 11.2.9 (October 23, 2026) =
+* Feature: Added an option to disable correct-answer highlighting for wrong responses.
+* Bug: Text/HTML, Opt-in, and Captcha fields no longer affect score totals.
+* Bug: Improved score accuracy when Text/HTML sections are hidden by conditional logic, including the admin Results column.
+* Security: Fixed stored XSS in the question featured image field.
+* Security: Fixed PHP Object Injection in quiz Contact tab settings.
 
 = 11.2.8 (October 5, 2026) =
 * Bug: Fixed issue where the QSM block creates blank question copies when a quiz is embedded twice.

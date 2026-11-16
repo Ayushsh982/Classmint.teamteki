@@ -142,9 +142,14 @@ class QSM_Ajax_Handler {
 		// Get questions from database
 		$questions = array();
 		foreach ( $question_ids as $question_id ) {
+			// Security: the nonce only proves the visitor could see $quiz_id, so only that
+			// quiz's questions may be rendered. The full renderer's load_questions() applies
+			// the same quiz_id bound; without it a public quiz's nonce could render questions
+			// from any other (private, draft or password-protected) quiz by ID.
 			$question = $wpdb->get_row( $wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}mlw_questions WHERE question_id = %d AND deleted = 0",
-				$question_id
+				"SELECT * FROM {$wpdb->prefix}mlw_questions WHERE question_id = %d AND quiz_id = %d AND deleted = 0",
+				$question_id,
+				$quiz_id
 			), ARRAY_A );
 
 			if ( ! $question ) {
@@ -191,6 +196,7 @@ class QSM_Ajax_Handler {
 			}
 
 			$question = $questions[ $question_id ];
+			$is_graded = $mlwQuizMasterNext->pluginHelper->is_question_type_graded( $question['question_type_new'] );
 			$question_settings = maybe_unserialize( $question['question_settings'] );
 			$answer_array = maybe_unserialize( $question['answer_array'] );
 
@@ -207,7 +213,7 @@ class QSM_Ajax_Handler {
 
 			?>
 			<div class="quiz_section qsm-question-wrapper qsm-question-wrapper-<?php echo esc_attr( $question_id ); ?> question-section-id-<?php echo esc_attr( $question_id ); ?> question-type-<?php echo esc_attr( $question['question_type_new'] ); ?>" data-qid="<?php echo esc_attr( $question_id ); ?>">
-				<?php if ( isset( $quiz_options_settings->question_numbering ) && 1 === intval( $quiz_options_settings->question_numbering ) ) { ?>
+				<?php if ( $is_graded && isset( $quiz_options_settings->question_numbering ) && 1 === intval( $quiz_options_settings->question_numbering ) ) { ?>
 				<span class='mlw_qmn_question_number'><?php echo esc_html( $current_question_number ); ?>.&nbsp;</span>
 				<?php } ?>
 				<?php
@@ -258,7 +264,9 @@ class QSM_Ajax_Handler {
 				?>
 			</div>
 			<?php
-			$current_question_number++;
+			if ( $is_graded ) {
+				$current_question_number++;
+			}
 		}
 
 		return ob_get_clean();

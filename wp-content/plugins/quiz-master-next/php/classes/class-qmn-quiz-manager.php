@@ -643,6 +643,7 @@ class QMNQuizManager {
 				'disable_first_page'                 => $qmn_quiz_options->disable_first_page,
 				'enable_result_after_timer_end'      => isset( $qmn_quiz_options->enable_result_after_timer_end ) ? $qmn_quiz_options->enable_result_after_timer_end : '',
 				'enable_quick_result_mc'             => isset( $qmn_quiz_options->enable_quick_result_mc ) ? $qmn_quiz_options->enable_quick_result_mc : '',
+				'highlight_correct_answer'           => isset( $qmn_quiz_options->highlight_correct_answer ) ? $qmn_quiz_options->highlight_correct_answer : 1,
 				'end_quiz_if_wrong'                  => isset( $qmn_quiz_options->end_quiz_if_wrong ) ? $qmn_quiz_options->end_quiz_if_wrong : 0,
 				'form_disable_autofill'              => isset( $qmn_quiz_options->form_disable_autofill ) ? $qmn_quiz_options->form_disable_autofill : '',
 				'disable_mathjax'                    => isset( $qmn_quiz_options->disable_mathjax ) ? $qmn_quiz_options->disable_mathjax : '',
@@ -677,16 +678,42 @@ class QMNQuizManager {
 			$enc_questions                      = array();
 			if ( ! empty( $qpages_arr ) ) {
 				foreach ( $qpages_arr as $item ) {
-					$enc_questions = array_merge( $enc_questions, $item['questions'] );
+					if ( ! empty( $item['questions'] ) && is_array( $item['questions'] ) ) {
+						$enc_questions = array_merge( $enc_questions, $item['questions'] );
+					}
 				}
 			}
-			$enc_questions      = implode( ',', $enc_questions );
-			$question_array     = $wpdb->get_results(
-				"SELECT quiz_id, question_id, answer_array, question_answer_info, question_type_new, question_settings
-				FROM {$wpdb->prefix}mlw_questions
-				WHERE question_id IN ($enc_questions)",
-				ARRAY_A
-			);
+			// qpages can be empty or out of step with pages (e.g. a question added but the
+			// Questions tab not saved yet). load_questions() still renders those questions
+			// from pages, or from quiz_id when pages is empty, so build the quick-result data
+			// from the same sources or the front end reads answer_array off undefined.
+			if ( is_array( $pages_arr ) ) {
+				foreach ( $pages_arr as $page ) {
+					if ( is_array( $page ) ) {
+						$enc_questions = array_merge( $enc_questions, $page );
+					}
+				}
+			}
+			if ( empty( $enc_questions ) ) {
+				$enc_questions = $wpdb->get_col( $wpdb->prepare( "SELECT question_id FROM {$wpdb->prefix}mlw_questions WHERE quiz_id = %d AND deleted = 0", $qmn_json_data['quiz_id'] ) );
+			}
+			// CVE-2026-116509: qpages is stored quiz data a Contributor can write, and
+			// quizzes saved before the fix may already hold a payload. Cast at the sink.
+			$enc_questions      = array_values( array_unique( array_filter( array_map( 'intval', $enc_questions ), function ( $id ) {
+				return $id > 0;
+			} ) ) );
+			$question_array     = array();
+			if ( ! empty( $enc_questions ) ) {
+				$question_array = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT quiz_id, question_id, answer_array, question_answer_info, question_type_new, question_settings
+						FROM {$wpdb->prefix}mlw_questions
+						WHERE question_id IN (" . implode( ',', array_fill( 0, count( $enc_questions ), '%d' ) ) . ')',
+						$enc_questions
+					),
+					ARRAY_A
+				);
+			}
 			$questions_settings = array();
 			foreach ( $question_array as $key => $question ) {
 
@@ -1087,8 +1114,9 @@ class QMNQuizManager {
 					}
 					$question_ids = array_unique( $random );
 				}
-			} elseif ( 1 == $quiz_options->limit_category_checkbox && ! empty( maybe_unserialize( $quiz_options->select_category_question ) ) && $is_quiz_page ) {
-				$category_question_limit = maybe_unserialize( $quiz_options->select_category_question );
+			} elseif ( 1 == $quiz_options->limit_category_checkbox && is_array( qsm_unserialize_no_objects( $quiz_options->select_category_question ) ) && ! empty( qsm_unserialize_no_objects( $quiz_options->select_category_question ) ) && $is_quiz_page ) {
+				// Security (PHP Object Injection): never instantiate objects from this quiz option.
+				$category_question_limit = qsm_unserialize_no_objects( $quiz_options->select_category_question );
 				$categories              = QSM_Questions::get_quiz_categories( $quiz_id );
 				$category_ids            = ( isset( $categories['list'] ) ? array_keys( $categories['list'] ) : array() );
 				if ( ! empty( $category_ids ) ) {
@@ -1222,7 +1250,7 @@ class QMNQuizManager {
 			$question_ids = apply_filters( 'qsm_load_questions_ids', array(), $quiz_id, $quiz_options );
 			$question_sql = '';
 			if ( ! empty( $question_ids ) ) {
-				$qids         = implode( ', ', $question_ids );
+				$qids         = implode( ', ', array_map( 'intval', $question_ids ) );
 				$question_sql = " AND question_id IN ($qids) ";
 			}
 			$questions = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mlw_questions WHERE quiz_id=%d AND deleted=0 %1s %2s %3s", $quiz_id, $question_sql, $order_by_sql, $limit_sql ) );
@@ -2850,14 +2878,50 @@ class QMNQuizManager {
 		$qmn_array_for_variables['time_taken']      = current_time( 'h:i:s A m/d/Y' );
 		$qmn_array_for_variables['contact']         = $contact_responses;
 		$qmn_array_for_variables['quiz_start_date'] = $mlw_quiz_start_date;
-		$hidden_questions                           = array();
+		$client_hidden_questions                    = array();
 		if ( isset( $_POST['qsm_hidden_questions'] ) ) {
-			$hidden_questions = sanitize_text_field( wp_unslash( $_POST['qsm_hidden_questions'] ) );
-			$hidden_questions = json_decode( $hidden_questions, true );
+			$client_hidden_questions = sanitize_text_field( wp_unslash( $_POST['qsm_hidden_questions'] ) );
+			$client_hidden_questions = json_decode( $client_hidden_questions, true );
 			// Only question ids ("12") and category ids ("c3") are valid here. json_decode()
 			// turns \u003c escapes back into markup that sanitize_text_field() never saw.
-			$hidden_questions = is_array( $hidden_questions ) ? array_values( array_filter( $hidden_questions, 'qsm_is_valid_hidden_question_id' ) ) : array();
+			$client_hidden_questions = is_array( $client_hidden_questions ) ? array_values( array_filter( $client_hidden_questions, 'qsm_is_valid_hidden_question_id' ) ) : array();
 		}
+		/*
+		 * SECURITY: qsm_hidden_questions excludes questions from scoring (both the
+		 * earned points and the percentage denominator). It is POSTed by the client,
+		 * so trusting it as-is lets an unauthenticated quiz taker mark any question
+		 * hidden and inflate the stored score to an arbitrary value (CWE-20/CWE-840).
+		 * The feature that legitimately hides questions is conditional logic, which
+		 * lives in the qsm-logic add-on, so the authoritative hidden set has to be
+		 * recomputed server-side from the saved rules and the submitted answers --
+		 * which only the add-on can do. Core therefore never trusts the raw client
+		 * list on its own:
+		 *   - the add-on supplies the verified set via qsm_verified_hidden_questions;
+		 *   - with no conditional logic configured on the quiz, nothing can be hidden,
+		 *     so the client list is dropped (closes the hole on every install that does
+		 *     not use conditional logic, which is the default);
+		 *   - a logic-configured quiz whose add-on has not yet implemented the filter
+		 *     keeps the legacy behaviour, so scoring does not regress before the add-on
+		 *     ships its server-side verifier.
+		 */
+		$verified_hidden_questions = apply_filters( 'qsm_verified_hidden_questions', null, $client_hidden_questions, $qmn_array_for_variables, $qmn_quiz_options );
+		if ( null === $verified_hidden_questions ) {
+			// Does conditional logic apply to this quiz? If the qsm-logic add-on is not
+			// active, nothing can legitimately be hidden, so the client list is dropped.
+			// If it is active, detect logic for this quiz across BOTH storage eras:
+			// pre-2.0 kept rules in the 'logic_rules' quiz setting; 2.0+ moved them to the
+			// mlw_logic table and BLANKS that setting (flagging migration with the
+			// logic_rules_quiz_<id> option, see blocks/block.php). Checking only the
+			// setting would treat every migrated logic quiz as no-logic and wrongly drop
+			// its legitimately hidden questions, lowering honest scores.
+			$logic_rules     = $mlwQuizMasterNext->pluginHelper->get_quiz_setting( 'logic_rules', '' );
+			$has_legacy_logic = ! empty( $logic_rules ) && 'a:0:{}' !== $logic_rules && '[]' !== $logic_rules && 'N;' !== $logic_rules;
+			$quiz_id          = isset( $qmn_quiz_options->quiz_id ) ? intval( $qmn_quiz_options->quiz_id ) : 0;
+			$has_migrated_logic = $quiz_id && get_option( 'logic_rules_quiz_' . $quiz_id );
+			$quiz_uses_logic  = class_exists( 'QSM_Logic' ) && ( $has_legacy_logic || $has_migrated_logic );
+			$verified_hidden_questions = $quiz_uses_logic ? $client_hidden_questions : array();
+		}
+		$hidden_questions                           = array_values( array_filter( (array) $verified_hidden_questions, 'qsm_is_valid_hidden_question_id' ) );
 		$qmn_array_for_variables['hidden_questions'] = $hidden_questions;
 		$qmn_array_for_variables                     = apply_filters( 'qsm_result_variables', $qmn_array_for_variables );
 		$error_details                               = '';
@@ -3242,7 +3306,7 @@ class QMNQuizManager {
 
 								// If a comment was submitted
 								if ( isset( $_POST[ 'mlwComment' . $question['question_id'] ] ) ) {
-									$comment = htmlspecialchars( strip_shortcodes( sanitize_textarea_field( wp_unslash( $_POST[ 'mlwComment' . $question['question_id'] ] ) ) ), ENT_QUOTES );
+									$comment = qsm_sanitize_submitted_comment( wp_unslash( $_POST[ "mlwComment" . $question["question_id"] ] ) );
 								} else {
 									$comment = '';
 								}
@@ -3328,7 +3392,7 @@ class QMNQuizManager {
 							}
 							// If a comment was submitted.
 							if ( isset( $_POST[ 'mlwComment' . $question['question_id'] ] ) ) {
-								$comment = htmlspecialchars( strip_shortcodes( sanitize_textarea_field( wp_unslash( $_POST[ 'mlwComment' . $question['question_id'] ] ) ) ), ENT_QUOTES );
+								$comment = qsm_neutralize_shortcode_brackets( htmlspecialchars( strip_shortcodes( sanitize_textarea_field( wp_unslash( $_POST[ "mlwComment" . $question["question_id"] ] ) ) ), ENT_QUOTES ) );
 							} else {
 								$comment = '';
 							}
@@ -3378,8 +3442,17 @@ class QMNQuizManager {
 		}
 
 		// Calculate Total Percent Score And Average Points Only If Total Questions Doesn't Equal Zero To Avoid Division By Zero Error
-		if ( 0 !== $total_questions ) {
-			$total_score = round( ( ( $total_correct / ( $total_questions - count( $hidden_questions ) ) ) * 100 ), 2 );
+		// total_questions only counts graded questions, so only subtract hidden questions that are graded.
+		// A hidden Text/HTML section would otherwise shrink the denominator and push the score above 100%.
+		global $mlwQuizMasterNext;
+		$hidden_graded_count = 0;
+		foreach ( $hidden_questions as $hidden_question_id ) {
+			if ( isset( $questions[ $hidden_question_id ] ) && $mlwQuizMasterNext->pluginHelper->is_question_type_graded( $questions[ $hidden_question_id ]['question_type_new'] ) ) {
+				++$hidden_graded_count;
+			}
+		}
+		if ( 0 < $total_questions - $hidden_graded_count ) {
+			$total_score = round( ( ( $total_correct / ( $total_questions - $hidden_graded_count ) ) * 100 ), 2 );
 		} else {
 			$total_score = 0;
 		}
@@ -3416,7 +3489,7 @@ class QMNQuizManager {
 	public function check_comment_section( $qmn_quiz_options, $qmn_array_for_variables ) {
 		$qmn_quiz_comments = '';
 		if ( isset( $_POST['mlwQuizComments'] ) ) {
-			$qmn_quiz_comments = strip_shortcodes( sanitize_textarea_field( wp_unslash( $_POST['mlwQuizComments'] ) ) );
+			$qmn_quiz_comments = qsm_strip_and_neutralize_shortcodes( sanitize_textarea_field( wp_unslash( $_POST["mlwQuizComments"] ) ) );
 		}
 		return apply_filters( 'qmn_returned_comments', $qmn_quiz_comments, $qmn_quiz_options, $qmn_array_for_variables );
 	}
