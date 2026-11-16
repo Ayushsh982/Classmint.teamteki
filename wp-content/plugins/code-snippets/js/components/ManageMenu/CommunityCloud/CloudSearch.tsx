@@ -10,7 +10,7 @@ import { LoadingStatusNotices } from '../../common/LoadingStatusNotices'
 import { SnippetViewToggle } from '../../common/SnippetViewToggle'
 import { CloudSnippetAuthor, CloudSnippetCard } from '../../common/cloud/CloudSnippetCard'
 import { CloudSnippetsTable } from './CloudSnippetsTable'
-import { useCloudSearch } from './WithCloudSearchContext'
+import { parseSearchMethod, useCloudSearch } from './WithCloudSearchContext'
 import { SearchFilters } from './SearchFilters'
 import type { CloudSearchResults } from './WithCloudSearchContext'
 import type { TableNavProps } from '../../common/ListTable/TableNavigation'
@@ -30,17 +30,17 @@ const SearchBox = () => {
 	}
 
 	return (
-		<form className="cloud-search-form" onSubmit={handleSubmit}>
+		<form aria-label={__('Search Cloud Library', 'code-snippets')} className="cloud-search-form" onSubmit={handleSubmit}>
 			<label htmlFor={searchMethodId} className="screen-reader-text">
 				{__('Search method', 'code-snippets')}
 			</label>
 			<select
 				id={searchMethodId}
 				value={searchParams.method}
-				onChange={event =>
-					updateSearchParams({ method: 'codevault' === event.target.value ? 'codevault' : 'term' })}
+				onChange={({ target: { value } }) => updateSearchParams({ method: parseSearchMethod(value) })}
 			>
 				<option value="term">{__('Search by keyword', 'code-snippets')}</option>
+				<option value="ai">{__('Search with AI', 'code-snippets')}</option>
 				<option value="codevault">{__('Name of library', 'code-snippets')}</option>
 			</select>
 

@@ -38,7 +38,7 @@ export const SnippetPriorityInput: React.FC<SnippetPriorityInputProps> = ({ snip
 	}
 
 	return (
-		<form onSubmit={event => {
+		<form aria-label={__('Snippet priority', 'code-snippets')} onSubmit={event => {
 			event.preventDefault()
 			handleUpdate()
 		}}>
@@ -47,6 +47,8 @@ export const SnippetPriorityInput: React.FC<SnippetPriorityInputProps> = ({ snip
 				type="number"
 				className="snippet-priority"
 				value={value}
+				min={0}
+				max={32767}
 				step="1"
 				onBlur={handleUpdate}
 				aria-label={__('Snippet priority', 'code-snippets')}

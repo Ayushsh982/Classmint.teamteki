@@ -6,6 +6,7 @@ use Code_Snippets\Migration\Export\Export;
 use Code_Snippets\Migration\Export\Export_Code;
 use Code_Snippets\Migration\Export\Export_JSON;
 use Code_Snippets\Model\Snippet;
+use Code_Snippets\REST_API\Network_Scope;
 use Code_Snippets\REST_API\REST_Collection_Controller;
 use WP_Error;
 use WP_REST_Request;
@@ -30,6 +31,8 @@ use function Code_Snippets\trash_snippet;
  * @package Code_Snippets
  */
 final class Snippets_REST_Controller extends REST_Collection_Controller {
+	use Network_Scope;
+
 
 	/**
 	 * Current API version.
@@ -217,35 +220,6 @@ final class Snippets_REST_Controller extends REST_Collection_Controller {
 	 */
 	public function permission_callback( WP_REST_Request $request ): bool {
 		return code_snippets()->current_user_can();
-	}
-
-	/**
-	 * Determine whether a request targets network-scoped snippets.
-	 *
-	 * Only the literal boolean `true` (or its common string/integer equivalents)
-	 * is treated as a network-scoped request. A missing or null `network` param
-	 * means "site-scoped", and must not be escalated to the network capability.
-	 *
-	 * @param WP_REST_Request|WP_Error $request Full data about the request.
-	 *
-	 * @return bool
-	 */
-	private function is_network_scoped_request( $request ): bool {
-		if ( ! is_multisite() || ! $request instanceof WP_REST_Request || ! $request->has_param( 'network' ) ) {
-			return false;
-		}
-
-		$network = $request->get_param( 'network' );
-
-		if ( is_bool( $network ) ) {
-			return $network;
-		}
-
-		if ( is_string( $network ) ) {
-			return ! in_array( strtolower( $network ), [ '0', 'false', 'no', '' ], true );
-		}
-
-		return (bool) $network;
 	}
 
 	/**
@@ -533,6 +507,9 @@ final class Snippets_REST_Controller extends REST_Collection_Controller {
 	 */
 	public function create_item( $request ) {
 		$snippet = $this->prepare_item_for_database( $request );
+
+		// An ID in the body names no snippet to create; saving it would overwrite that snippet.
+		$snippet->id = 0;
 		$result = save_snippet( $snippet );
 
 		return $result
@@ -591,6 +568,14 @@ final class Snippets_REST_Controller extends REST_Collection_Controller {
 				'rest_cannot_delete',
 				__( 'The snippet could not be found.', 'code-snippets' ),
 				[ 'status' => 404 ]
+			);
+		}
+
+		if ( $snippet->locked ) {
+			return new WP_Error(
+				'rest_snippet_locked',
+				__( 'This snippet is locked. Unlock it before trashing or deleting it.', 'code-snippets' ),
+				[ 'status' => 409 ]
 			);
 		}
 
@@ -891,6 +876,7 @@ final class Snippets_REST_Controller extends REST_Collection_Controller {
 				'scope'            => [
 					'description' => esc_html__( 'Context in which the snippet is executable.', 'code-snippets' ),
 					'type'        => 'string',
+					'enum'        => Snippet::get_all_scopes(),
 				],
 				'condition_id'     => [
 					'description' => esc_html__( 'Identifier of condition linked to this snippet.', 'code-snippets' ),

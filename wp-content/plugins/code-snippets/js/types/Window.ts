@@ -33,6 +33,7 @@ declare global {
 		readonly CODE_SNIPPETS?: {
 			debug: boolean
 			isLicensed: boolean
+			safeModeRequested: boolean
 			hideUpsell: boolean
 			isCloudConnected: boolean
 			snippetView: SnippetView
@@ -52,6 +53,7 @@ declare global {
 					token: string
 					snippets: string
 				}
+				search: string
 			}
 			urls: {
 				plugin: string
@@ -63,6 +65,7 @@ declare global {
 				import: string
 				settings: string | null
 				cloud: string
+				connectCloud?: string
 				demoReset: string
 			}
 			banner: {
@@ -93,6 +96,10 @@ declare global {
 			editorTheme: string
 			aiDemo?: {
 				siteName: string
+			}
+			previewDemo?: {
+				siteName: string
+				homeUrl: string
 			}
 		}
 		readonly CODE_SNIPPETS_EDIT?: {

@@ -6,6 +6,7 @@ use Code_Snippets\Admin\Bootstrap_Admin;
 use Code_Snippets\Admin\Feedback_Error_Capture;
 use Code_Snippets\Admin\Feedback_Panel;
 use Code_Snippets\Admin\Menus\Manage\Manage_Menu;
+use Code_Snippets\Client\Docs_Client;
 use Code_Snippets\Client\Feedback_Client;
 use Code_Snippets\Controller\Cloud_Search_Controller;
 use Code_Snippets\Core\DB;
@@ -26,8 +27,11 @@ use Code_Snippets\REST_API\Import\Plugins_Import_REST_Controller;
 use Code_Snippets\REST_API\Preferences\Demos_Seen_REST_Controller;
 use Code_Snippets\REST_API\Preferences\Stats_View_Rest_Controller;
 use Code_Snippets\REST_API\Preferences\Snippet_View_REST_Controller;
+use Code_Snippets\REST_API\REST_Cache_Bypass;
+use Code_Snippets\REST_API\Search\Search_REST_Controller;
 use Code_Snippets\REST_API\Snippets\Recently_Active_REST_Controller;
 use Code_Snippets\REST_API\Snippets\Snippets_REST_Controller;
+use Code_Snippets\Search\Universal_Search;
 use function Code_Snippets\Settings\are_settings_unified;
 
 /**
@@ -155,6 +159,8 @@ class Plugin {
 	public function init_rest_api() {
 		$cloud_search = new Cloud_Search_Controller( $this->cloud_connection );
 
+		new REST_Cache_Bypass();
+
 		new Snippets_REST_Controller();
 		new Recently_Active_REST_Controller();
 
@@ -168,6 +174,8 @@ class Plugin {
 		new Cloud_Snippets_REST_Controller( $cloud_search );
 
 		new Feedback_REST_Controller( new Feedback_Client( new Feedback_Connection() ) );
+
+		new Search_REST_Controller( new Universal_Search( $cloud_search, new Docs_Client() ) );
 	}
 
 	/**
@@ -338,6 +346,22 @@ class Plugin {
 	}
 
 	/**
+	 * Determine if a given user has the capability to manage snippets at the given scope.
+	 *
+	 * @param int  $user_id User ID.
+	 * @param bool $network Whether to check for network snippets.
+	 *
+	 * @return bool
+	 */
+	public function user_can_manage_snippets( int $user_id, bool $network = false ): bool {
+		if ( $network || ( is_multisite() && ! $this->is_subsite_menu_enabled() ) ) {
+			return is_super_admin( $user_id ) || user_can( $user_id, $this->get_network_cap_name() );
+		}
+
+		return user_can( $user_id, $this->get_cap_name() );
+	}
+
+	/**
 	 * Get the required capability to perform a certain action on snippets.
 	 * Does not check if the user has this capability or not.
 	 *
@@ -368,6 +392,7 @@ class Plugin {
 			[
 				'debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
 				'isLicensed'         => $this->licensing->is_licensed(),
+				'safeModeRequested'  => Evaluate_Functions::is_safe_mode_query_var_set() && $this->current_user_can(),
 				'isCloudConnected'   => $this->cloud_connection->is_authenticated(),
 				'hideUpsell'         => Settings\get_setting( 'general', 'hide_upgrade_menu' ),
 				'snippetView'        => Snippet_View_REST_Controller::get_snippet_view(),
@@ -387,6 +412,7 @@ class Plugin {
 						'token'    => $this->cloud_connection->get_local_token(),
 						'snippets' => esc_url_raw( rest_url( Cloud_Snippets_REST_Controller::get_base_route() ) ),
 					],
+					'search'         => esc_url_raw( rest_url( Search_REST_Controller::get_base_route() ) ),
 				],
 				'urls'               => [
 					'plugin'    => esc_url_raw( plugins_url( '', PLUGIN_FILE ) ),

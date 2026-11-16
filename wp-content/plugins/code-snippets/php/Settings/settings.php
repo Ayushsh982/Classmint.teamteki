@@ -7,8 +7,11 @@
 
 namespace Code_Snippets\Settings;
 
+use Code_Snippets\Client\Docs_Client;
 use Code_Snippets\Client\Welcome_Client;
 use Code_Snippets\Controller\Cloud_Search_Controller;
+use Code_Snippets\Search\Search_Index;
+use Code_Snippets\Search\Universal_Search;
 use function add_action;
 use function Code_Snippets\clean_snippets_cache;
 use function Code_Snippets\flush_versioned_cache_groups;
@@ -133,8 +136,9 @@ function do_settings_fields_with_headings( string $page, string $section ): void
 		}
 
 		$class = empty( $field['args']['class'] ) ? '' : ' class="' . esc_attr( $field['args']['class'] ) . '"';
+		$anchor = ' id="' . esc_attr( Search_Index::SETTING_ANCHOR_PREFIX . $field['id'] ) . '"';
 
-		echo '<tr' . $class . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+		echo '<tr' . $anchor . $class . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
 
 		// A field with no title, such as a notice rendered by a callback, spans
 		// the row rather than leaving an empty header cell for a screen reader.
@@ -199,19 +203,12 @@ function register_plugin_settings() {
 	// Register settings fields. The tab a field appears under comes from the
 	// layout, while the section it saves into stays exactly as it was.
 	$definitions = Settings_Fields::get_field_definitions();
-	$descriptions = Settings_Layout::get_descriptions();
 	$headings = Settings_Layout::get_group_headings();
 
 	foreach ( get_settings_sections() as $tab_id => $tab_name ) {
 		foreach ( Settings_Layout::get_visible_fields( $tab_id, $current_settings ) as $entry ) {
 			list( $section_id, $field_id ) = $entry;
-			$field = $definitions[ $section_id ][ $field_id ];
-
-			// Reword the settings whose description names the control without
-			// saying what it buys you.
-			if ( isset( $descriptions[ $field_id ] ) ) {
-				$field['desc'] = $descriptions[ $field_id ];
-			}
+			$field = Settings_Layout::apply_description( $definitions[ $section_id ][ $field_id ], $field_id );
 
 			$field_object = new Setting_Field( $section_id, $field_id, $field );
 
@@ -220,7 +217,7 @@ function register_plugin_settings() {
 			// accessible name. Checkboxes render their own labels, and
 			// callback/action fields have no single control to point at.
 			$labelable_types = [ 'text', 'number', 'select' ];
-			$field_args      = [];
+			$field_args = [];
 
 			if ( isset( $field['type'] ) && in_array( $field['type'], $labelable_types, true ) ) {
 				$field_args['label_for'] = $field_object->element_id;
@@ -262,7 +259,7 @@ add_action( 'admin_init', __NAMESPACE__ . '\\register_plugin_settings' );
  *
  * @param array<string, mixed>                    $field    Field definition.
  * @param array<string, array<string,mixed>>      $settings Current settings values.
- * @param array<string, array<string,mixed>>|null $input Optional raw input values.
+ * @param array<string, array<string,mixed>>|null $input    Optional raw input values.
  *
  * @return bool
  */
@@ -368,7 +365,7 @@ function process_settings_actions( array $input ): ?array {
 		add_settings_error(
 			OPTION_NAME,
 			'settings_reset',
-			__( 'All settings have been reset to their defaults.', 'code-snippets' ),
+			esc_html__( 'All settings have been reset to their defaults.', 'code-snippets' ),
 			'updated'
 		);
 
@@ -377,19 +374,32 @@ function process_settings_actions( array $input ): ?array {
 	}
 
 	if ( isset( $input['debug']['database_update'] ) ) {
-		code_snippets()->db->create_or_upgrade_tables();
+		if ( code_snippets()->db->create_or_upgrade_tables() ) {
+			add_settings_error(
+				OPTION_NAME,
+				'database_update_done',
+				esc_html__( 'Successfully performed database table upgrade.', 'code-snippets' ),
+				'updated'
+			);
+		} else {
+			global $wpdb;
 
-		add_settings_error(
-			OPTION_NAME,
-			'database_update_done',
-			__( 'Successfully performed database table upgrade.', 'code-snippets' ),
-			'updated'
-		);
+			/* translators: %s: database error message */
+			$error_text = __( 'The database table upgrade did not complete: %s', 'code-snippets' );
+
+			add_settings_error(
+				OPTION_NAME,
+				'database_update_failed',
+				esc_html( sprintf( $error_text, $wpdb->last_error ) ),
+			);
+		}
 	}
 
 	if ( isset( $input['debug']['reset_caches'] ) ) {
 		Welcome_Client::clear_cache();
 		Cloud_Search_Controller::clear_caches();
+		Docs_Client::clear_cache();
+		Universal_Search::clear_caches();
 		clean_snippets_cache( code_snippets()->db->get_table_name( false ) );
 
 		if ( is_multisite() ) {
@@ -401,12 +411,36 @@ function process_settings_actions( array $input ): ?array {
 		// versioned groups (current, previous and legacy) all go too.
 		flush_versioned_cache_groups( (string) get_option( 'code_snippets_cache_version', '' ) );
 
-		add_settings_error(
-			OPTION_NAME,
-			'snippet_caches_reset',
-			__( 'Successfully reset snippets caches.', 'code-snippets' ),
-			'updated'
-		);
+		// Resetting caches before a rollback is also how an administrator checks
+		// what the version source is serving now, so the versions are fetched again.
+		$available_versions = Version_Switch::refresh_available_versions();
+		$refresh_failure = Version_Switch::get_refresh_failure();
+
+		if ( $refresh_failure ) {
+			/* translators: %s: reason the plugin versions could not be listed. */
+			$message = __( 'Successfully reset snippets caches, but the available plugin versions could not be listed: %s', 'code-snippets' );
+
+			add_settings_error(
+				OPTION_NAME,
+				'snippet_caches_reset',
+				esc_html( sprintf( $message, $refresh_failure ) ),
+			);
+		} else {
+			/* translators: %d: number of plugin versions available to install. */
+			$message = _n(
+				'Successfully reset snippets caches. %d plugin version is available to install.',
+				'Successfully reset snippets caches. %d plugin versions are available to install.',
+				count( $available_versions ),
+				'code-snippets'
+			);
+
+			add_settings_error(
+				OPTION_NAME,
+				'snippet_caches_reset',
+				esc_html( sprintf( $message, count( $available_versions ) ) ),
+				'updated'
+			);
+		}
 	}
 
 	return null;

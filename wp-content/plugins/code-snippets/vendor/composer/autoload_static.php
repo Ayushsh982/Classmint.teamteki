@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit118984772f6b448937a6130f407c8a8b
+class ComposerStaticInit1b291557f4b8130f2c07ad0bf3138d2b
 {
     public static $files = array (
         'b1ada0eb618777c05225569c0c6d0f01' => __DIR__ . '/../..' . '/php/Admin/Menus/Manage/Manage_Menu.php',
@@ -61,6 +61,7 @@ class ComposerStaticInit118984772f6b448937a6130f407c8a8b
         'Code_Snippets\\Admin\\Menus\\Welcome_Menu' => __DIR__ . '/../..' . '/php/Admin/Menus/Welcome_Menu.php',
         'Code_Snippets\\Admin\\Notice_Filter' => __DIR__ . '/../..' . '/php/Admin/Notice_Filter.php',
         'Code_Snippets\\Client\\Cloud_Public_Client' => __DIR__ . '/../..' . '/php/Client/Cloud_Public_Client.php',
+        'Code_Snippets\\Client\\Docs_Client' => __DIR__ . '/../..' . '/php/Client/Docs_Client.php',
         'Code_Snippets\\Client\\Feedback_Client' => __DIR__ . '/../..' . '/php/Client/Feedback_Client.php',
         'Code_Snippets\\Client\\Welcome_Client' => __DIR__ . '/../..' . '/php/Client/Welcome_Client.php',
         'Code_Snippets\\Controller\\Cloud_Search_Controller' => __DIR__ . '/../..' . '/php/Controller/Cloud_Search_Controller.php',
@@ -111,19 +112,29 @@ class ComposerStaticInit118984772f6b448937a6130f407c8a8b
         'Code_Snippets\\REST_API\\Import\\Plugins\\Insert_PHP_Code_Snippet_Plugin_Importer' => __DIR__ . '/../..' . '/php/REST_API/Import/Plugins/Insert_PHP_Code_Snippet_Plugin_Importer.php',
         'Code_Snippets\\REST_API\\Import\\Plugins\\Plugin_Importer' => __DIR__ . '/../..' . '/php/REST_API/Import/Plugins/Plugin_Importer.php',
         'Code_Snippets\\REST_API\\Import\\Plugins_Import_REST_Controller' => __DIR__ . '/../..' . '/php/REST_API/Import/Plugins_Import_REST_Controller.php',
+        'Code_Snippets\\REST_API\\Network_Scope' => __DIR__ . '/../..' . '/php/REST_API/Network_Scope.php',
         'Code_Snippets\\REST_API\\Preferences\\Demos_Seen_REST_Controller' => __DIR__ . '/../..' . '/php/REST_API/Preferences/Demos_Seen_REST_Controller.php',
         'Code_Snippets\\REST_API\\Preferences\\Preference_REST_Controller' => __DIR__ . '/../..' . '/php/REST_API/Preferences/Preference_REST_Controller.php',
         'Code_Snippets\\REST_API\\Preferences\\Snippet_View_REST_Controller' => __DIR__ . '/../..' . '/php/REST_API/Preferences/Snippet_View_REST_Controller.php',
         'Code_Snippets\\REST_API\\Preferences\\Stats_View_Rest_Controller' => __DIR__ . '/../..' . '/php/REST_API/Preferences/Stats_View_Rest_Controller.php',
+        'Code_Snippets\\REST_API\\REST_Cache_Bypass' => __DIR__ . '/../..' . '/php/REST_API/REST_Cache_Bypass.php',
         'Code_Snippets\\REST_API\\REST_Collection_Controller' => __DIR__ . '/../..' . '/php/REST_API/REST_Collection_Controller.php',
         'Code_Snippets\\REST_API\\REST_Controller' => __DIR__ . '/../..' . '/php/REST_API/REST_Controller.php',
+        'Code_Snippets\\REST_API\\Search\\Search_REST_Controller' => __DIR__ . '/../..' . '/php/REST_API/Search/Search_REST_Controller.php',
         'Code_Snippets\\REST_API\\Snippets\\Recently_Active_REST_Controller' => __DIR__ . '/../..' . '/php/REST_API/Snippets/Recently_Active_REST_Controller.php',
         'Code_Snippets\\REST_API\\Snippets\\Snippets_REST_Controller' => __DIR__ . '/../..' . '/php/REST_API/Snippets/Snippets_REST_Controller.php',
+        'Code_Snippets\\Search\\Search_Index' => __DIR__ . '/../..' . '/php/Search/Search_Index.php',
+        'Code_Snippets\\Search\\Search_Query' => __DIR__ . '/../..' . '/php/Search/Search_Query.php',
+        'Code_Snippets\\Search\\Universal_Search' => __DIR__ . '/../..' . '/php/Search/Universal_Search.php',
         'Code_Snippets\\Settings\\Editor_Preview' => __DIR__ . '/../..' . '/php/Settings/Editor_Preview.php',
+        'Code_Snippets\\Settings\\Package_Installer' => __DIR__ . '/../..' . '/php/Settings/Package_Installer.php',
         'Code_Snippets\\Settings\\Setting_Field' => __DIR__ . '/../..' . '/php/Settings/Setting_Field.php',
         'Code_Snippets\\Settings\\Settings_Fields' => __DIR__ . '/../..' . '/php/Settings/Settings_Fields.php',
         'Code_Snippets\\Settings\\Settings_Layout' => __DIR__ . '/../..' . '/php/Settings/Settings_Layout.php',
+        'Code_Snippets\\Settings\\Upgrader_Package_Installer' => __DIR__ . '/../..' . '/php/Settings/Upgrader_Package_Installer.php',
+        'Code_Snippets\\Settings\\Version_Source' => __DIR__ . '/../..' . '/php/Settings/Version_Source.php',
         'Code_Snippets\\Settings\\Version_Switch' => __DIR__ . '/../..' . '/php/Settings/Version_Switch.php',
+        'Code_Snippets\\Settings\\WordPress_Org_Version_Source' => __DIR__ . '/../..' . '/php/Settings/WordPress_Org_Version_Source.php',
         'Code_Snippets\\Utils\\Code_Highlighter' => __DIR__ . '/../..' . '/php/Utils/Code_Highlighter.php',
         'Code_Snippets\\Utils\\System_Info' => __DIR__ . '/../..' . '/php/Utils/System_Info.php',
         'Code_Snippets\\Utils\\Validator' => __DIR__ . '/../..' . '/php/Utils/Validator.php',
@@ -252,9 +263,9 @@ class ComposerStaticInit118984772f6b448937a6130f407c8a8b
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit118984772f6b448937a6130f407c8a8b::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit118984772f6b448937a6130f407c8a8b::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit118984772f6b448937a6130f407c8a8b::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit1b291557f4b8130f2c07ad0bf3138d2b::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit1b291557f4b8130f2c07ad0bf3138d2b::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit1b291557f4b8130f2c07ad0bf3138d2b::$classMap;
 
         }, null, ClassLoader::class);
     }
