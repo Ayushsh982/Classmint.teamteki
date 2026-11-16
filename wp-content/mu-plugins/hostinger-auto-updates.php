@@ -3,7 +3,7 @@
  * Plugin Name:       Hostinger Smart Auto Updates
  * Plugin URI:        https://www.hostinger.com
  * Description:       Faster and more secure updates for your themes, plugins, and core files. Managed entirely by Hostinger.
- * Version:           1.0.9
+ * Version:           1.0.10
  * Author:            Hostinger
  * Author URI:        https://www.hostinger.com
  * License:           GPL-2.0-or-later
@@ -29,23 +29,12 @@ add_filter( 'auto_update_plugin', '__return_false' );        // Plugin updates
 /**
  * Endpoints used to serve package downloads and the WordPress.org API.
  */
-if ( ! defined( 'HOSTINGER_LOCAL_DOWNLOAD_BASE' ) ) {
-    define( 'HOSTINGER_LOCAL_DOWNLOAD_BASE', 'http://127.0.0.1:7777/hsub_downloads' );
-}
-
 if ( ! defined( 'HOSTINGER_CDN_DOWNLOAD_HOST' ) ) {
     define( 'HOSTINGER_CDN_DOWNLOAD_HOST', 'wpdownloads.hostinger.io' );
 }
 
 if ( ! defined( 'HOSTINGER_API_PROXY_HOST' ) ) {
     define( 'HOSTINGER_API_PROXY_HOST', 'wpapi.hostinger.io' );
-}
-
-/**
- * Timeout cap for the local hop, in seconds.
- */
-if ( ! defined( 'HOSTINGER_LOCAL_DOWNLOAD_TIMEOUT' ) ) {
-    define( 'HOSTINGER_LOCAL_DOWNLOAD_TIMEOUT', 30 );
 }
 
 /**
@@ -57,23 +46,18 @@ if ( ! defined( 'HOSTINGER_MIN_PACKAGE_BYTES' ) ) {
 
 /**
  * Build the ordered list of endpoints to try for a downloads.wordpress.org URL.
+ *
+ * Every tier is a public HTTPS endpoint, so packages are authenticated by TLS
+ * and requests keep WordPress's URL safety checks (wp_http_validate_url()),
+ * including on redirects. Do not add plain-HTTP or loopback tiers here: on a
+ * shared server any tenant can bind a free loopback port and serve a package.
  */
 if ( ! function_exists( 'hostinger_download_tiers' ) ) {
     function hostinger_download_tiers( $url ) {
-        $parts = wp_parse_url( $url );
-        $path  = isset( $parts['path'] ) ? $parts['path'] : '/';
-
-        if ( ! empty( $parts['query'] ) ) {
-            $path .= '?' . $parts['query'];
-        }
-
-        $tiers = [];
-
-        if ( ! defined( 'HOSTINGER_DISABLE_LOCAL_PROXY' ) || ! HOSTINGER_DISABLE_LOCAL_PROXY ) {
-            $tiers['local'] = untrailingslashit( HOSTINGER_LOCAL_DOWNLOAD_BASE ) . $path;
-        }
-
-        $tiers['hcdn'] = str_replace( 'downloads.wordpress.org', HOSTINGER_CDN_DOWNLOAD_HOST, $url );
+        $url = set_url_scheme( $url, 'https' );
+        $tiers = [
+            'hcdn' => str_replace( 'downloads.wordpress.org', HOSTINGER_CDN_DOWNLOAD_HOST, $url ),
+        ];
 
         if ( ! defined( 'HOSTINGER_DISABLE_ORIGIN_FALLBACK' ) || ! HOSTINGER_DISABLE_ORIGIN_FALLBACK ) {
             $tiers['wporg'] = $url;
@@ -83,33 +67,6 @@ if ( ! function_exists( 'hostinger_download_tiers' ) ) {
          * Filter the download tiers.
          */
         return apply_filters( 'hostinger_download_tiers', $tiers, $url );
-    }
-}
-
-/**
- * Adjust request arguments for the loopback hop.
- */
-if ( ! function_exists( 'hostinger_prepare_local_request_args' ) ) {
-    function hostinger_prepare_local_request_args( $args ) {
-        // download_url() goes through wp_safe_remote_get(), which sets
-        // reject_unsafe_urls. wp_http_validate_url() rejects 127.0.0.0/8, so the
-        // loopback hop would fail before a socket was ever opened. The public
-        // tiers keep the check.
-        $args['reject_unsafe_urls'] = false;
-
-        $timeout = isset( $args['timeout'] ) ? (int) $args['timeout'] : 0;
-
-        if ( $timeout <= 0 || $timeout > HOSTINGER_LOCAL_DOWNLOAD_TIMEOUT ) {
-            $args['timeout'] = HOSTINGER_LOCAL_DOWNLOAD_TIMEOUT;
-        }
-
-        if ( empty( $args['headers'] ) || is_array( $args['headers'] ) ) {
-            $headers                    = empty( $args['headers'] ) ? [] : $args['headers'];
-            $headers['Accept-Encoding'] = 'identity';
-            $args['headers']            = $headers;
-        }
-
-        return $args;
     }
 }
 
@@ -144,6 +101,9 @@ if ( ! function_exists( 'hostinger_read_file_head' ) ) {
 
 /**
  * Decide whether a tier actually returned a usable package.
+ *
+ * This is a sanity check that catches error pages served with a 200 status. It
+ * is not an integrity check; package authenticity comes from TLS on each tier.
  */
 if ( ! function_exists( 'hostinger_inspect_response' ) ) {
     function hostinger_inspect_response( $response, $args, $url ) {
@@ -221,10 +181,9 @@ if ( ! function_exists( 'hostinger_fetch_package' ) ) {
         $response   = new WP_Error( 'hostinger_no_download_tier', 'No download endpoint available.' );
         $inspection = null;
 
-        foreach ( hostinger_download_tiers( $url ) as $tier => $tier_url ) {
-            $request_args = ( $tier === 'local' ) ? hostinger_prepare_local_request_args( $args ) : $args;
-            $response     = wp_remote_request( $tier_url, $request_args );
-            $inspection   = hostinger_inspect_response( $response, $args, $url );
+        foreach ( hostinger_download_tiers( $url ) as $tier_url ) {
+            $response   = wp_remote_request( $tier_url, $args );
+            $inspection = hostinger_inspect_response( $response, $args, $url );
 
             if ( $inspection['ok'] ) {
                 return $response;
@@ -286,26 +245,6 @@ if ( ! function_exists( 'hostinger_use_proxy_services' ) ) {
 }
 
 add_filter( 'pre_http_request', 'hostinger_use_proxy_services', 10, 3 );
-
-/**
- * Keep loopback requests off a configured HTTP proxy.
- */
-if ( ! function_exists( 'hostinger_bypass_proxy_for_local_cache' ) ) {
-    function hostinger_bypass_proxy_for_local_cache( $send, $uri, $check, $home ) {
-        // WP_HTTP_Proxy exempts 'localhost' and the site host, but not 127.0.0.1,
-        // so on a server with WP_PROXY_HOST set the local cache hop would be sent
-        // to the proxy.
-        $local_host = wp_parse_url( HOSTINGER_LOCAL_DOWNLOAD_BASE, PHP_URL_HOST );
-
-        if ( ! empty( $check['host'] ) && ! empty( $local_host ) && $check['host'] === $local_host ) {
-            return false;
-        }
-
-        return $send;
-    }
-}
-
-add_filter( 'pre_http_send_through_proxy', 'hostinger_bypass_proxy_for_local_cache', 10, 4 );
 
 /**
  * Modify the default auto-update tests.
