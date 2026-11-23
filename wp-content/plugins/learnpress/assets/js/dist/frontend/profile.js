@@ -35,6 +35,7 @@ class ViewStudentsModal {
     endDateInput: '#lp-modal-enrolled-filter-end-date',
     searchBtn: '.lp-enrolled-btn-search-modal',
     clearBtn: '.lp-enrolled-btn-clear-modal',
+    viewDetailBtn: '.lp-btn-view-students-detail',
     modalSearchFields: '#lp-modal-enrolled-search-input, #lp-modal-enrolled-filter-start-date, #lp-modal-enrolled-filter-end-date'
   };
   setButtonLoadingState(btn, isLoading) {
@@ -134,16 +135,42 @@ class ViewStudentsModal {
     if (this.isRequesting || btn.classList.contains('loading')) {
       return;
     }
-    form.reset();
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.resetForm(form);
     this.setButtonLoadingState(btn, true);
     this.loadEnrolledStudents(this.activeCourseId, 1, btn);
   }
   getModalPopup() {
     return (sweetalert2__WEBPACK_IMPORTED_MODULE_0___default().getPopup) ? sweetalert2__WEBPACK_IMPORTED_MODULE_0___default().getPopup() : null;
   }
-  getModalToolbarHtml() {
+
+  /**
+   * Get modal toolbar HTML.
+   *
+   * @param {Object} args
+   * @return {string}
+   */
+  getModalToolbarHtml(args = {}) {
+    const {
+      courseName = '',
+      courseId = ''
+    } = args;
     const template = document.querySelector(ViewStudentsModal.selectors.toolbarTemplate);
-    return template ? template.innerHTML : '';
+    if (!template) {
+      return '';
+    }
+
+    // Work on a copy so the original template is not modified.
+    const elWrap = document.createElement('div');
+    elWrap.innerHTML = template.innerHTML;
+    const elBtnDetail = elWrap.querySelector(ViewStudentsModal.selectors.viewDetailBtn);
+
+    // Set param course_name
+    if (elBtnDetail && courseName) {
+      elBtnDetail.href = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_1__.lpAddQueryArgs(elBtnDetail.href, {
+        course_id: courseId
+      }).toString();
+    }
+    return elWrap.innerHTML;
   }
   getModalTargetHtml() {
     const template = document.querySelector(ViewStudentsModal.selectors.targetTemplate);
@@ -205,7 +232,10 @@ class ViewStudentsModal {
     ajaxHandle.fetchAJAX(dataSend, callBack);
   }
   openModal(courseId, courseTitle, elTrigger = null) {
-    const modalToolbarHtml = this.getModalToolbarHtml();
+    const modalToolbarHtml = this.getModalToolbarHtml({
+      courseName: courseTitle,
+      courseId: courseId
+    });
     const modalTargetHtml = this.getModalTargetHtml();
     if (!modalToolbarHtml || !modalTargetHtml) {
       if (elTrigger) {
@@ -1401,6 +1431,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   resetForm: () => (/* binding */ resetForm),
 /* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
 /* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
@@ -1430,7 +1461,7 @@ const lpFetchAPI = (url, data = {}, functions = {}) => {
   fetch(url, {
     method: 'GET',
     ...data
-  }).then(response => response.json()).then(response => {
+  }).then(response => 'function' === typeof functions.checkResponse ? functions.checkResponse(response) : response).then(response => response.json()).then(response => {
     if ('function' === typeof functions.success) {
       functions.success(response);
     }
@@ -1655,6 +1686,29 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
     ...dataForm
   };
   return dataHandle;
+};
+
+/**
+ * Reset all fields of form to empty, select to first option.
+ * Not use form.reset(), because it restores values rendered by server (e.g. from URL params).
+ *
+ * @param elForm
+ */
+const resetForm = elForm => {
+  if (!elForm) {
+    return;
+  }
+  Array.from(elForm.elements).forEach(elField => {
+    const tagName = elField.tagName;
+    const type = elField.type;
+    if (tagName === 'SELECT') {
+      elField.selectedIndex = 0;
+    } else if (type === 'checkbox' || type === 'radio') {
+      elField.checked = false;
+    } else if ((tagName === 'INPUT' || tagName === 'TEXTAREA') && !['hidden', 'button', 'submit', 'reset'].includes(type)) {
+      elField.value = '';
+    }
+  });
 };
 
 /**

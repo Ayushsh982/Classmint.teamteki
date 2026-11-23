@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit();
  * Class DataBase
  *
  * @since 4.2.9.3
- * @version 1.0.1
+ * @version 1.0.2
  */
 class DataBase {
 	private static $_instance;
@@ -26,6 +26,7 @@ class DataBase {
 	public $tb_lp_quiz_questions;
 	public $tb_lp_user_item_results;
 	public $tb_lp_question_answers;
+	public $tb_lp_question_answer_config;
 	public $tb_lp_question_answermeta;
 	public $tb_lp_upgrade_db;
 	public $tb_lp_sessions;
@@ -44,32 +45,33 @@ class DataBase {
 		global $wpdb;
 		$prefix = $wpdb->prefix;
 
-		$this->wpdb                      = $wpdb;
-		$this->tb_users                  = $wpdb->users;
-		$this->tb_posts                  = $wpdb->posts;
-		$this->tb_postmeta               = $wpdb->postmeta;
-		$this->tb_options                = $wpdb->options;
-		$this->tb_terms                  = $wpdb->terms;
-		$this->tb_term_relationships     = $wpdb->term_relationships;
-		$this->tb_term_taxonomy          = $wpdb->term_taxonomy;
-		$this->tb_lp_courses             = $prefix . 'learnpress_courses';
-		$this->tb_lp_user_items          = $prefix . 'learnpress_user_items';
-		$this->tb_lp_user_itemmeta       = $prefix . 'learnpress_user_itemmeta';
-		$this->tb_lp_order_items         = $prefix . 'learnpress_order_items';
-		$this->tb_lp_order_itemmeta      = $prefix . 'learnpress_order_itemmeta';
-		$this->tb_lp_section_items       = $prefix . 'learnpress_section_items';
-		$this->tb_lp_sections            = $prefix . 'learnpress_sections';
-		$this->tb_lp_quiz_questions      = $prefix . 'learnpress_quiz_questions';
-		$this->tb_lp_user_item_results   = $prefix . 'learnpress_user_item_results';
-		$this->tb_lp_question_answers    = $prefix . 'learnpress_question_answers';
-		$this->tb_lp_question_answermeta = $prefix . 'learnpress_question_answermeta';
-		$this->tb_lp_upgrade_db          = $prefix . 'learnpress_upgrade_db';
-		$this->tb_lp_sessions            = $prefix . 'learnpress_sessions';
-		$this->tb_lp_files               = $prefix . 'learnpress_files';
-		$this->tb_lp_webhooks            = $prefix . 'learnpress_webhooks';
-		$this->tb_lp_notes               = $prefix . 'learnpress_notes';
-		$this->tb_thim_cache             = $prefix . 'thim_cache';
-		$this->tb_lp_mcp_api_keys        = $prefix . 'learnpress_mcp_api_keys';
+		$this->wpdb                         = $wpdb;
+		$this->tb_users                     = $wpdb->users;
+		$this->tb_posts                     = $wpdb->posts;
+		$this->tb_postmeta                  = $wpdb->postmeta;
+		$this->tb_options                   = $wpdb->options;
+		$this->tb_terms                     = $wpdb->terms;
+		$this->tb_term_relationships        = $wpdb->term_relationships;
+		$this->tb_term_taxonomy             = $wpdb->term_taxonomy;
+		$this->tb_lp_courses                = $prefix . 'learnpress_courses';
+		$this->tb_lp_user_items             = $prefix . 'learnpress_user_items';
+		$this->tb_lp_user_itemmeta          = $prefix . 'learnpress_user_itemmeta';
+		$this->tb_lp_order_items            = $prefix . 'learnpress_order_items';
+		$this->tb_lp_order_itemmeta         = $prefix . 'learnpress_order_itemmeta';
+		$this->tb_lp_section_items          = $prefix . 'learnpress_section_items';
+		$this->tb_lp_sections               = $prefix . 'learnpress_sections';
+		$this->tb_lp_quiz_questions         = $prefix . 'learnpress_quiz_questions';
+		$this->tb_lp_user_item_results      = $prefix . 'learnpress_user_item_results';
+		$this->tb_lp_question_answers       = $prefix . 'learnpress_question_answers';
+		$this->tb_lp_question_answer_config = $prefix . 'learnpress_question_answer_config';
+		$this->tb_lp_question_answermeta    = $prefix . 'learnpress_question_answermeta';
+		$this->tb_lp_upgrade_db             = $prefix . 'learnpress_upgrade_db';
+		$this->tb_lp_sessions               = $prefix . 'learnpress_sessions';
+		$this->tb_lp_files                  = $prefix . 'learnpress_files';
+		$this->tb_lp_webhooks               = $prefix . 'learnpress_webhooks';
+		$this->tb_lp_notes                  = $prefix . 'learnpress_notes';
+		$this->tb_thim_cache                = $prefix . 'thim_cache';
+		$this->tb_lp_mcp_api_keys           = $prefix . 'learnpress_mcp_api_keys';
 		$this->wpdb->hide_errors();
 		$this->set_collate();
 	}
@@ -118,7 +120,8 @@ class DataBase {
 	public function check_table_exists( string $name_table ) {
 		return $this->wpdb->query(
 			$this->wpdb->prepare(
-				"SHOW TABLES LIKE '%s'", $name_table
+				"SHOW TABLES LIKE '%s'",
+				$name_table
 			)
 		);
 	}
@@ -131,10 +134,6 @@ class DataBase {
 	 * @throws Exception
 	 */
 	public function clone_table( string $name_table ): bool {
-		if ( ! current_user_can( ADMIN_ROLE ) ) {
-			throw new Exception( 'You don\'t have permission' );
-		}
-
 		$table_bk = $name_table . '_bk';
 
 		// Drop table bk if exists.
@@ -179,10 +178,6 @@ class DataBase {
 	 * @throws Exception
 	 */
 	public function drop_col_table( string $name_table = '', string $name_col = '' ) {
-		if ( ! current_user_can( 'administrator' ) ) {
-			return false;
-		}
-
 		$check_table = $this->check_col_table( $name_table, $name_col );
 
 		if ( $check_table ) {
@@ -208,10 +203,6 @@ class DataBase {
 	 * @throws Exception
 	 */
 	public function add_col_table( string $name_table, string $name_col, string $type, string $after_col = '' ) {
-		if ( ! current_user_can( ADMIN_ROLE ) ) {
-			return false;
-		}
-
 		$query_add = '';
 
 		$col_exists = $this->check_col_table( $name_table, $name_col );
@@ -298,10 +289,6 @@ class DataBase {
 	 * @throws Exception
 	 */
 	public function drop_table( string $name_table = '' ) {
-		if ( ! current_user_can( ADMIN_ROLE ) ) {
-			throw new Exception( 'You don\'t have permission' );
-		}
-
 		// Check table exists.
 		$tb_exists = $this->check_table_exists( $name_table );
 		if ( $tb_exists ) {
@@ -395,10 +382,6 @@ class DataBase {
 	 * @return int|bool
 	 */
 	public function set_step_complete( string $step, string $status ) {
-		if ( ! current_user_can( 'administrator' ) ) {
-			return false;
-		}
-
 		return $this->wpdb->insert(
 			$this->tb_lp_upgrade_db,
 			array(
@@ -463,10 +446,6 @@ class DataBase {
 	 * @author tungnx
 	 */
 	public function rename_table( string $name_table = '', string $new_name = '' ) {
-		if ( ! current_user_can( ADMIN_ROLE ) ) {
-			throw new Exception( 'You don\'t have permission' );
-		}
-
 		$tb_exists = $this->check_table_exists( $name_table );
 
 		if ( ! $tb_exists ) {

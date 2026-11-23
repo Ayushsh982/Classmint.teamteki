@@ -365,6 +365,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   resetForm: () => (/* binding */ resetForm),
 /* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
 /* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
@@ -394,7 +395,7 @@ const lpFetchAPI = (url, data = {}, functions = {}) => {
   fetch(url, {
     method: 'GET',
     ...data
-  }).then(response => response.json()).then(response => {
+  }).then(response => 'function' === typeof functions.checkResponse ? functions.checkResponse(response) : response).then(response => response.json()).then(response => {
     if ('function' === typeof functions.success) {
       functions.success(response);
     }
@@ -619,6 +620,29 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
     ...dataForm
   };
   return dataHandle;
+};
+
+/**
+ * Reset all fields of form to empty, select to first option.
+ * Not use form.reset(), because it restores values rendered by server (e.g. from URL params).
+ *
+ * @param elForm
+ */
+const resetForm = elForm => {
+  if (!elForm) {
+    return;
+  }
+  Array.from(elForm.elements).forEach(elField => {
+    const tagName = elField.tagName;
+    const type = elField.type;
+    if (tagName === 'SELECT') {
+      elField.selectedIndex = 0;
+    } else if (type === 'checkbox' || type === 'radio') {
+      elField.checked = false;
+    } else if ((tagName === 'INPUT' || tagName === 'TEXTAREA') && !['hidden', 'button', 'submit', 'reset'].includes(type)) {
+      elField.value = '';
+    }
+  });
 };
 
 /**
@@ -10259,21 +10283,6 @@ const formatTimer = (seconds, total) => {
   }
   return `${pad(seconds / 3600)}:${pad(seconds % 3600 / 60)}:${pad(seconds % 60)}`;
 };
-
-/**
- * Replace %1$d, %2$d... (and %d in order) of text.
- *
- * @param {string} text
- * @param {Array}  args
- * @return {string} text
- */
-const replacePlaceholders = (text, ...args) => {
-  let i = 0;
-  return text.replace(/%(?:(\d+)\$)?[ds]/g, (match, position) => {
-    const value = position ? args[position - 1] : args[i++];
-    return value === undefined ? match : String(value);
-  });
-};
 class UserQuiz {
   static selectors = {
     elWrap: '#learn-press-user-quiz',
@@ -10283,8 +10292,8 @@ class UserQuiz {
     elQuestion: '.question[data-id]',
     elBtnStart: '.lp-button.start',
     elBtnRetake: '.retake-quiz',
-    elBtnFinish: '#button-submit-quiz, .lp-button.submit-quiz',
-    elBtnFinishStatusBar: '#button-submit-quiz',
+    elBtnFinish: '.lp-button.submit-quiz',
+    elBtnFinishStatusBar: '.quiz-doing-bar-info .lp-button.submit-quiz',
     elBtnCheck: '.lp-button.instant-check',
     elBtnHint: '.btn-show-hint',
     elBtnReview: '.lp-button.review-quiz',
@@ -10476,7 +10485,7 @@ class UserQuiz {
     if (!elHint) {
       return;
     }
-    elHint.style.display = elHint.style.display === 'none' ? '' : 'none';
+    elHint.classList.toggle('lp-hidden');
   }
   showReview(args) {
     this.toggleReview(args, true);
@@ -10500,8 +10509,8 @@ class UserQuiz {
     if (!elResultWrap || !elReview) {
       return;
     }
-    elResultWrap.style.display = isReview ? 'none' : '';
-    elReview.style.display = isReview ? '' : 'none';
+    elResultWrap.classList.toggle('lp-hidden', isReview);
+    elReview.classList.toggle('lp-hidden', !isReview);
     if (isReview) {
       this.showPage(elReview, 1);
     }
@@ -10538,7 +10547,7 @@ class UserQuiz {
     page = Math.min(Math.max(1, page), numPages);
     elScope.dataset.currentPage = String(page);
     elScope.querySelectorAll(UserQuiz.selectors.elQuestion).forEach(elQuestion => {
-      elQuestion.style.display = (parseInt(elQuestion.dataset.page) || 1) === page ? '' : 'none';
+      elQuestion.classList.toggle('lp-hidden', (parseInt(elQuestion.dataset.page) || 1) !== page);
     });
 
     // Pagination of each page is rendered by PHP, show the one of current page.
@@ -10547,9 +10556,28 @@ class UserQuiz {
     });
     const elIndex = elScope.querySelector(UserQuiz.selectors.elQuestionsIndex);
     if (elIndex) {
-      const start = perPage > 0 ? (page - 1) * perPage + 1 : 1;
-      const end = perPage > 0 ? Math.min(start + perPage - 1, total) : total;
-      elIndex.innerHTML = end > start ? replacePlaceholders(this.i18n.question_index_range || 'Question <span>%1$d to %2$d of %3$d</span>', start, end, total) : replacePlaceholders(this.i18n.question_index || 'Question <span>%1$d of %2$d</span>', start, total);
+      // Only update dynamic content when num_pages > 1
+      if (numPages > 1) {
+        const start = perPage > 0 ? (page - 1) * perPage + 1 : 1;
+        const end = perPage > 0 ? Math.min(start + perPage - 1, total) : total;
+        if (perPage === 1) {
+          // Update single question index
+          const elCurrent = elIndex.querySelector('.i-current');
+          if (elCurrent) {
+            elCurrent.textContent = start;
+          }
+        } else {
+          // Update range index
+          const elStart = elIndex.querySelector('.i-start');
+          const elEnd = elIndex.querySelector('.i-end');
+          if (elStart) {
+            elStart.textContent = start;
+          }
+          if (elEnd) {
+            elEnd.textContent = end;
+          }
+        }
+      }
     }
     const isLast = page === numPages;
     elScope.querySelectorAll('.quiz-buttons').forEach(elButtons => {
@@ -10558,7 +10586,7 @@ class UserQuiz {
     });
 
     // Finish button below questions shows on last page.
-    elScope.querySelectorAll('.quiz-buttons .lp-button.submit-quiz').forEach(elBtn => {
+    elScope.querySelectorAll(':scope > .lp-button.submit-quiz').forEach(elBtn => {
       elBtn.hidden = !isLast;
     });
     if (elScope.matches(UserQuiz.selectors.elDoing)) {

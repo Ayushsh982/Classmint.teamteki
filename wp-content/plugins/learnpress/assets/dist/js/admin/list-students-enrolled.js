@@ -26,6 +26,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   resetForm: () => (/* binding */ resetForm),
 /* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
 /* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
@@ -55,7 +56,7 @@ const lpFetchAPI = (url, data = {}, functions = {}) => {
   fetch(url, {
     method: 'GET',
     ...data
-  }).then(response => response.json()).then(response => {
+  }).then(response => 'function' === typeof functions.checkResponse ? functions.checkResponse(response) : response).then(response => response.json()).then(response => {
     if ('function' === typeof functions.success) {
       functions.success(response);
     }
@@ -280,6 +281,29 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
     ...dataForm
   };
   return dataHandle;
+};
+
+/**
+ * Reset all fields of form to empty, select to first option.
+ * Not use form.reset(), because it restores values rendered by server (e.g. from URL params).
+ *
+ * @param elForm
+ */
+const resetForm = elForm => {
+  if (!elForm) {
+    return;
+  }
+  Array.from(elForm.elements).forEach(elField => {
+    const tagName = elField.tagName;
+    const type = elField.type;
+    if (tagName === 'SELECT') {
+      elField.selectedIndex = 0;
+    } else if (type === 'checkbox' || type === 'radio') {
+      elField.checked = false;
+    } else if ((tagName === 'INPUT' || tagName === 'TEXTAREA') && !['hidden', 'button', 'submit', 'reset'].includes(type)) {
+      elField.value = '';
+    }
+  });
 };
 
 /**
@@ -765,7 +789,8 @@ class ListStudentsEnrolled {
     }
     const elForm = btn.closest(ListStudentsEnrolled.selectors.elForm);
     const elLayout = elForm.closest(ListStudentsEnrolled.selectors.elLayout);
-    const elLPTarget = elLayout.querySelector(ListStudentsEnrolled.selectors.elLPTarget);
+    const elTableWrap = elLayout.querySelector('.lp-enrolled-students-table-wrap');
+    const elLPTarget = elTableWrap.closest(ListStudentsEnrolled.selectors.elLPTarget);
     if (!elLPTarget || !elForm) {
       return;
     }
@@ -798,7 +823,8 @@ class ListStudentsEnrolled {
     }
     const elForm = btn.closest(ListStudentsEnrolled.selectors.elForm);
     const elLayout = elForm.closest(ListStudentsEnrolled.selectors.elLayout);
-    const elLPTarget = elLayout.querySelector(ListStudentsEnrolled.selectors.elLPTarget);
+    const elTableWrap = elLayout.querySelector('.lp-enrolled-students-table-wrap');
+    const elLPTarget = elTableWrap.closest(ListStudentsEnrolled.selectors.elLPTarget);
     if (!elLPTarget || !elForm) {
       return;
     }
@@ -807,8 +833,12 @@ class ListStudentsEnrolled {
       return;
     }
     this.setButtonLoadingState(btn, true);
-    elForm.reset();
+    lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.resetForm(elForm);
     this.syncCourseIdFromName(elForm);
+    // resetForm() skips hidden inputs: clear the course selected by the search suggest input.
+    elForm.querySelectorAll('.lp-input-search-suggest-value').forEach(elInputValue => {
+      elInputValue.value = '';
+    });
     const dataSend = ajaxHandle.getDataSetCurrent(elLPTarget);
     dataSend.args = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.mergeDataWithDatForm(elForm, dataSend.args || {});
     dataSend.args.paged = 1;

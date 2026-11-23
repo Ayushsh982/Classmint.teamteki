@@ -1,23 +1,19 @@
 <?php
 
-/**
- * Class UserItemModel
- * To replace class LP_User_Item
- *
- * @package LearnPress/Classes
- * @version 1.0.3
- * @since 4.2.5
- */
-
 namespace LearnPress\Models\UserItems;
 
 use Exception;
+use LearnPress\Databases\UserItemsDB;
 use LearnPress\Filters\UserItemsFilter;
+use LearnPress\Helpers\LPDateTime;
 use LearnPress\Models\CoursePostModel;
 use LearnPress\Models\PostModel;
 use LearnPress\Models\UserItemMeta\UserItemMetaModel;
+use LearnPress\Models\UserItemResults\UserItemResultModel;
 use LearnPress\Models\UserModel;
 use LP_Datetime;
+use LP_Debug;
+use LP_Helper;
 use LP_User_Item_Meta_DB;
 use LP_User_Item_Meta_Filter;
 use LP_User_Items_Cache;
@@ -26,13 +22,23 @@ use LP_User_Items_Filter;
 use stdClass;
 use Throwable;
 
+defined( 'ABSPATH' ) || exit();
+
+/**
+ * Class UserItemModel
+ * To replace class LP_User_Item
+ *
+ * @package LearnPress/Classes
+ * @version 1.0.4
+ * @since 4.2.5
+ */
 class UserItemModel {
 	/**
 	 * Auto increment, Primary key
 	 *
 	 * @var int
 	 */
-	private $user_item_id = 0;
+	protected $user_item_id = 0;
 	/**
 	 * @var string User ID, foreign key
 	 */
@@ -88,6 +94,12 @@ class UserItemModel {
 	 */
 	public $parent_id = 0;
 	/**
+	 * Store more data type JSON
+	 *
+	 * @var string|null
+	 */
+	public $extra_data = null;
+	/**
 	 * @var null|PostModel|CoursePostModel
 	 */
 	public $item;
@@ -108,6 +120,14 @@ class UserItemModel {
 	const GRADUATION_IN_PROGRESS = 'in-progress';
 	const GRADUATION_PASSED      = 'passed';
 	const GRADUATION_FAILED      = 'failed';
+
+	/**
+	 * Whether to create a new user item result instead of updating the existing one.
+	 *
+	 * @var int 1 to create, 0 to update.
+	 * @since 4.5.0
+	 */
+	public $must_create_new_data_table_result = 0;
 
 	/**
 	 * If data get from database, map to object.
@@ -177,7 +197,7 @@ class UserItemModel {
 	 *
 	 * @param int $user_item_id
 	 */
-	private function set_user_item_id( int $user_item_id ) {
+	protected function set_user_item_id( int $user_item_id ) {
 		$this->user_item_id = $user_item_id;
 	}
 
@@ -219,10 +239,20 @@ class UserItemModel {
 	 *
 	 * @return UserItemModel|false|static
 	 * @since 4.2.5
-	 * @version 1.0.2
+	 * @version 1.0.3
 	 */
 	public static function get_user_item_model_from_db( $filter ) {
-		$lp_user_item_db = LP_User_Items_DB::getInstance();
+		if ( $filter instanceof LP_User_Items_Filter ) {
+			$user_items_filter = new UserItemsFilter();
+			foreach ( get_object_vars( $filter ) as $property => $value ) {
+				if ( property_exists( $user_items_filter, $property ) ) {
+					$user_items_filter->{$property} = $value;
+				}
+			}
+			$filter = $user_items_filter;
+		}
+
+		$lp_user_item_db = UserItemsDB::getInstance();
 		$user_item_model = false;
 
 		try {
@@ -240,7 +270,7 @@ class UserItemModel {
 				$user_item_model = new static( $user_item_rs );
 			}
 		} catch ( Throwable $e ) {
-			error_log( __METHOD__ . ': ' . $e->getMessage() );
+			LP_Debug::error_log( $e );
 		}
 
 		return $user_item_model;
@@ -258,7 +288,7 @@ class UserItemModel {
 	 *
 	 * @return false|UserItemModel|static
 	 * @since 4.2.7.3
-	 * @version 1.0.2
+	 * @version 1.0.3
 	 */
 	public static function find_user_item(
 		int $user_id,
@@ -269,7 +299,7 @@ class UserItemModel {
 		bool $check_cache = false
 	) {
 		$key_cache         = "userItemModel/find/{$user_id}/{$item_id}/{$item_type}";
-		$filter            = new LP_User_Items_Filter();
+		$filter            = new UserItemsFilter();
 		$filter->user_id   = $user_id;
 		$filter->item_id   = $item_id;
 		$filter->item_type = $item_type;
@@ -406,26 +436,32 @@ class UserItemModel {
 	}
 
 	/**
-	 * Update data to database.
+	 * Save the user item and its result data.
 	 *
-	 * If user_item_id is empty, insert new data, else update data.
+	 * Creates a new record when user_item_id is empty; otherwise, updates the existing record.
 	 *
 	 * @return UserItemModel
 	 * @throws Exception
 	 * @since 4.2.5
-	 * @version 1.0.3
+	 * @version 1.0.4
 	 */
 	public function save(): UserItemModel {
-		$lp_user_item_db  = LP_User_Items_DB::getInstance();
-		$user_item_id_new = 0;
-		$data             = get_object_vars( $this );
+		$lp_user_item_db = UserItemsDB::getInstance();
+		$data            = get_object_vars( $this );
 
 		if ( ! isset( $data['start_time'] ) ) {
 			$data['start_time'] = gmdate( 'Y-m-d H:i:s', time() );
 			$this->start_time   = $data['start_time'];
 		}
 
-		// Check if exists user_item_id.
+		$args = [
+			'data'               => $data,
+			'filter'             => new UserItemsFilter(),
+			'table_name'         => $lp_user_item_db->tb_lp_user_items,
+			'key_auto_increment' => UserItemsFilter::COL_USER_ITEM_ID,
+			'where_key'          => UserItemsFilter::COL_USER_ITEM_ID,
+		];
+
 		if ( empty( $this->get_user_item_id() ) ) { // Insert data.
 			if ( empty( $data['item_id'] ) ) {
 				throw new Exception( 'Item ID is require.' );
@@ -439,45 +475,103 @@ class UserItemModel {
 				throw new Exception( 'User ID is require.' );
 			}
 
-			$user_item_id_new = $lp_user_item_db->insert_data( $data );
+			$user_item_id_new = $lp_user_item_db->insert_data( $args );
 			if ( empty( $user_item_id_new ) ) {
 				throw new Exception( 'Cannot insert data to database.' );
 			}
-		} else { // Update data.
-			$lp_user_item_db->update_data( $data );
-		}
 
-		if ( $user_item_id_new ) {
 			$this->set_user_item_id( $user_item_id_new );
+
+			do_action( 'learn-press/user-item/created', $this );
+
+			// Update data for table user_item_results
+			$this->create_data_table_result();
+		} else { // Update data.
+			$lp_user_item_db->update_data( $args );
+
+			// Update data for table user_item_results
+			if ( $this->must_create_new_data_table_result ) {
+				$this->create_data_table_result();
+			} else {
+				$this->update_data_table_result();
+			}
 		}
 
 		// Clear caches before firing the created hook. Webhook and third-party listeners may reload
 		// this user item from the model/cache layer, so firing earlier can expose stale data.
 		$this->clean_caches();
 
-		if ( $user_item_id_new ) {
-			do_action( 'learn-press/user-item/created', $this );
+		return $this;
+	}
+
+	/**
+	 * Create a user item result record for history.
+	 * Store on the table user_item_results
+	 *
+	 * @throws Exception
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function create_data_table_result() {
+		// Store user item result
+		// Find parent result id
+		if ( $this->parent_id > 0 ) {
+			$userParentResultModel = UserItemResultModel::find_by_user_item_id(
+				$this->parent_id,
+				true
+			);
 		}
 
-		return $this;
+		$userItemResultModelNew = new UserItemResultModel( $this );
+		if ( isset( $userParentResultModel )
+			&& $userParentResultModel instanceof UserItemResultModel ) {
+			$userItemResultModelNew->parent_result_id = $userParentResultModel->get_id();
+		}
+		$userItemResultModelNew->set_user_item_id( $this->get_user_item_id() );
+		$userItemResultModelNew->save();
+		// End store
+	}
+
+	/**
+	 * Update the existing user item result record.
+	 * Store on the table user_item_results
+	 *
+	 * @return void
+	 * @throws Exception
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function update_data_table_result() {
+		$userItemResultModel = UserItemResultModel::find_by_user_item_id( $this->get_user_item_id() );
+		if ( $userItemResultModel instanceof UserItemResultModel ) {
+			foreach ( get_object_vars( $this ) as $k => $v ) {
+				if ( property_exists( $userItemResultModel, $k ) ) {
+					$userItemResultModel->{$k} = $v;
+				}
+			}
+			$userItemResultModel->save();
+		}
 	}
 
 	/**
 	 * Get total timestamp complete, done item.
 	 *
 	 * @return int
+	 * @since 4.2.5
+	 * @version 1.0.1
 	 */
 	public function get_total_timestamp_completed(): int {
 		$time_interval = 0;
 
-		if ( empty( $this->get_start_time() ) || empty( $this->get_end_time() ) ) {
+		if ( empty( $this->get_start_time() )
+			|| empty( $this->get_end_time() ) ) {
 			return $time_interval;
 		}
 
-		$start = new LP_Datetime( $this->get_start_time() );
-		$end   = new LP_Datetime( $this->get_end_time() );
+		$start = new LPDateTime( $this->get_start_time() );
+		$end   = new LPDateTime( $this->get_end_time() );
 
-		return $end->getTimestamp() - $start->getTimestamp();
+		return $end->get_timestamp() - $start->get_timestamp();
 	}
 
 	/**
@@ -493,8 +587,8 @@ class UserItemModel {
 		if ( ! absint( $duration ) || empty( $this->start_time ) ) {
 			$expire = null;
 		} else {
-			$start      = new LP_Datetime( $this->start_time );
-			$start_time = $start->getTimestamp();
+			$start      = new LPDateTime( $this->get_start_time() );
+			$start_time = $start->get_timestamp();
 			// Convert duration from string to seconds.
 			if ( ! is_numeric( $duration ) ) {
 				$duration = strtotime( $duration ) - time();
@@ -549,7 +643,7 @@ class UserItemModel {
 	 *
 	 * @return string
 	 * @since 4.4.2
-	 * @version 1.0.0
+	 * @version 1.0.1
 	 */
 	public function get_status_label(): string {
 		switch ( $this->get_status() ) {
@@ -570,7 +664,11 @@ class UserItemModel {
 				break;
 		}
 
-		return (string) $value;
+		return (string) apply_filters(
+			'learn-press/userItemModel/status-label',
+			$value,
+			$this
+		);
 	}
 
 	/**
@@ -578,7 +676,7 @@ class UserItemModel {
 	 *
 	 * @return string
 	 * @since 4.4.2
-	 * @version 1.0.0
+	 * @version 1.0.1
 	 */
 	public function get_graduation_label(): string {
 		switch ( $this->get_graduation() ) {
@@ -596,7 +694,59 @@ class UserItemModel {
 				break;
 		}
 
-		return (string) $value;
+		return (string) apply_filters(
+			'learn-press/userItemModel/graduation-label',
+			$value,
+			$this
+		);
+	}
+
+	/**
+	 * Decoded `extra_data` blob. Always an array, even for legacy rows that
+	 * stored NULL or invalid JSON.
+	 *
+	 * @return array
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function get_extra_data(): array {
+		try {
+			if ( empty( $this->extra_data ) ) {
+				return array();
+			}
+
+			return LP_Helper::json_decode( $this->extra_data, true );
+		} catch ( Throwable $e ) {
+			return array();
+		}
+	}
+
+	/**
+	 * Write one key into `extra_data`, preserving the others. Does not save().
+	 *
+	 * @param string $key
+	 * @param mixed  $value
+	 *
+	 * @return void
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function set_extra_data_by_key_value( string $key, $value ) {
+		$data         = $this->get_extra_data();
+		$data[ $key ] = $value;
+
+		$this->set_extra_data( $data );
+	}
+
+	/**
+	 * Set extra data
+	 *
+	 * @param array $data
+	 * @return void
+	 * @since 4.5.0
+	 */
+	public function set_extra_data( array $data = [] ) {
+		$this->extra_data = (string) wp_json_encode( $data, JSON_UNESCAPED_UNICODE );
 	}
 
 	/**
@@ -604,29 +754,29 @@ class UserItemModel {
 	 *
 	 * @throws Exception
 	 * @since 4.2.7.3
-	 * @version 1.0.2
+	 * @version 1.0.3
 	 */
 	public function delete() {
-		// Delete meta data of user item.
+		// Delete metadata of user item.
 		$lp_user_item_meta_db = LP_User_Item_Meta_DB::getInstance();
-		$filter               = new LP_User_Item_Meta_Filter();
+		$filter               = new UserItemsFilter();
 		$filter->where[]      = $lp_user_item_meta_db->wpdb->prepare( 'AND learnpress_user_item_id = %d', $this->get_user_item_id() );
 		$filter->collection   = $lp_user_item_meta_db->tb_lp_user_itemmeta;
 		$lp_user_item_meta_db->delete_execute( $filter );
 		$this->meta_data = null;
 
 		// Delete user item relationships.
-		$lp_user_item_db    = LP_User_Items_DB::getInstance();
-		$filter             = new LP_User_Items_Filter();
+		$lp_user_item_db    = UserItemsDB::getInstance();
+		$filter             = new UserItemsFilter();
+		$filter->collection = $lp_user_item_meta_db->tb_lp_user_items;
 		$filter->where[]    = $lp_user_item_db->wpdb->prepare( 'AND parent_id = %d', $this->get_user_item_id() );
-		$filter->collection = $lp_user_item_db->tb_lp_user_items;
 		$lp_user_item_db->delete_execute( $filter );
 
 		// Delete user item.
-		$lp_user_item_db    = LP_User_Items_DB::getInstance();
-		$filter             = new LP_User_Items_Filter();
+		$lp_user_item_db    = UserItemsDB::getInstance();
+		$filter             = new UserItemsFilter();
+		$filter->collection = $lp_user_item_meta_db->tb_lp_user_items;
 		$filter->where[]    = $lp_user_item_db->wpdb->prepare( 'AND user_item_id = %d', $this->get_user_item_id() );
-		$filter->collection = $lp_user_item_db->tb_lp_user_items;
 		$lp_user_item_db->delete_execute( $filter );
 
 		$this->clean_caches();

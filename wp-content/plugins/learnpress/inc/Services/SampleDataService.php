@@ -24,6 +24,7 @@ use LearnPress\Models\CourseSectionItemModel;
 use LearnPress\Models\CourseSectionModel;
 use LearnPress\Models\LessonPostModel;
 use LearnPress\Models\PostModel;
+use LearnPress\Models\Question\QuestionAnswerConfigModel;
 use LearnPress\Models\Question\QuestionPostModel;
 use LearnPress\Models\Quiz\QuizQuestionModel;
 use LearnPress\Models\QuizPostModel;
@@ -594,8 +595,9 @@ class SampleDataService {
 	/**
 	 * Create answers for a question.
 	 *
-	 * @param int    $question_id
+	 * @param int $question_id
 	 * @param string $type
+	 * @throws Exception
 	 */
 	protected function create_question_answers( $question_id, $type ) {
 		global $wpdb;
@@ -610,11 +612,20 @@ class SampleDataService {
 				'order'       => $order + 1,
 			);
 
-			$wpdb->insert(
+			$inserted = $wpdb->insert(
 				$wpdb->learnpress_question_answers,
 				$data,
 				array( '%d', '%s', '%s', '%s', '%d' )
 			);
+			if ( false === $inserted ) {
+				throw new Exception( 'Failed to create sample question answer: ' . $wpdb->last_error );
+			}
+		}
+
+		// For save new table question_answer_config - @since 4.5.0
+		$questionPostModel = QuestionPostModel::find( $question_id, true );
+		if ( $questionPostModel ) {
+			$questionPostModel->save_answers_config( $answers );
 		}
 	}
 

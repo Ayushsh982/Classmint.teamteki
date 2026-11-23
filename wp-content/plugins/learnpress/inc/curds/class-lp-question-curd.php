@@ -13,6 +13,9 @@
  */
 defined( 'ABSPATH' ) || exit();
 
+use LearnPress\Models\Question\QuestionAnswerConfigModel;
+use LearnPress\Models\Question\QuestionPostModel;
+
 if ( ! class_exists( 'LP_Question_CURD' ) ) {
 
 	/**
@@ -181,7 +184,10 @@ if ( ! class_exists( 'LP_Question_CURD' ) ) {
 				update_user_meta( $user_id, '_learn_press_memorize_question_types', $new_question->get_type() );
 
 				// duplicate answer
-				$this->duplicate_answer( $question_id, $new_question_id );
+				$result = $this->duplicate_answer( $question_id, $new_question_id );
+				if ( is_wp_error( $result ) ) {
+					return $result;
+				}
 
 				do_action( 'learn-press/item/after-duplicate', $question_id, $new_question_id, $args );
 
@@ -195,17 +201,32 @@ if ( ! class_exists( 'LP_Question_CURD' ) ) {
 		 * @param $question_id     | origin question
 		 * @param $question_id_clone | new question
 		 * @version 3.0.1
-		 * @since 1.0.1
+		 * @since 1.0.2
 		 */
 		public function duplicate_answer( $question_id, $question_id_clone ) {
 			$lp_db                  = LP_Database::getInstance();
 			$lp_question_answers_db = LP_Question_Answers_DB::getInstance();
+			$questionPostModel      = QuestionPostModel::find( (int) $question_id, true );
+			$questionModelClone     = QuestionPostModel::find( (int) $question_id_clone, true );
+
+			if ( ! $questionPostModel ) {
+				return new WP_Error( 'question_answer_duplicate_err', 'Oops! Question not found' );
+			}
+
+			if ( ! $questionModelClone ) {
+				return new WP_Error( 'question_answer_duplicate_err', 'Oops! Question clone not found' );
+			}
 
 			try {
+				// New types only have JSON config, copy as-is - @since 4.5.0
+				if ( ! $questionPostModel->is_legacy_answer_type() ) {
+					$questionModelClone->save_answers_config( $questionPostModel->get_answers_config() );
+
+					return true;
+				}
+
 				// Get all answer of question
-				$filter_get_answer_options               = new LP_Question_Answers_Filter();
-				$filter_get_answer_options->question_ids = [ $question_id ];
-				$answer_options                          = $lp_question_answers_db->get_question_answers( $filter_get_answer_options );
+				$answer_options = $questionPostModel->get_answer_option();
 
 				if ( $answer_options ) {
 					foreach ( $answer_options as $answer_option ) {
@@ -252,7 +273,7 @@ if ( ! class_exists( 'LP_Question_CURD' ) ) {
 						$question_answermeta_rs       = $lp_db->execute( $filter_get );
 
 						foreach ( $question_answermeta_rs as $question_answermeta ) {
-							$lp_db->wpdb->insert(
+							$inserted = $lp_db->wpdb->insert(
 								$lp_db->tb_lp_question_answermeta,
 								array(
 									'learnpress_question_answer_id' => $question_answer_id_new,
@@ -261,12 +282,20 @@ if ( ! class_exists( 'LP_Question_CURD' ) ) {
 								),
 								array( '%d', '%s', '%s' )
 							);
+							if ( false === $inserted ) {
+								throw new Exception( __( 'Failed to duplicate answer meta', 'learnpress' ) );
+							}
 						}
 					}
 				}
+
+				$questionModelClone->save_answers_config( $answer_options );
 			} catch ( Throwable $e ) {
 				error_log( $e->getMessage() );
+				return new WP_Error( 'question_answer_duplicate_err', $e->getMessage() );
 			}
+
+			return true;
 		}
 
 		/**
@@ -362,7 +391,7 @@ if ( ! class_exists( 'LP_Question_CURD' ) ) {
 			$question_id = $question->get_id();
 
 			// If not new Question or not change type return
-			$old_type    = get_post_meta( $question_id, '_lp_type', true );
+			$old_type = get_post_meta( $question_id, '_lp_type', true );
 			if ( ! empty( $old_type ) && $old_type === $new_type ) {
 				return;
 			}
@@ -802,7 +831,7 @@ if ( ! class_exists( 'LP_Question_CURD' ) ) {
 						'order'       => $index + 1,
 					);
 					$new_answers[] = $this->add_answer( $new_question->get_type(), $insert );
-				};
+				}
 
 				return $new_answers;
 			}

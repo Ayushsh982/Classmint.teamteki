@@ -26,6 +26,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   resetForm: () => (/* binding */ resetForm),
 /* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
 /* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
@@ -55,7 +56,7 @@ const lpFetchAPI = (url, data = {}, functions = {}) => {
   fetch(url, {
     method: 'GET',
     ...data
-  }).then(response => response.json()).then(response => {
+  }).then(response => 'function' === typeof functions.checkResponse ? functions.checkResponse(response) : response).then(response => response.json()).then(response => {
     if ('function' === typeof functions.success) {
       functions.success(response);
     }
@@ -280,6 +281,29 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
     ...dataForm
   };
   return dataHandle;
+};
+
+/**
+ * Reset all fields of form to empty, select to first option.
+ * Not use form.reset(), because it restores values rendered by server (e.g. from URL params).
+ *
+ * @param elForm
+ */
+const resetForm = elForm => {
+  if (!elForm) {
+    return;
+  }
+  Array.from(elForm.elements).forEach(elField => {
+    const tagName = elField.tagName;
+    const type = elField.type;
+    if (tagName === 'SELECT') {
+      elField.selectedIndex = 0;
+    } else if (type === 'checkbox' || type === 'radio') {
+      elField.checked = false;
+    } else if ((tagName === 'INPUT' || tagName === 'TEXTAREA') && !['hidden', 'button', 'submit', 'reset'].includes(type)) {
+      elField.value = '';
+    }
+  });
 };
 
 /**
@@ -596,7 +620,7 @@ __webpack_require__.r(__webpack_exports__);
  * Load all you need via AJAX
  *
  * @since 4.2.5.7
- * @version 1.1.1
+ * @version 1.1.2
  */
 
 
@@ -610,6 +634,33 @@ if ('undefined' !== typeof lpDataAdmin) {
 }
 // End Handle general parameter in the Frontend and Backend
 
+// Refresh nonce for case HTML is cached (nonce on page is expired or belongs to another session).
+let promiseRefreshNonce = null;
+const lpRefreshNonce = () => {
+  if (promiseRefreshNonce) {
+    return promiseRefreshNonce;
+  }
+  if (!lpSettings.ajaxUrl) {
+    return Promise.resolve(false);
+  }
+  const urlNonce = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpAddQueryArgs(lpSettings.ajaxUrl, {
+    action: 'rest-nonce'
+  });
+  promiseRefreshNonce = fetch(urlNonce, {
+    credentials: 'same-origin'
+  }).then(res => res.ok ? res.text() : '').then(nonce => {
+    nonce = nonce.trim();
+    // Guest receives "0", so only accept a real nonce.
+    if (!/^[a-f0-9]{10}$/.test(nonce)) {
+      return false;
+    }
+    lpSettings.nonce = nonce;
+    return true;
+  }).catch(() => false).finally(() => {
+    promiseRefreshNonce = null;
+  });
+  return promiseRefreshNonce;
+};
 const lpAJAX = () => {
   const classLPTarget = '.lp-target';
   const urlCurrent = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpGetCurrentURLNoParam();
@@ -663,37 +714,66 @@ const lpAJAX = () => {
       }
       const action = params.hasOwnProperty('action') ? params.action : 'load_content_via_ajax';
       const isGet = params.hasOwnProperty('method_request') && 'GET' === String(params.method_request).toUpperCase();
-      let dataSend;
-      if (isGet) {
-        // Don't send method_request back to server; keep URL shorter.
-        const paramsForSend = {
-          ...params
+
+      // Build request each time, because nonce is in URL/FormData and can be refreshed.
+      const buildRequest = () => {
+        let url = urlAjax;
+        let dataSend;
+        if (isGet) {
+          // Don't send method_request back to server; keep URL shorter.
+          const paramsForSend = {
+            ...params
+          };
+          delete paramsForSend.method_request;
+          url = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpAddQueryArgs(url, {
+            nonce: lpSettings.nonce,
+            'lp-load-ajax': action,
+            data: JSON.stringify(paramsForSend)
+          });
+          dataSend = {
+            method: 'GET',
+            headers: {}
+          };
+        } else {
+          const formData = new FormData();
+          formData.append('nonce', lpSettings.nonce);
+          formData.append('lp-load-ajax', action);
+          formData.append('data', JSON.stringify(params));
+          dataSend = {
+            method: 'POST',
+            headers: {},
+            body: formData
+          };
+        }
+        if (0 !== parseInt(lpSettings.user_id)) {
+          dataSend.headers['X-WP-Nonce'] = lpSettings.nonce;
+        }
+        return {
+          url,
+          dataSend
         };
-        delete paramsForSend.method_request;
-        urlAjax = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpAddQueryArgs(urlAjax, {
-          nonce: lpSettings.nonce,
-          'lp-load-ajax': action,
-          data: JSON.stringify(paramsForSend)
-        });
-        dataSend = {
-          method: 'GET',
-          headers: {}
-        };
-      } else {
-        const formData = new FormData();
-        formData.append('nonce', lpSettings.nonce);
-        formData.append('lp-load-ajax', action);
-        formData.append('data', JSON.stringify(params));
-        dataSend = {
-          method: 'POST',
-          headers: {},
-          body: formData
-        };
-      }
-      if (0 !== parseInt(lpSettings.user_id)) {
-        dataSend.headers['X-WP-Nonce'] = lpSettings.nonce;
-      }
-      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpFetchAPI(urlAjax, dataSend, callBack);
+      };
+      const request = buildRequest();
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpFetchAPI(request.url, request.dataSend, {
+        ...callBack,
+        checkResponse: response => {
+          if ('1' !== response.headers.get('X-LP-Nonce-Invalid')) {
+            return response;
+          }
+
+          // Nonce invalid (HTML cached): get new nonce, retry one time.
+          return lpRefreshNonce().then(refreshed => {
+            if (!refreshed) {
+              return response;
+            }
+            const requestRetry = buildRequest();
+            return fetch(requestRetry.url, {
+              method: 'GET',
+              ...requestRetry.dataSend
+            });
+          });
+        }
+      });
     },
     getElements: () => {
       // Finds all elements with the class '.lp-load-ajax-element'

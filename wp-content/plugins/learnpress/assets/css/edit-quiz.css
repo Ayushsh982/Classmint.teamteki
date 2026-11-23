@@ -366,6 +366,10 @@
   color: #fff !important;
 }
 
+.lp-question-type-not-exist {
+  color: #d63638;
+}
+
 /**
 * Style for the popup select item to add in LearnPress
 */

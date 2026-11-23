@@ -45,7 +45,7 @@ if ( ! class_exists( 'LP_Question_Post_Type' ) ) {
 		public function __construct() {
 			//add_action( 'wp_loaded', array( $this, 'wp_loaded' ) );
 			add_action( 'admin_head', array( $this, 'init' ) );
-			add_action( 'learn-press/admin/after-enqueue-scripts', array( $this, 'data_question_editor' ) );
+			//add_action( 'learn-press/admin/after-enqueue-scripts', array( $this, 'data_question_editor' ) );
 
 			add_filter( 'views_edit-' . LP_QUESTION_CPT, array( $this, 'views_pages' ), 11 );
 			add_action( 'posts_pre_query', array( $this, 'posts_pre_query' ), 999, 2 );
@@ -135,8 +135,9 @@ if ( ! class_exists( 'LP_Question_Post_Type' ) ) {
 		 * Load data for question editor.
 		 *
 		 * @since 3.0.0
+		 * @deprecated 4.5.0
 		 */
-		public function data_question_editor() {
+		/*public function data_question_editor() {
 			global $post;
 
 			if ( LP_QUESTION_CPT !== get_post_type() ) {
@@ -198,12 +199,14 @@ if ( ! class_exists( 'LP_Question_Post_Type' ) ) {
 					)
 				)
 			);
-		}
+		}*/
 
 		/**
 		 * Register question post type.
 		 */
 		public function args_register_post_type(): array {
+			$questionPostModelTmp = new QuestionPostModel();
+
 			register_taxonomy(
 				'question_tag',
 				array( LP_QUESTION_CPT ),
@@ -244,7 +247,19 @@ if ( ! class_exists( 'LP_Question_Post_Type' ) ) {
 					'not_found'          => esc_html__( 'No questions found', 'learnpress' ),
 					'not_found_in_trash' => esc_html__( 'There was no questions found in the trash', 'learnpress' ),
 				),
+				/**
+				 * Set false to hide from:
+				 * - Frontend: single URLs, archive pages, search results, author archives
+				 * - Feeds: RSS/Atom feeds
+				 * - Sitemaps: WordPress default and SEO plugin sitemaps
+				 * - Nav menus: cannot add to Appearance > Menus
+				 * Still visible in admin because show_ui and show_in_menu are true.
+				 */
 				'public'              => true,
+				/**
+				 * Allow frontend URL queries (e.g., example.com/lesson/slug) even when public is false.
+				 * LearnPress uses this for course item URLs, but has additional 404 protection logic.
+				 */
 				'publicly_queryable'  => true,
 				'show_ui'             => true,
 				'has_archive'         => false,
@@ -253,7 +268,7 @@ if ( ! class_exists( 'LP_Question_Post_Type' ) ) {
 				'show_in_menu'        => 'learn_press',
 				'show_in_admin_bar'   => true,
 				'show_in_nav_menus'   => true,
-				'show_in_rest'        => learn_press_user_maybe_is_a_teacher(),
+				'show_in_rest'        => $questionPostModelTmp->check_capabilities_create(),
 				'supports'            => array( 'title', 'editor', 'revisions' ),
 				'hierarchical'        => false,
 				'rewrite'             => array(

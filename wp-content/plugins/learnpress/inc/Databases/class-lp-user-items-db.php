@@ -140,7 +140,8 @@ class LP_User_Items_DB extends LP_Database {
 			$filter->where[]      = $this->wpdb->prepare( 'AND ui.user_item_id IN (' . $user_item_ids_format . ')', $filter->user_item_ids );
 		}
 
-		if ( $filter->user_id !== false ) {
+		// null (default of filter) or false = do not filter by user. 0 = guest.
+		if ( null !== $filter->user_id && false !== $filter->user_id ) {
 			$filter->where[] = $this->wpdb->prepare( 'AND ui.user_id = %d', $filter->user_id );
 		}
 
@@ -665,7 +666,7 @@ class LP_User_Items_DB extends LP_Database {
 	 * @param int $course_id
 	 * @author tungnx
 	 * @since 4.1.4
-	 * @version 1.0.0
+	 * @version 1.0.1
 	 */
 	public function delete_user_items_old( int $user_id = 0, int $course_id = 0 ) {
 		$lp_user_items_db     = LP_User_Items_DB::getInstance();

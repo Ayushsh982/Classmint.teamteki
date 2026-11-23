@@ -88,6 +88,12 @@ export class CourseNotes {
 			return;
 		}
 
+		// Custom learning templates may omit the Notes sidebar and its form.
+		const template = document.querySelector( '[data-learning-bar-item="notes"] template' );
+		if ( ! template?.content.querySelector( CourseNotes.selectors.form ) ) {
+			return;
+		}
+
 		this.el.selectionBtn = this.root.querySelector( CourseNotes.selectors.selectionBtn );
 
 		this.contentRoot = document.querySelector( this.config.contentSelector );
@@ -728,6 +734,11 @@ export class CourseNotes {
 					bounds.top = Math.max( bounds.top, box.top );
 					bounds.bottom = Math.min( bounds.bottom, box.bottom );
 				}
+			}
+			// Learning popups are fixed to the viewport. Their outer page wrappers
+			// (including Eduma's short, overflow-hidden body) do not clip the lesson.
+			if ( style.position === 'fixed' ) {
+				break;
 			}
 		}
 		const rects = Array.from( range.getClientRects() );

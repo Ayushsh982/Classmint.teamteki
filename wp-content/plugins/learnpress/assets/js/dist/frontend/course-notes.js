@@ -335,6 +335,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   resetForm: () => (/* binding */ resetForm),
 /* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
 /* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
@@ -364,7 +365,7 @@ const lpFetchAPI = (url, data = {}, functions = {}) => {
   fetch(url, {
     method: 'GET',
     ...data
-  }).then(response => response.json()).then(response => {
+  }).then(response => 'function' === typeof functions.checkResponse ? functions.checkResponse(response) : response).then(response => response.json()).then(response => {
     if ('function' === typeof functions.success) {
       functions.success(response);
     }
@@ -589,6 +590,29 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
     ...dataForm
   };
   return dataHandle;
+};
+
+/**
+ * Reset all fields of form to empty, select to first option.
+ * Not use form.reset(), because it restores values rendered by server (e.g. from URL params).
+ *
+ * @param elForm
+ */
+const resetForm = elForm => {
+  if (!elForm) {
+    return;
+  }
+  Array.from(elForm.elements).forEach(elField => {
+    const tagName = elField.tagName;
+    const type = elField.type;
+    if (tagName === 'SELECT') {
+      elField.selectedIndex = 0;
+    } else if (type === 'checkbox' || type === 'radio') {
+      elField.checked = false;
+    } else if ((tagName === 'INPUT' || tagName === 'TEXTAREA') && !['hidden', 'button', 'submit', 'reset'].includes(type)) {
+      elField.value = '';
+    }
+  });
 };
 
 /**
@@ -6811,6 +6835,12 @@ class CourseNotes {
     if (!this.config || !this.root) {
       return;
     }
+
+    // Custom learning templates may omit the Notes sidebar and its form.
+    const template = document.querySelector('[data-learning-bar-item="notes"] template');
+    if (!template?.content.querySelector(CourseNotes.selectors.form)) {
+      return;
+    }
     this.el.selectionBtn = this.root.querySelector(CourseNotes.selectors.selectionBtn);
     this.contentRoot = document.querySelector(this.config.contentSelector);
     this.notes = Array.isArray(this.config.notes) ? this.config.notes : [];
@@ -7464,6 +7494,11 @@ class CourseNotes {
           bounds.top = Math.max(bounds.top, box.top);
           bounds.bottom = Math.min(bounds.bottom, box.bottom);
         }
+      }
+      // Learning popups are fixed to the viewport. Their outer page wrappers
+      // (including Eduma's short, overflow-hidden body) do not clip the lesson.
+      if (style.position === 'fixed') {
+        break;
       }
     }
     const rects = Array.from(range.getClientRects());

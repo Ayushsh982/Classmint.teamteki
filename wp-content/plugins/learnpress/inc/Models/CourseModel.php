@@ -15,6 +15,7 @@ namespace LearnPress\Models;
 
 use Exception;
 use LearnPress\Databases\Course\CourseSectionItemsDB;
+use LearnPress\Databases\UserItemsDB;
 use LearnPress\Filters\PostFilter;
 use LearnPress\Models\UserItems\UserCourseModel;
 use LearnPress\Models\UserItems\UserItemModel;
@@ -26,6 +27,8 @@ use LP_Course_JSON_Filter;
 use LP_Datetime;
 use LP_Debug;
 use LP_Helper;
+use LP_Meta_Box_Course;
+use LP_Meta_Box_Field;
 use LP_Section_Items_Filter;
 use LP_Settings;
 use stdClass;
@@ -988,8 +991,8 @@ class CourseModel {
 				return $total;
 			}
 
-			$lp_course_db = LP_Course_DB::getInstance();
-			$total        = $lp_course_db->get_total_user_enrolled_or_purchased( $this->get_id() );
+			$db    = UserItemsDB::getInstance();
+			$total = $db->get_total_users_enrolled_by_course( $this->get_id() );
 			$lp_course_cache->set_total_students_enrolled_or_purchased( $this->get_id(), $total );
 		} catch ( Throwable $e ) {
 			LP_Debug::error_log( $e );
@@ -1318,8 +1321,6 @@ class CourseModel {
 				case LP_QUIZ_CPT:
 					$item = QuizPostModel::find( $item_id, true );
 					break;
-				case LP_QUESTION_CPT:
-					break;
 				default:
 					$item = apply_filters( 'learn-press/course/get-item-model', $item, $item_id, $item_type, $this );
 					break;
@@ -1449,6 +1450,33 @@ class CourseModel {
 		$lp_course_json_db = LP_Course_JSON_DB::getInstance();
 
 		$courseObjToJSON = clone $this;
+
+		// Save only course meta keys to avoid conflicts with plugins like Elementor, another plugins
+		include_once LP_PLUGIN_PATH . 'inc/admin/class-lp-admin.php';
+		$lp_meta_box_course = new LP_Meta_Box_Course();
+		$ground_fields      = $lp_meta_box_course->metabox( $this->ID );
+		$meta_keys          = [];
+		foreach ( $ground_fields as $fields ) {
+			if ( ! isset( $fields['content'] ) ) {
+				continue;
+			}
+			foreach ( $fields['content'] as $meta_key => $option ) {
+				$option->id = $meta_key;
+				if ( ! $option instanceof LP_Meta_Box_Field ) {
+					continue;
+				}
+
+				$meta_keys[] = $meta_key;
+			}
+		}
+
+		foreach ( $courseObjToJSON->meta_data as $key => $value ) {
+			if ( ! in_array( $key, $meta_keys ) ) {
+				unset( $courseObjToJSON->meta_data->{$key} );
+			}
+		}
+		// End only save meta-key of course
+
 		unset( $courseObjToJSON->post_content );
 		unset( $courseObjToJSON->json );
 		$this->json = json_encode( $courseObjToJSON, JSON_UNESCAPED_UNICODE );

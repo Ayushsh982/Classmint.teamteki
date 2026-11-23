@@ -124,6 +124,9 @@
   font-weight: normal;
   line-height: 1;
 }
+.learn-press-message.hidden-icon::before {
+  display: none;
+}
 .learn-press-message.error {
   background-color: #FEE5E5;
   color: #FF3B30;
@@ -728,7 +731,7 @@ ul .clearfix {
 
 @font-face {
   font-family: "lp-icon";
-  src: url("../../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=9") format("woff2");
+  src: url("../../src/css/vendor/fonts/lp-icon/lp-icon.woff2?v=180") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -5030,11 +5033,6 @@ input[name=_lp_course_result]:checked ~ #passing-condition-quiz-result {
 }
 .post-type-lp_course .wp-list-table .column-certificate img {
   max-width: 100% !important;
-}
-@media only screen and (min-width: 1024px) {
-  .post-type-lp_course .wp-list-table .check-column {
-    width: 1.2em;
-  }
 }
 @media only screen and (min-width: 783px) {
   .post-type-lp_course .wp-list-table .column-title {
@@ -12982,80 +12980,6 @@ a.block-editor-block-list__block.wp-block-learnpress-course-button:hover {
   border-top: none;
 }
 
-.lp-enrolled-students-table-footer .learn-press-pagination {
-  margin: 0;
-  text-align: right;
-}
-.lp-enrolled-students-table-footer .learn-press-pagination ul.page-numbers {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.lp-enrolled-students-table-footer .learn-press-pagination ul.page-numbers > li {
-  margin: 0;
-}
-.lp-enrolled-students-table-footer .learn-press-pagination a.page-numbers,
-.lp-enrolled-students-table-footer .learn-press-pagination span.page-numbers {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  height: 40px;
-  width: 40px;
-  line-height: 40px;
-  padding: 0 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  color: #475569;
-  background: #fff;
-  font-size: 13px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.lp-enrolled-students-table-footer .learn-press-pagination a.page-numbers:hover:not(.current),
-.lp-enrolled-students-table-footer .learn-press-pagination span.page-numbers:hover:not(.current) {
-  border-color: #3b82f6;
-  color: #3b82f6 !important;
-  background: #eff6ff;
-}
-.lp-enrolled-students-table-footer .learn-press-pagination span.page-numbers.current {
-  border-color: #3b82f6;
-  color: #fff;
-  background: #3b82f6;
-  cursor: default;
-}
-.lp-enrolled-students-table-footer .learn-press-pagination span.page-numbers.dots {
-  min-width: auto;
-  border: 0;
-  background: transparent;
-  cursor: default;
-}
-.lp-enrolled-students-table-footer .learn-press-pagination span.page-numbers.current,
-.lp-enrolled-students-table-footer .learn-press-pagination span.page-numbers.dots {
-  pointer-events: none;
-}
-
-.lp-enrolled-empty {
-  padding: 40px 20px;
-  color: #94a3b8;
-  text-align: center;
-}
-.lp-enrolled-empty p {
-  margin: 0;
-  font-size: 14px;
-}
-
-.lp-enrolled-error {
-  padding: 15px 20px;
-  color: #dc2626;
-  font-size: 13px;
-}
-
 #lp-modal-enrolled-wrap {
   position: relative;
   /*tbody {
@@ -13096,24 +13020,21 @@ a.block-editor-block-list__block.wp-block-learnpress-course-button:hover {
   padding: 0 10px;
   border-radius: 20px;
   color: #94a3b8;
-  background: #f8fafc;
-  font-weight: bold;
+  background: #eef7fb;
   line-height: 1.25rem;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.08);
 }
 .lp-course-student-counter.disabled {
   background: #ddd;
 }
 
 a .lp-course-student-counter {
-  color: #1d4ed8;
-  background: #eff6ff;
+  color: #235af3;
+  background: #d4e8fb;
 }
 a .lp-course-student-counter:hover {
   background: #2563eb;
   color: white;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
   transform: translateY(-1.5px);
 }
 
@@ -13299,6 +13220,188 @@ a .lp-course-student-counter:hover {
 }
 .lp-student-notes__detail p {
   overflow-wrap: anywhere;
+}
+
+/**
+ * Course settings tab: More Features (recommended add-ons).
+ * Shared by wp-admin (admin.scss) and Course Builder (course-builder.scss),
+ * so only plain values are used here (no entry-specific variables/mixins).
+ *
+ * @since 4.4.15
+ * @version 1.0.0
+ */
+@keyframes lp-more-features-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.lp-more-features {
+  box-sizing: border-box;
+}
+.lp-more-features *,
+.lp-more-features *::before,
+.lp-more-features *::after {
+  box-sizing: border-box;
+}
+.lp-more-features [hidden] {
+  display: none !important;
+}
+.lp-more-features .lp-more-features__title {
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1e1e1e;
+}
+.lp-more-features .lp-more-features__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-more-features .lp-more-features__item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 14px 0;
+  max-height: 200px;
+  overflow: hidden;
+  border-bottom: 1px solid #e5e7eb;
+  transition: max-height 0.25s ease, opacity 0.25s ease, padding 0.25s ease, border-width 0.25s ease;
+}
+.lp-more-features .lp-more-features__item.is-removing {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom-width: 0;
+  opacity: 0;
+}
+.lp-more-features .lp-more-features__item.is-entering {
+  animation: lp-more-features-fade-in 0.3s ease;
+}
+.lp-more-features .lp-more-features__icon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.lp-more-features .lp-more-features__info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.lp-more-features .lp-more-features__name {
+  margin: 0 0 2px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1e1e1e;
+}
+.lp-more-features .lp-more-features__desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #646970;
+}
+.lp-more-features .lp-more-features__learn,
+.lp-more-features .lp-more-features__reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid #2271b1;
+  border-radius: 3px;
+  font-size: 13px;
+  line-height: 2;
+  color: #2271b1;
+  background: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.lp-more-features .lp-more-features__learn {
+  flex: 0 0 auto;
+}
+.lp-more-features .lp-more-features__learn:hover, .lp-more-features .lp-more-features__learn:focus {
+  color: #135e96;
+  border-color: #135e96;
+  background: #f6f7f7;
+}
+.lp-more-features .lp-more-features__dismiss {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  color: #8c8f94;
+  cursor: pointer;
+}
+.lp-more-features .lp-more-features__dismiss .dashicons {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+.lp-more-features .lp-more-features__dismiss:hover, .lp-more-features .lp-more-features__dismiss:focus {
+  color: #1e1e1e;
+  background: transparent;
+}
+.lp-more-features .lp-more-features__empty,
+.lp-more-features .lp-more-features__none {
+  margin: 0;
+  padding: 20px 0;
+  font-size: 13px;
+  color: #646970;
+  border-bottom: 1px solid #e5e7eb;
+}
+.lp-more-features .lp-more-features__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+}
+.lp-more-features .lp-more-features__discover,
+.lp-more-features .lp-more-features__reset-link {
+  color: #2271b1;
+  font-size: 13px;
+  text-decoration: none;
+}
+.lp-more-features .lp-more-features__discover:hover, .lp-more-features .lp-more-features__discover:focus,
+.lp-more-features .lp-more-features__reset-link:hover,
+.lp-more-features .lp-more-features__reset-link:focus {
+  color: #135e96;
+  text-decoration: underline;
+}
+.lp-more-features .lp-more-features__reset {
+  margin-left: auto;
+}
+.lp-more-features .lp-more-features__reset:hover, .lp-more-features .lp-more-features__reset:focus {
+  color: #135e96;
+  border-color: #135e96;
+  background: #f6f7f7;
+}
+@media screen and (max-width: 600px) {
+  .lp-more-features .lp-more-features__item {
+    flex-wrap: wrap;
+  }
+  .lp-more-features .lp-more-features__info {
+    flex-basis: calc(100% - 56px);
+  }
 }
 
 /**
@@ -13488,6 +13591,8 @@ table.lp-list-table.profile-list-quizzes tfoot td {
 .lp-form-filter input, .lp-form-filter select {
   min-height: 40px;
   padding: 0 12px;
+  border-radius: 5px;
+  border: 1px solid #949494;
 }
 .lp-form-filter .lp-tom-select.ts-wrapper {
   width: 100%;
@@ -13644,6 +13749,116 @@ html.lp-full-screen-active body {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+/**
+ * Input search suggest (autocomplete).
+ * HTML: AdminInputSearchSuggest::layout(), JS: assets/src/js/lp-input-search-suggest.js
+ */
+.lp-wrap-input-search-suggest {
+  position: relative;
+  display: inline-block;
+  min-width: 250px;
+  max-width: 100%;
+}
+.lp-wrap-input-search-suggest .lp-input-search-suggest {
+  width: 100%;
+  margin: 0;
+}
+.lp-form-filter .lp-wrap-input-search-suggest {
+  display: block;
+  min-width: 0;
+}
+.lp-wrap-input-search-suggest.loading .lp-input-search-suggest {
+  background-image: linear-gradient(90deg, transparent 0%, #2271b1 50%, transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 40% 2px;
+  background-position: -40% 100%;
+  animation: lp-input-search-suggest-loading 1s linear infinite;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-result {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  margin-top: 2px;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-result .learn-press-message {
+  margin: 0;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-list {
+  margin: 0;
+  padding: 4px 0;
+  max-height: 240px;
+  overflow-y: auto;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-item,
+.lp-wrap-input-search-suggest .lp-search-suggest-empty {
+  margin: 0;
+  padding: 6px 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-item {
+  cursor: pointer;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-item:hover, .lp-wrap-input-search-suggest .lp-search-suggest-item.is-active {
+  background: #f0f6fc;
+  color: #2271b1;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-item--multiple {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-item--multiple .lp-search-suggest-checkbox {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  margin: 2px 0 0;
+  padding: 0;
+  cursor: pointer;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-item--multiple.is-selected {
+  font-weight: 600;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-actions {
+  margin: 0;
+  padding: 2px 12px 6px;
+  border-bottom: 1px solid #f0f0f1;
+  text-align: right;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-actions .lp-search-suggest-clear-all {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #b32d2e;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-actions .lp-search-suggest-clear-all:hover, .lp-wrap-input-search-suggest .lp-search-suggest-actions .lp-search-suggest-clear-all:focus {
+  text-decoration: underline;
+}
+.lp-wrap-input-search-suggest .lp-search-suggest-empty {
+  color: #646970;
+  font-style: italic;
+}
+
+@keyframes lp-input-search-suggest-loading {
+  from {
+    background-position: -40% 100%;
+  }
+  to {
+    background-position: 140% 100%;
   }
 }
 .button.disabled {
@@ -13865,10 +14080,12 @@ html.lp-full-screen-active body {
 
 .lp-notice-update-database {
   border: 1px solid rebeccapurple;
-  border-left-color: #f00;
   border-radius: 3px;
   color: white;
   background: rebeccapurple;
+}
+.lp-notice-update-database p {
+  color: white;
 }
 .lp-notice-update-database.do-updating::before {
   display: inline-block;

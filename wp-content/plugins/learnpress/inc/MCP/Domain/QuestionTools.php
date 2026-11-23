@@ -73,6 +73,7 @@ class QuestionTools {
 					$options[] = array(
 						'title'   => Sanitizer::text( $answer['title'] ?? '' ),
 						'is_true' => Sanitizer::boolean( $answer['is_correct'] ?? false ) ? 'yes' : '',
+						'value'   => learn_press_random_value(),
 					);
 				}
 			}
@@ -178,9 +179,9 @@ class QuestionTools {
 			}
 			self::apply_meta( $question, $args );
 
-			if ( array_key_exists( 'answers', $args ) && is_array( $args['answers'] ) ) {
+			/*if ( array_key_exists( 'answers', $args ) && is_array( $args['answers'] ) ) {
 				self::sync_answers( $question, $args['answers'] );
-			}
+			}*/
 
 			if ( array_key_exists( 'order', $args ) ) {
 				self::reorder_question( $quiz, $question_id, absint( $args['order'] ) );
@@ -329,7 +330,7 @@ class QuestionTools {
 	 * @return void
 	 * @throws Exception When answer persistence fails.
 	 */
-	protected static function sync_answers( QuestionPostModel $question, array $answers ): void {
+	/*protected static function sync_answers( QuestionPostModel $question, array $answers ): void {
 		$existing = array();
 		foreach ( $question->get_answer_option() as $model ) {
 			if ( $model instanceof QuestionAnswerModel ) {
@@ -379,7 +380,8 @@ class QuestionTools {
 			}
 			$model->delete();
 		}
-	}
+		$question->save_answers_config();
+	}*/
 
 	/**
 	 * Reorder a question to a 1-based position within the quiz.

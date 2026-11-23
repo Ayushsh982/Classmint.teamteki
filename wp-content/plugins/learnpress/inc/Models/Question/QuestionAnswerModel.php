@@ -12,7 +12,7 @@ use stdClass;
  * Class QuestionAnswerModel
  * Answers for questions in LearnPress.
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @since 4.2.9
  */
 class QuestionAnswerModel {
@@ -160,8 +160,7 @@ class QuestionAnswerModel {
 	 * @throws Exception
 	 */
 	public function check_capabilities_create() {
-		$user = wp_get_current_user();
-		if ( ! user_can( $user, 'edit_' . LP_LESSON_CPT, $this->question_id ) ) {
+		if ( ! current_user_can( 'edit_' . LP_LESSON_CPT, $this->question_id ) ) {
 			throw new Exception( __( 'You do not have permission to create answer.', 'learnpress' ) );
 		}
 	}
@@ -211,10 +210,7 @@ class QuestionAnswerModel {
 	 */
 	public function save() {
 		$db   = QuestionAnswersDB::getInstance();
-		$data = [];
-		foreach ( get_object_vars( $this ) as $property => $value ) {
-			$data[ $property ] = $value;
-		}
+		$data = get_object_vars( $this );
 
 		$args = [
 			'data'       => $data,
@@ -236,6 +232,11 @@ class QuestionAnswerModel {
 		}
 
 		$this->clean_caches();
+
+		// Sync to question_answer_config new table for backward compatibility
+		$questionPostModel = $this->get_question_post_model();
+		$questionPostModel->save_answers_config( $questionPostModel->get_answer_option() );
+		// End
 	}
 
 	/**
@@ -252,7 +253,8 @@ class QuestionAnswerModel {
 
 		$this->check_capabilities_update();
 
-		if ( $questionPostModel->get_type() === 'single_choice' || $questionPostModel->get_type() === 'multi_choice' ) {
+		if ( $questionPostModel->get_type() === 'single_choice'
+			|| $questionPostModel->get_type() === 'multi_choice' ) {
 			// For single choice and multiple choice, at least two answer is required.
 			$filter              = new QuestionAnswersFilter();
 			$filter->question_id = $this->question_id;
@@ -281,6 +283,11 @@ class QuestionAnswerModel {
 
 		// Clear cache
 		$this->clean_caches();
+
+		// Sync to question_answer_config new table for backward compatibility
+		$questionPostModel = $this->get_question_post_model();
+		$questionPostModel->save_answers_config( $questionPostModel->get_answer_option() );
+		// End
 	}
 
 	/**

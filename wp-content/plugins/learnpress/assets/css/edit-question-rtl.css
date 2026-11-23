@@ -359,3 +359,7 @@
   background: rgb(19, 94, 150) !important;
   color: #fff !important;
 }
+
+.lp-question-type-not-exist {
+  color: #d63638;
+}

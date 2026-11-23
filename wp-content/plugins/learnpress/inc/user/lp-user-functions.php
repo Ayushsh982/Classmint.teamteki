@@ -1,5 +1,6 @@
 <?php
 
+use LearnPress\Models\Question\QuestionPostModel;
 use LearnPress\Models\UserItems\UserItemModel;
 use LearnPress\Models\UserModel;
 use LearnPress\Services\UserService;
@@ -1082,6 +1083,38 @@ function learn_press_isset_user_item_for_quiz( $quiz_id, $course_id ) {
 }*/
 
 /**
+ * Get content of question to display.
+ * Same as LP_Question::get_content() old: setup global post (shortcode use it), fix WP Bakery shortcodes.
+ *
+ * @param QuestionPostModel $question
+ *
+ * @return string
+ * @since 4.5.0
+ * @version 1.0.0
+ */
+function learn_press_get_question_content_display( QuestionPostModel $question ): string {
+	global $post;
+
+	// Fix style, js if content is WP Bakery
+	if ( class_exists( 'WPBMap' ) && method_exists( 'WPBMap', 'addAllMappedShortcodes' ) ) {
+		WPBMap::addAllMappedShortcodes();
+	}
+
+	$original_post = $post;
+	$post          = get_post( $question->get_id() ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	setup_postdata( $post );
+
+	$content = $question->get_the_content();
+
+	$post = $original_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	if ( $post ) {
+		setup_postdata( $post );
+	}
+
+	return $content;
+}
+
+/**
  * Prepares list of questions for rest api.
  *
  * @param int[] $question_ids
@@ -1119,7 +1152,11 @@ function learn_press_rest_prepare_user_questions( array $question_ids = array(),
 
 	if ( $question_ids ) {
 		foreach ( $question_ids as $id ) {
-			$question       = learn_press_get_question( $id );
+			$question = QuestionPostModel::find( (int) $id );
+			if ( ! $question instanceof QuestionPostModel ) {
+				continue;
+			}
+
 			$hasHint        = false;
 			$hasExplanation = false;
 			$canCheck       = false;
@@ -1139,12 +1176,12 @@ function learn_press_rest_prepare_user_questions( array $question_ids = array(),
 			$questionData = array(
 				'object' => $question,
 				'id'     => absint( $id ),
-				'title'  => $question->get_title(),
+				'title'  => $question->get_the_title(),
 				'type'   => $question->get_type(),
 				'point'  => $mark,
 			);
 
-			$content = $question->get_content();
+			$content = learn_press_get_question_content_display( $question );
 			if ( $content ) {
 				$questionData['content'] = $content;
 			}
@@ -1165,14 +1202,16 @@ function learn_press_rest_prepare_user_questions( array $question_ids = array(),
 				}
 			}
 
-			$with_true_or_false = ( $checked || ( $quizStatus == 'completed' && $args['show_correct_review'] ) );
+			// Checked or completed: show result of user's answer. Correct answer only when option "Show the correct answer" enabled.
+			$with_true_or_false = ( $checked || $quizStatus == 'completed' );
 
 			// if ( $question->is_support( 'answer-options' ) ) {
 			$questionData['options'] = learn_press_get_question_options_for_js(
 				$question,
 				array(
-					'include_is_true' => $with_true_or_false,
-					'answer'          => $answered[ $id ]['answered'] ?? '',
+					'include_is_true'     => $with_true_or_false,
+					'show_correct_answer' => $with_true_or_false && ! empty( $args['show_correct_review'] ),
+					'answer'              => $answered[ $id ]['answered'] ?? '',
 				)
 			);
 			// }

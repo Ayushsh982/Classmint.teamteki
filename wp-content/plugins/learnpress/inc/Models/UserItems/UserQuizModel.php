@@ -1,5 +1,29 @@
 <?php
 
+namespace LearnPress\Models\UserItems;
+
+use Exception;
+use LearnPress\Databases\UserItemsDB;
+use LearnPress\Filters\UserItemsFilter;
+use LearnPress\Helpers\LPDateTime;
+use LearnPress\Models\CourseModel;
+use LearnPress\Models\Question\QuestionPostModel;
+use LearnPress\Models\QuizPostModel;
+use LearnPress\Models\UserItemMeta\UserItemMetaModel;
+use LearnPress\Models\UserItemMeta\UserQuizMetaModel;
+use LearnPress\Models\UserItemResults\UserItemResultModel;
+use LearnPress\Models\UserModel;
+use LearnPress\Databases\UserItemResultsDB;
+use LearnPress\Filters\UserItemResultsFilter;
+use LP_Debug;
+use LP_Quiz_CURD;
+use LP_User_Items_Result_DB;
+use stdClass;
+use Throwable;
+use WP_Error;
+
+defined( 'ABSPATH' ) || exit();
+
 /**
  * Class UserQuizModel
  *
@@ -7,23 +31,6 @@
  * @version 1.0.3
  * @since 4.2.5
  */
-
-namespace LearnPress\Models\UserItems;
-
-use Exception;
-use LearnPress\Models\CourseModel;
-use LearnPress\Models\QuizPostModel;
-use LearnPress\Models\UserItemMeta\UserItemMetaModel;
-use LearnPress\Models\UserItemMeta\UserQuizMetaModel;
-use LearnPress\Models\UserModel;
-use LP_Datetime;
-use LP_Helper;
-use LP_Question;
-use LP_Quiz_CURD;
-use LP_User_Items_Result_DB;
-use Throwable;
-use WP_Error;
-
 class UserQuizModel extends UserItemModel {
 	/**
 	 * Item type Course
@@ -49,10 +56,16 @@ class UserQuizModel extends UserItemModel {
 	 *
 	 * @return bool|QuizPostModel
 	 * @since 4.2.5
-	 * @version 1.0.1
+	 * @version 1.0.2
 	 */
 	public function get_quiz_post_model() {
-		return QuizPostModel::find( $this->item_id, true );
+		$quizPostModel = false;
+		$courseModel   = $this->get_course_model();
+		if ( $courseModel instanceof CourseModel ) {
+			$quizPostModel = $courseModel->get_item_model( $this->item_id, LP_QUIZ_CPT );
+		}
+
+		return $quizPostModel;
 	}
 
 	/**
@@ -143,10 +156,10 @@ class UserQuizModel extends UserItemModel {
 	 *
 	 * @throws Exception
 	 * @since 4.2.5
-	 * @version 1.0.0
+	 * @version 1.0.1
 	 */
-	public function start_quiz() {
-		$can_start = $this->check_can_start();
+	public function handle_start() {
+		$can_start = $this->can_start();
 		if ( is_wp_error( $can_start ) ) {
 			/**
 			 * @var WP_Error $can_start
@@ -165,12 +178,74 @@ class UserQuizModel extends UserItemModel {
 	}
 
 	/**
+	 * Finish quiz.
+	 *
+	 * @param array $data ['answered', 'time_spend']
+	 * @return array
+	 * @throws Exception
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function handle_finish( array $data = [] ): array {
+		$can_finish = $this->can_finish();
+		if ( is_wp_error( $can_finish ) ) {
+			throw new Exception( $can_finish->get_error_message() );
+		}
+
+		$answered   = $data['answered'] ?? [];
+		$time_spend = absint( $data['time_spend'] ?? 0 );
+
+		$userItemResultModel = UserItemResultModel::find_by_user_item_id(
+			$this->get_user_item_id(),
+			true
+		);
+		if ( ! $userItemResultModel instanceof UserItemResultModel ) {
+			throw new Exception( __( 'Quiz result is invalid.', 'learnpress' ) );
+		}
+
+		// Merge answers saved by Instant Check.
+		$result_instant_check = $userItemResultModel->get_result();
+		if ( ! empty( $result_instant_check['questions'] ) ) {
+			foreach ( $result_instant_check['questions'] as $question_id => $question_answer ) {
+				if ( ! empty( $question_answer['answered'] ) ) {
+					$answered[ $question_id ] = $question_answer['answered'];
+				}
+			}
+		}
+
+		$start_time       = strtotime( $this->get_start_time() );
+		$this->end_time   = gmdate( LPDateTime::FORMAT_MYSQL, $start_time + $time_spend );
+		$result           = $this->calculate_quiz_result( $answered );
+		$this->status     = self::STATUS_COMPLETED;
+		$this->graduation = $result['pass'] ? self::GRADUATION_PASSED : self::GRADUATION_FAILED;
+		$this->save();
+
+		// Get result after change data on UserItemModel and set result
+		$userItemResultModel = UserItemResultModel::find_by_user_item_id( $this->get_user_item_id(), true );
+		$userItemResultModel->set_result( $result );
+		$userItemResultModel->save();
+
+		do_action( 'learn-press/user/quiz-finished', $this->item_id, $this->ref_id, $this->user_id, $this );
+		// @since 4.5.0
+		do_action( 'learnpress/user/quiz-finished', $this );
+
+		$result['status']   = $this->get_status();
+		$result['attempts'] = $this->get_attempts();
+		$result['answered'] = $result['questions'];
+		$result['results']  = $result;
+
+		return $result;
+	}
+
+	/**
 	 * Retake quiz.
 	 *
 	 * @throws Exception
+	 * @since 4.2.5
+	 * @version 1.0.1
 	 */
-	public function retake() {
-		$can_retake = $this->check_can_retake();
+	public function handle_retake() {
+		$can_retake = $this->can_retake();
 		if ( is_wp_error( $can_retake ) ) {
 			/**
 			 * @var WP_Error $can_retake
@@ -193,16 +268,15 @@ class UserQuizModel extends UserItemModel {
 			$user_quiz_retaken_new->save();
 		}
 
-		//Todo: rewrite by object.
-		//Create new result in table learnpress_user_item_results.
-		LP_User_Items_Result_DB::instance()->insert( $this->get_user_item_id() );
-		// Remove user_item_meta.
-		learn_press_delete_user_item_meta( $this->get_user_item_id(), '_lp_question_checked' );
+		// Remove questions checked (for case enable instant check).
+		$this->delete_meta( UserQuizMetaModel::KEY_QUESTION_CHECKED );
+		//learn_press_delete_user_item_meta( $this->get_user_item_id(), '_lp_question_checked' );
 
-		$this->status     = self::STATUS_STARTED;
-		$this->start_time = gmdate( LP_Datetime::$format, time() );
-		$this->end_time   = null;
-		$this->graduation = LP_COURSE_GRADUATION_IN_PROGRESS;
+		$this->status                            = self::STATUS_STARTED;
+		$this->start_time                        = gmdate( LPDateTime::FORMAT_MYSQL, time() );
+		$this->end_time                          = null;
+		$this->graduation                        = LP_COURSE_GRADUATION_IN_PROGRESS;
+		$this->must_create_new_data_table_result = 1;
 		$this->save();
 
 		// Hook old - random quiz using.
@@ -222,7 +296,7 @@ class UserQuizModel extends UserItemModel {
 	 * @since 4.2.5
 	 * @version 1.0.3
 	 */
-	public function check_can_start() {
+	public function can_start() {
 		$can_start = true;
 
 		$userModel = $this->get_user_model();
@@ -249,10 +323,13 @@ class UserQuizModel extends UserItemModel {
 			true
 		);
 		if ( $userQuizModel instanceof UserQuizModel ) {
-			$can_start = new WP_Error( 'started_quiz', __( 'You have already started the quiz.', 'learnpress' ) );
+			$can_start = new WP_Error(
+				'quiz_started',
+				__( 'You have already started the quiz.', 'learnpress' )
+			);
 		}
 
-		// Check user, course of quiz is enrolled.
+		// Check user, course of quiz can impact item.
 		$userCourseModel = $this->get_user_course_model();
 		if ( ! $userCourseModel instanceof UserCourseModel ) {
 			$can_start = new WP_Error(
@@ -293,13 +370,76 @@ class UserQuizModel extends UserItemModel {
 	}
 
 	/**
+	 * Check user can finish quiz.
+	 *
+	 * @return bool|WP_Error
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function can_finish() {
+		$can_finish = true;
+
+		$userModel = $this->get_user_model();
+		if ( ! $userModel instanceof UserModel ) {
+			$can_finish = new WP_Error( 'user_invalid', __( 'User is invalid.', 'learnpress' ) );
+		}
+
+		$courseModel = $this->get_course_model();
+		if ( ! $courseModel instanceof CourseModel ) {
+			$can_finish = new WP_Error( 'course_invalid', __( 'Course is invalid.', 'learnpress' ) );
+		}
+
+		$quizPostModel = $this->get_quiz_post_model();
+		if ( ! $quizPostModel instanceof QuizPostModel ) {
+			$can_finish = new WP_Error( 'quiz_invalid', __( 'Quiz is invalid.', 'learnpress' ) );
+		}
+
+		$userCourseModel = $this->get_user_course_model();
+		if ( ! $userCourseModel instanceof UserCourseModel ) {
+			$can_finish = new WP_Error(
+				'not_enrolled_course',
+				__( 'User is not enrolled in the course.', 'learnpress' )
+			);
+		}
+
+		$can_impact_quiz = $userCourseModel->can_impact_item();
+		if ( $can_impact_quiz instanceof WP_Error ) {
+			$can_finish = $can_impact_quiz;
+		}
+
+		if ( ! $this->has_started() ) {
+			$can_finish = new WP_Error(
+				'quiz_not_start',
+				__( 'Quiz must start.', 'learnpress' )
+			);
+		}
+
+		if ( $this->has_finished() ) {
+			$can_finish = new WP_Error(
+				'quiz_finished',
+				__( 'You have completed this quiz.', 'learnpress' )
+			);
+		}
+
+		$userItemResultModel = UserItemResultModel::find_by_user_item_id( $this->get_user_item_id() );
+		if ( ! $userItemResultModel instanceof UserItemResultModel ) {
+			$can_finish = new WP_Error(
+				'quiz_result_invalid',
+				__( 'Quiz result is invalid.', 'learnpress' )
+			);
+		}
+
+		return apply_filters( 'learn-press/user/can-finish-quiz', $can_finish, $this );
+	}
+
+	/**
 	 * Check can retake quiz.
 	 *
 	 * @throws Exception
 	 * @since 4.2.5
 	 * @version 1.0.2
 	 */
-	public function check_can_retake() {
+	public function can_retake() {
 		$can_retake = true;
 
 		$userModel = $this->get_user_model();
@@ -324,22 +464,28 @@ class UserQuizModel extends UserItemModel {
 				'not_errol_course',
 				__( 'Please enroll in the course before starting the quiz.', 'learnpress' )
 			);
-		} else {
-			$can_impact_item = $userCourseModel->can_impact_item();
-			if ( $can_impact_item instanceof WP_Error ) {
-				$can_retake = $can_impact_item;
-			}
+		}
+
+		$can_impact_item = $userCourseModel->can_impact_item();
+		if ( $can_impact_item instanceof WP_Error ) {
+			$can_retake = $can_impact_item;
 		}
 
 		// Check user quiz start and completed?.
-		if ( $this->get_status() !== LP_ITEM_COMPLETED ) {
-			$can_retake = new WP_Error( 'not_completed_quiz', __( 'You have not completed the quiz.', 'learnpress' ) );
+		if ( ! $this->has_finished() ) {
+			$can_retake = new WP_Error(
+				'not_completed_quiz',
+				__( 'You have not completed the quiz.', 'learnpress' )
+			);
 		}
 
 		// Check retaken count.
 		$retake_max = $quizPostModel->get_retake_count();
 		if ( $retake_max != -1 && $this->get_remaining_retake() === 0 ) {
-			$can_retake = new WP_Error( 'exceed_retaken_count', __( 'You have exceeded the number of retakes.', 'learnpress' ) );
+			$can_retake = new WP_Error(
+				'exceed_retaken_count',
+				__( 'You have exceeded the number of retakes.', 'learnpress' )
+			);
 		}
 
 		// Hook can retake quiz
@@ -373,6 +519,7 @@ class UserQuizModel extends UserItemModel {
 	 * Get all attempts of a quiz.
 	 *
 	 * @move from LP_Quiz
+	 * @param int $limit
 	 *
 	 * @return array
 	 */
@@ -429,6 +576,160 @@ class UserQuizModel extends UserItemModel {
 	}
 
 	/**
+	 * Mark a question as checked.
+	 *
+	 * @param int $question_id
+	 *
+	 * @return void
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function save_questions_instant_checked( int $question_id ) {
+		$checked_questions = $this->get_checked_questions();
+
+		if ( ! in_array( $question_id, $checked_questions, true ) ) {
+			$checked_questions[] = $question_id;
+			$this->set_meta_value_for_key( UserQuizMetaModel::KEY_QUESTION_CHECKED, $checked_questions );
+		}
+	}
+
+	/**
+	 * Check user can instantly check a question.
+	 *
+	 * @param int $question_id
+	 *
+	 * @return bool|WP_Error
+	 * @since 4.5.0
+	 * @version 1.0.1
+	 */
+	public function can_check_instant_answer( int $question_id = 0 ) {
+		$quizPostModel = $this->get_quiz_post_model();
+		if ( ! $quizPostModel instanceof QuizPostModel ) {
+			return new WP_Error( 'quiz_invalid', __( 'Quiz is invalid', 'learnpress' ) );
+		}
+
+		if ( ! $quizPostModel->has_instant_check() ) {
+			return new WP_Error( 'instant_check_disable', __( 'Instant check is disable', 'learnpress' ) );
+		}
+
+		// Same as finish quiz: user must be enrolled and course can impact item (not finished, not expired).
+		$userCourseModel = $this->get_user_course_model();
+		if ( ! $userCourseModel instanceof UserCourseModel ) {
+			return new WP_Error( 'not_enrolled_course', __( 'User is not enrolled in the course.', 'learnpress' ) );
+		}
+
+		$can_impact_item = $userCourseModel->can_impact_item();
+		if ( $can_impact_item instanceof WP_Error ) {
+			return $can_impact_item;
+		}
+
+		if ( in_array( $question_id, $this->get_checked_questions() ) ) {
+			return new WP_Error( 'already_checked', __( 'This question is already selected', 'learnpress' ) );
+		}
+
+		return apply_filters(
+			'learn-press/user/can-instant-check-quiz',
+			true,
+			$question_id,
+			$this
+		);
+	}
+
+	/**
+	 * Instant check question.
+	 * Result saved has only the question checking and the questions checked before.
+	 *
+	 * @param int $question_id
+	 * @param mixed $answered
+	 *
+	 * @return array
+	 * @throws Exception
+	 * @since 4.5.0
+	 * @version 1.0.2
+	 */
+	public function instant_check_question( int $question_id, $answered = null ): array {
+		$questionPostModel = QuestionPostModel::find( $question_id, true );
+		if ( ! $questionPostModel ) {
+			throw new Exception( __( 'The question is invalid!', 'learnpress' ) );
+		}
+
+		$can_check = $this->can_check_instant_answer( $question_id );
+		if ( is_wp_error( $can_check ) ) {
+			throw new Exception( $can_check->get_error_message() );
+		} elseif ( ! $can_check ) {
+			throw new Exception( __( 'Cannot check the answer to the question.', 'learnpress' ) );
+		}
+
+		// Questions checked before, can_check_instant_answer() ensures the question checking is not one of them.
+		$questions_checked = array_map( 'absint', $this->get_checked_questions() );
+
+		$answered_check = array(
+			'instant_check' => 1,
+			$question_id    => $answered,
+		);
+
+		$user_item_id        = $this->get_user_item_id();
+		$userItemResultModel = $user_item_id ? UserItemResultModel::find_by_user_item_id( $user_item_id, true ) : false;
+
+		// Answers of questions checked before, they are calculated again with the question checking.
+		if ( $userItemResultModel instanceof UserItemResultModel ) {
+			$questions_result = $this->filter_questions_checked(
+				$userItemResultModel->get_result()['questions'] ?? array(),
+				$questions_checked
+			);
+
+			foreach ( $questions_result as $question_checked_id => $question_result ) {
+				$answered_checked = $question_result['answered'] ?? '';
+				if ( ! empty( $answered_checked ) ) {
+					$answered_check[ $question_checked_id ] = $answered_checked;
+				}
+			}
+		}
+
+		$result_answer = $this->calculate_quiz_result( $answered_check );
+
+		// calculate_quiz_result() returns all questions of quiz, keep only questions checked, not leak the others.
+		$questions_checked[]        = $question_id;
+		$result_answer['questions'] = $this->filter_questions_checked(
+			$result_answer['questions'] ?? array(),
+			$questions_checked
+		);
+
+		if ( $userItemResultModel instanceof UserItemResultModel ) {
+			$userItemResultModel->set_result( $result_answer );
+			$userItemResultModel->save();
+			$this->save_questions_instant_checked( $question_id );
+		} elseif ( $user_item_id ) {
+			throw new Exception( __( 'Quiz result is invalid.', 'learnpress' ) );
+		}
+
+		$checked = array(
+			'answered' => $answered,
+			'mark'     => $result_answer['questions'][ $question_id ]['mark'] ?? 0,
+			'correct'  => $result_answer['questions'][ $question_id ]['correct'] ?? false,
+		);
+
+		return $checked;
+	}
+
+	/**
+	 * Keep only results of questions user has checked (instant check), drop the other questions.
+	 * Result of quiz when doing must not hold questions not checked yet.
+	 *
+	 * @param array $questions [ question_id => [ answered, mark, correct ] ]
+	 * @param array $question_ids_checked
+	 *
+	 * @return array same shape as $questions
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function filter_questions_checked( array $questions, array $question_ids_checked ): array {
+		$question_ids_checked = array_map( 'absint', $question_ids_checked );
+
+		return array_intersect_key( $questions, array_flip( $question_ids_checked ) );
+	}
+
+	/**
 	 * Get result when user completed quiz.
 	 *
 	 * @move from LP_Quiz
@@ -453,18 +754,12 @@ class UserQuizModel extends UserItemModel {
 		);
 
 		try {
-			$result_tmp = LP_User_Items_Result_DB::instance()->get_result( $this->get_user_item_id() );
-			if ( $result_tmp ) {
-				if ( isset( $result_tmp['user_mark'] ) && $result_tmp['user_mark'] < 0 ) {
-					$result_tmp['user_mark'] = 0;
-				}
-
-				$result = $result_tmp;
+			$userQuizResultModel = UserItemResultModel::find_by_user_item_id( $this->get_user_item_id(), true );
+			if ( $userQuizResultModel instanceof UserItemResultModel ) {
+				return $userQuizResultModel->get_result();
 			}
-
-			return $result;
 		} catch ( Throwable $e ) {
-			error_log( __METHOD__ . ': ' . $e->getMessage() );
+			LP_Debug::error_log( $e );
 		}
 
 		return $result;
@@ -476,8 +771,9 @@ class UserQuizModel extends UserItemModel {
 	 * @param array $answered [question_id => answered, 'instant_check' => 0]
 	 *
 	 * @return array
-	 * @since 4.2.5
+	 * @throws Exception
 	 * @version 1.0.0
+	 * @since 4.2.5
 	 */
 	public function calculate_quiz_result( array $answered ): array {
 		$result = array(
@@ -507,20 +803,48 @@ class UserQuizModel extends UserItemModel {
 		$result['question_count'] = $quizPostModel->count_questions();
 		$result['time_spend']     = $this->get_time_spend();
 		$result['passing_grade']  = $quizPostModel->get_passing_grade();
-		$checked_questions        = $this->get_checked_questions();
 
 		foreach ( $question_ids as $question_id ) {
-			$question = LP_Question::get_question( $question_id );
-			$point    = floatval( $question->get_mark() );
+			// $questionPostModel = QuestionPostModel::find( $question_id, true );
+			// Temporary not get cache for case of QuestionSortingChoiceModel, when addon sorting choice update for this model will use cache again
+			$questionPostModel = QuestionPostModel::find( $question_id );
+			if ( ! $questionPostModel instanceof QuestionPostModel ) {
+				continue;
+			}
 
-			$result['questions'][ $question_id ]             = array();
-			$result['questions'][ $question_id ]['answered'] = $answered[ $question_id ] ?? '';
+			if ( $questionPostModel->is_legacy_answer_type() ) {
+				$answers_config = $questionPostModel->get_answers_for_legacy_type();
+			} else {
+				$answers_config = $questionPostModel->get_answers_config();
+			}
+
+			$questionPostModel->get_all_metadata();
+			$point = floatval( $questionPostModel->get_mark() );
+
+			// Set question snapshot, for case get question from this, not query question present, if question deleted still keep info
+			$questionSnapShort                   = [];
+			$questionSnapShort['ID']             = $questionPostModel->get_id();
+			$questionSnapShort['question_type']  = $questionPostModel->get_type();
+			$questionSnapShort['post_title']     = $questionPostModel->post_title;
+			$questionSnapShort['post_content']   = $questionPostModel->post_content;
+			$questionSnapShort['meta_data']      = (array) $questionPostModel->get_all_metadata();
+			$questionSnapShort['answers_config'] = json_decode( json_encode( $answers_config ), true );
+			// End set question snapshot
+
+			$result['questions'][ $question_id ]                     = array();
+			$result['questions'][ $question_id ]['questionSnapshot'] = $questionSnapShort;
+			$result['questions'][ $question_id ]['answered']         = $answered[ $question_id ] ?? '';
 
 			if ( isset( $answered[ $question_id ] ) ) { // User's answer
 				++$result['question_answered'];
 
-				$check = $question->check( $answered[ $question_id ] );
-				$point = apply_filters( 'learn-press/user/calculate-quiz-result/point', $point, $question, $check );
+				$check = $questionPostModel->check( $answered[ $question_id ] );
+				$point = apply_filters(
+					'learn-press/user/calculate-quiz-result/point',
+					$point,
+					$questionPostModel,
+					$check
+				);
 				if ( $check['correct'] ) {
 					++$result['question_correct'];
 					$result['user_mark'] += $point;
@@ -548,16 +872,22 @@ class UserQuizModel extends UserItemModel {
 				$result['questions'][ $question_id ]['mark']    = 0;
 			}
 
-			if ( $quizPostModel->has_instant_check() && ! array_key_exists( 'instant_check', $answered ) ) {
-				$result['questions'][ $question_id ]['explanation'] = $question->get_explanation();
-				$result['questions'][ $question_id ]['options']     = learn_press_get_question_options_for_js(
-					$question,
+			// Submit quiz: options has result of user's answer, correct answer only when option "Show the correct answer" enabled.
+			// Comment this code, code only use for API LP_Jwt_Quiz_V1_Controller::submit_quiz -> LP_REST_Users_Controller::submit_quiz
+			/*if ( ! array_key_exists( 'instant_check', $answered ) ) {
+				if ( $quizPostModel->has_instant_check() ) {
+					$result['questions'][ $question_id ]['explanation'] = $questionPostModel->get_explanation();
+				}
+
+				$result['questions'][ $question_id ]['options'] = learn_press_get_question_options_for_js(
+					$questionPostModel,
 					array(
-						'include_is_true' => in_array( $question_id, $checked_questions ) || $quizPostModel->has_show_correct_review(),
-						'answer'          => $answered[ $question_id ] ?? '',
+						'include_is_true'     => true,
+						'show_correct_answer' => $quizPostModel->has_show_correct_review(),
+						'answer'              => $answered[ $question_id ] ?? '',
 					)
 				);
-			}
+			}*/
 		}
 
 		if ( $result['user_mark'] < 0 ) {
@@ -589,8 +919,7 @@ class UserQuizModel extends UserItemModel {
 			return '--:--';
 		}
 
-		$duration = new LP_Datetime( $interval );
-		return $duration->format( 'H:i:s' );
+		return gmdate( 'H:i:s', $interval );
 	}
 
 	/**
@@ -599,30 +928,62 @@ class UserQuizModel extends UserItemModel {
 	 * @param int $limit
 	 *
 	 * @return array
-	 * @version 1.0.0
+	 * @version 1.0.2
 	 * @since 4.2.7.6
 	 */
 	public function get_history( int $limit = 3 ): array {
 		$history = array();
 
 		try {
-			$results = LP_User_Items_Result_DB::instance()->get_results( $this->get_user_item_id(), $limit, true );
+			$filter                  = new UserItemResultsFilter();
+			$filter->user_id         = $this->user_id;
+			$filter->item_id         = $this->item_id;
+			$filter->item_type       = $this->item_type;
+			$filter->ref_id          = $this->ref_id;
+			$filter->ref_type        = $this->ref_type;
+			$filter->order_by        = UserItemsFilter::COL_END_TIME;
+			$filter->order           = 'DESC';
+			$filter->limit           = $limit + 1;
+			$filter->run_query_count = false;
+
+			$results = UserItemResultsDB::getInstance()->get_user_item_results( $filter );
 
 			if ( ! empty( $results ) ) {
+				// Remove the most recent result from the history list.
+				array_shift( $results );
+
 				foreach ( $results as $result ) {
-					if ( $result && is_string( $result ) ) {
-						$result = LP_Helper::json_decode( $result );
-
-						unset( $result->questions );
-
-						$history[] = $result;
-					}
+					$user_item_result = new UserItemResultModel( $result );
+					$result_data      = $user_item_result->get_result();
+					$history[]        = $result_data;
 				}
 			}
 		} catch ( Throwable $e ) {
-			error_log( __METHOD__ . ': ' . $e->getMessage() );
+			LP_Debug::error_log( $e );
 		}
 
 		return $history;
+	}
+
+	/**
+	 * Check has finished
+	 *
+	 * @return bool
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function has_started(): bool {
+		return $this->get_status() === self::STATUS_STARTED;
+	}
+
+	/**
+	 * Check has finished
+	 *
+	 * @return bool
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function has_finished(): bool {
+		return $this->get_status() === self::STATUS_COMPLETED;
 	}
 }

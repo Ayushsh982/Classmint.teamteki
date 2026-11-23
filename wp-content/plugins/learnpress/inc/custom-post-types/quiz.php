@@ -52,7 +52,7 @@ if ( ! class_exists( 'LP_Quiz_Post_Type' ) ) {
 
 			//$this->add_map_method( 'before_delete', 'before_delete_quiz' );
 
-			add_action( 'learn-press/admin/after-enqueue-scripts', array( $this, 'data_quiz_editor' ) );
+			//add_action( 'learn-press/admin/after-enqueue-scripts', array( $this, 'data_quiz_editor' ) );
 
 			add_filter( 'views_edit-' . LP_QUIZ_CPT, array( $this, 'views_pages' ), 10 );
 			add_action( 'posts_pre_query', array( $this, 'posts_pre_query' ), 999, 2 );
@@ -107,6 +107,8 @@ if ( ! class_exists( 'LP_Quiz_Post_Type' ) ) {
 		 * Register quiz post type.
 		 */
 		public function args_register_post_type(): array {
+			$quizPostModelTemp = new QuizPostModel();
+
 			$args = apply_filters(
 				'lp_quiz_post_type_args',
 				array(
@@ -124,14 +126,27 @@ if ( ! class_exists( 'LP_Quiz_Post_Type' ) ) {
 						'not_found'          => sprintf( __( 'You haven\'t had any quizzes yet. Click <a href="%s">Add new</a> to start', 'learnpress' ), admin_url( 'post-new.php?post_type=lp_quiz' ) ),
 						'not_found_in_trash' => esc_html__( 'There was no quiz found in the trash', 'learnpress' ),
 					),
+					/**
+					 * Set false to hide from:
+					 * - Frontend: single URLs, archive pages, search results, author archives
+					 * - Feeds: RSS/Atom feeds
+					 * - Sitemaps: WordPress default and SEO plugin sitemaps
+					 * - Nav menus: cannot add to Appearance > Menus
+					 * Still visible in admin because show_ui and show_in_menu are true.
+					 */
 					'public'              => true,
+					/**
+					 * Allow frontend URL queries (e.g., example.com/lesson/slug) even when public is false.
+					 * LearnPress uses this for course item URLs, but has additional 404 protection logic.
+					 */
 					'publicly_queryable'  => true,
 					'show_ui'             => true,
 					'has_archive'         => false,
 					'capability_type'     => LP_LESSON_CPT,
 					'map_meta_cap'        => true,
 					'show_in_menu'        => 'learn_press',
-					'show_in_rest'        => true,
+					// Enable REST API wp-json/wp/v2/lp_quiz/{id} use for Gutenberg
+					'show_in_rest'        => $quizPostModelTemp->check_capabilities_create(),
 					'show_in_admin_bar'   => true,
 					'show_in_nav_menus'   => true,
 					'supports'            => array(
@@ -156,8 +171,9 @@ if ( ! class_exists( 'LP_Quiz_Post_Type' ) ) {
 		 * Load data for quiz editor.
 		 *
 		 * @since 3.0.0
+		 * @deprecated 4.5.0
 		 */
-		public function data_quiz_editor() {
+		/*public function data_quiz_editor() {
 			if ( LP_QUIZ_CPT !== get_post_type() ) {
 				return;
 			}
@@ -217,7 +233,7 @@ if ( ! class_exists( 'LP_Quiz_Post_Type' ) ) {
 					)
 				)
 			);
-		}
+		}*/
 
 		/**
 		 * Delete all questions assign to quiz.
@@ -301,6 +317,8 @@ if ( ! class_exists( 'LP_Quiz_Post_Type' ) ) {
 				$order   = LP_Request::get_param( 'order', '', 'key' );
 
 				$filter              = new QuizPostFilter();
+				$filter->page        = $paged;
+				$filter->limit       = $posts_per_page;
 				$filter->only_fields = array_map(
 					function ( $field ) {
 						return "p.{$field}";

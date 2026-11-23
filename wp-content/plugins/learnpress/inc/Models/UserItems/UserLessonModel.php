@@ -13,6 +13,7 @@ namespace LearnPress\Models\UserItems;
 use Exception;
 use LearnPress\Models\CourseModel;
 use LearnPress\Models\LessonPostModel;
+use LearnPress\Models\UserItemResults\UserItemResultModel;
 use LP_Datetime;
 use WP_Error;
 

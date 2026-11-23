@@ -4,7 +4,7 @@
  * Plugin URI: https://thimpress.com/learnpress
  * Description: LearnPress is a WordPress complete solution for creating a Learning Management System (LMS). It can help you to create courses, lessons and quizzes.
  * Author: ThimPress
- * Version: 4.4.13
+ * Version: 4.5.0
  * Author URI: http://thimpress.com
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -37,6 +37,7 @@ use LearnPress\Ajax\MCP\McpApiKeysAjax;
 use LearnPress\Ajax\Webhook\WebhooksAjax;
 use LearnPress\Ajax\CourseBuilder\CBEditCourseAjax;
 use LearnPress\Ajax\SendEmailAjax;
+use LearnPress\Ajax\UserQuizAjax;
 use LearnPress\Background\LPBackgroundTrigger;
 use LearnPress\ExternalPlugin\Elementor\LPElementor;
 use LearnPress\ExternalPlugin\RankMath\LPRankMath;
@@ -58,6 +59,8 @@ use LearnPress\TemplateHooks\Admin\AdminEditQizTemplate;
 use LearnPress\TemplateHooks\Admin\AdminEditQuestionTemplate;
 use LearnPress\TemplateHooks\Admin\AdminListStudentsEnrolled;
 use LearnPress\TemplateHooks\Admin\AdminStatisticsReportTable;
+use LearnPress\TemplateHooks\Admin\InputSuggest\AdminInputSearchCourseSuggest;
+use LearnPress\TemplateHooks\Admin\InputSuggest\AdminInputSearchUserSuggest;
 use LearnPress\TemplateHooks\Admin\Notices\AdminNotesTemplate;
 use LearnPress\TemplateHooks\Admin\Tools\AdminCourseTools;
 use LearnPress\Statistics\FilterOptionsProvider;
@@ -128,7 +131,7 @@ if ( ! class_exists( 'LearnPress' ) ) {
 		 *
 		 * @var int
 		 */
-		public $db_version = 5;
+		public $db_version = 6;
 
 		/**
 		 * The single instance of the class
@@ -420,6 +423,8 @@ if ( ! class_exists( 'LearnPress' ) ) {
 			AdminEditQuestionTemplate::instance();
 			AdminNotesTemplate::instance();
 			AdminCourseTools::instance();
+			AdminInputSearchCourseSuggest::instance();
+			AdminInputSearchUserSuggest::instance();
 			CourseMaterialTemplate::instance();
 			CourseAIAssistantTemplate::instance();
 			CourseNoteTemplate::instance();
@@ -800,6 +805,7 @@ if ( ! class_exists( 'LearnPress' ) ) {
 					WebhooksAjax::catch_lp_ajax();
 					CBEditCourseAjax::catch_lp_ajax();
 					CourseToolsAjax::catch_lp_ajax();
+					UserQuizAjax::catch_lp_ajax();
 
 					do_action( 'learn-press/register-ajax-handlers' );
 				},

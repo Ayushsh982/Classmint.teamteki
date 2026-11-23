@@ -2165,6 +2165,241 @@ class EditSection {
 
 /***/ },
 
+/***/ "./assets/src/js/admin/edit-course/more-features.js"
+/*!**********************************************************!*\
+  !*** ./assets/src/js/admin/edit-course/more-features.js ***!
+  \**********************************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MoreFeatures: () => (/* binding */ MoreFeatures),
+/* harmony export */   bootMoreFeatures: () => (/* binding */ bootMoreFeatures),
+/* harmony export */   initMoreFeatures: () => (/* binding */ initMoreFeatures),
+/* harmony export */   parseDismissed: () => (/* binding */ parseDismissed),
+/* harmony export */   pickVisible: () => (/* binding */ pickVisible)
+/* harmony export */ });
+/**
+ * Course settings tab "More Features": recommended add-ons with Dismiss / Reset.
+ *
+ * Server renders every candidate add-on (`.lp-more-features__item[data-slug]`);
+ * this module keeps at most `data-max` visible, hides dismissed ones and stores
+ * them in localStorage as `{ slug: timestamp }` for `data-ttl-days` days.
+ * Shared by wp-admin (edit-course.js) and Course Builder (course-builder.js).
+ *
+ * @since 4.4.15
+ * @version 1.0.0
+ */
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const ANIMATION_MS = 250;
+const SELECTOR = {
+  root: '.lp-more-features',
+  item: '.lp-more-features__item',
+  empty: '.lp-more-features__empty',
+  reset: '.lp-more-features__reset',
+  resetLink: '.lp-more-features__reset-link',
+  dismiss: '.lp-more-features__dismiss'
+};
+
+/**
+ * Parse stored value and drop invalid or expired entries.
+ *
+ * @param {string|null} raw   Raw localStorage value.
+ * @param {number}      now   Timestamp (ms).
+ * @param {number}      ttlMs Time to live (ms).
+ * @return {Object} Map slug => timestamp still valid.
+ */
+const parseDismissed = (raw, now, ttlMs) => {
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    return {};
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return {};
+  }
+  const result = {};
+  Object.keys(data).forEach(slug => {
+    const time = data[slug];
+    if (typeof time === 'number' && Number.isFinite(time) && now - time < ttlMs) {
+      result[slug] = time;
+    }
+  });
+  return result;
+};
+
+/**
+ * Slugs to show: not dismissed, keeping order, up to max.
+ *
+ * @param {string[]} slugs     All slugs in display order.
+ * @param {Object}   dismissed Map slug => timestamp.
+ * @param {number}   max       Max items.
+ * @return {string[]}
+ */
+const pickVisible = (slugs, dismissed, max) => {
+  return slugs.filter(slug => !Object.prototype.hasOwnProperty.call(dismissed, slug)).slice(0, max);
+};
+class MoreFeatures {
+  constructor(root, options = {}) {
+    var _options$delay;
+    this.root = root;
+    this.max = parseInt(root.dataset.max, 10) || 5;
+    this.ttlMs = (parseInt(root.dataset.ttlDays, 10) || 30) * DAY_MS;
+    this.storageKey = root.dataset.storageKey || 'lp_more_features_dismissed';
+    this.delay = (_options$delay = options.delay) !== null && _options$delay !== void 0 ? _options$delay : ANIMATION_MS;
+    this.now = options.now || (() => Date.now());
+    this.memory = {}; // Fallback when localStorage is unavailable.
+    this.dismissed = {};
+  }
+  init() {
+    this.dismissed = this.load();
+    this.root.addEventListener('click', e => this.onClick(e));
+    this.render(false);
+  }
+  load() {
+    const now = this.now();
+    let raw = null;
+    try {
+      raw = window.localStorage.getItem(this.storageKey);
+    } catch (e) {
+      return parseDismissed(JSON.stringify(this.memory), now, this.ttlMs);
+    }
+    const valid = parseDismissed(raw, now, this.ttlMs);
+    // Persist the cleaned list so expired entries are removed.
+    if (raw !== null && JSON.stringify(valid) !== raw) {
+      this.save(valid);
+    }
+    return valid;
+  }
+  save(data) {
+    this.memory = data;
+    try {
+      if (Object.keys(data).length) {
+        window.localStorage.setItem(this.storageKey, JSON.stringify(data));
+      } else {
+        window.localStorage.removeItem(this.storageKey);
+      }
+    } catch (e) {
+      // Ignore: dismissal then only lasts for this page load.
+    }
+  }
+  items() {
+    return Array.from(this.root.querySelectorAll(SELECTOR.item));
+  }
+  onClick(e) {
+    const dismissBtn = e.target.closest(SELECTOR.dismiss);
+    if (dismissBtn && this.root.contains(dismissBtn)) {
+      e.preventDefault();
+      this.dismiss(dismissBtn.closest(SELECTOR.item));
+      return;
+    }
+    if (e.target.closest(SELECTOR.reset) || e.target.closest(SELECTOR.resetLink)) {
+      e.preventDefault();
+      this.reset();
+    }
+  }
+  dismiss(item) {
+    if (!item || item.classList.contains('is-removing')) {
+      return;
+    }
+    this.dismissed[item.dataset.slug] = this.now();
+    this.save(this.dismissed);
+
+    // Slide-up the dismissed item while the next one fades in.
+    item.classList.add('is-removing');
+    this.render(true);
+    setTimeout(() => {
+      item.hidden = true;
+      item.classList.remove('is-removing');
+      this.updateChrome();
+    }, this.delay);
+  }
+  reset() {
+    this.dismissed = {};
+    this.save({});
+    this.render(true);
+  }
+  render(animate) {
+    const items = this.items();
+    const visible = pickVisible(items.map(item => item.dataset.slug), this.dismissed, this.max);
+    items.forEach(item => {
+      if (item.classList.contains('is-removing')) {
+        return;
+      }
+      const show = visible.includes(item.dataset.slug);
+      if (show && item.hidden) {
+        item.hidden = false;
+        if (animate) {
+          item.classList.add('is-entering');
+          setTimeout(() => item.classList.remove('is-entering'), this.delay + 50);
+        }
+      } else if (!show && !item.hidden) {
+        item.hidden = true;
+      }
+    });
+    this.updateChrome();
+  }
+
+  /**
+   * Empty message and Reset button follow the current state.
+   */
+  updateChrome() {
+    const items = this.items();
+    const shown = items.filter(item => !item.hidden && !item.classList.contains('is-removing'));
+    const hasDismissed = items.some(item => Object.prototype.hasOwnProperty.call(this.dismissed, item.dataset.slug));
+    const empty = this.root.querySelector(SELECTOR.empty);
+    if (empty) {
+      empty.hidden = !(items.length > 0 && shown.length === 0);
+    }
+    const reset = this.root.querySelector(SELECTOR.reset);
+    if (reset) {
+      reset.hidden = !hasDismissed;
+    }
+  }
+}
+
+/**
+ * Init every not-yet-initialized block (safe to call repeatedly).
+ *
+ * @param {ParentNode} scope
+ */
+const initMoreFeatures = (scope = document) => {
+  scope.querySelectorAll(`${SELECTOR.root}:not([data-lp-init])`).forEach(root => {
+    root.dataset.lpInit = '1';
+    new MoreFeatures(root).init();
+  });
+};
+
+/**
+ * Init now and for blocks inserted later (Course Builder loads tabs via AJAX).
+ */
+const bootMoreFeatures = () => {
+  const start = () => {
+    initMoreFeatures();
+    if (typeof MutationObserver === 'undefined' || !document.body) {
+      return;
+    }
+    new MutationObserver(() => {
+      if (document.querySelector(`${SELECTOR.root}:not([data-lp-init])`)) {
+        initMoreFeatures();
+      }
+    }).observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+};
+
+/***/ },
+
 /***/ "./assets/src/js/admin/edit-question.js"
 /*!**********************************************!*\
   !*** ./assets/src/js/admin/edit-question.js ***!
@@ -2430,6 +2665,9 @@ class EditQuestion {
       editor.settings.force_p_newlines = false;
       editor.settings.forced_root_block = '';
       editor.settings.force_br_newlines = true;
+      // Same as WP editor, not encode chars to named entities (e.g. à → &agrave;)
+      editor.settings.entity_encoding = 'raw';
+      editor.settings.entities = '38,amp,60,lt,62,gt';
 
       // Config use absolute url
       editor.settings.relative_urls = false;
@@ -2672,7 +2910,17 @@ class EditQuestion {
     elQuestionAnswerTitleNewInput.value = '';
     const questionId = elQuestionEditMain.dataset.questionId;
 
-    // Call ajax to add new question answer
+    // Append new answer (without question_answer_id => PHP inserts it)
+    const dataAnswers = this.getDataAnswersConfig(elQuestionEditMain) || [];
+    dataAnswers.push({
+      question_id: questionId,
+      title: answerTitle,
+      value: '',
+      is_true: '',
+      order: dataAnswers.length + 1
+    });
+
+    // Call ajax to update answers config with the new answer
     const callBack = {
       success: response => {
         const {
@@ -2681,15 +2929,12 @@ class EditQuestion {
           data
         } = response;
         if (status === 'success') {
-          const {
-            question_answer
-          } = data;
-          elQuestionAnswerNew.dataset.answerId = question_answer.question_answer_id;
+          const newQuestionAnswer = data && data.new_question_answer ? data.new_question_answer : dataAnswers[dataAnswers.length - 1];
+          elQuestionAnswerNew.dataset.answerId = newQuestionAnswer.question_answer_id;
           lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elQuestionAnswerNew, 0);
 
-          // Set data lp-answers-config
-          const dataAnswers = this.getDataAnswersConfig(elQuestionEditMain);
-          dataAnswers.push(question_answer);
+          // Set data lp-answers-config with the persisted answer
+          dataAnswers[dataAnswers.length - 1] = newQuestionAnswer;
           this.setDataAnswersConfig(elQuestionEditMain, dataAnswers);
         } else {
           throw `Error: ${message}`;
@@ -2703,9 +2948,9 @@ class EditQuestion {
       completed: () => {}
     };
     const dataSend = {
-      action: 'add_question_answer',
+      action: 'update_question_answers_config',
       question_id: questionId,
-      answer_title: answerTitle,
+      answers: dataAnswers,
       args: {
         id_url: idUrlHandle
       }
@@ -2904,6 +3149,11 @@ class EditQuestion {
       reverseButtons: true
     }).then(result => {
       if (result.isConfirmed) {
+        const dataAnswers = this.getDataAnswersConfig(elQuestionEditMain);
+        if (!Array.isArray(dataAnswers)) {
+          return;
+        }
+        const updatedAnswers = dataAnswers.filter(answer => String(answer.question_answer_id) !== String(questionAnswerId));
         lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elQuestionAnswerItem, 1);
 
         // Call ajax to delete item from section
@@ -2915,13 +3165,8 @@ class EditQuestion {
             } = response;
             lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_1__.show(message, status);
             if (status === 'success') {
-              const elQuestionAnswerId = parseInt(elQuestionAnswerItem.dataset.answerId);
               elQuestionAnswerItem.remove();
-              const dataAnswers = this.getDataAnswersConfig(elQuestionEditMain);
-              if (dataAnswers) {
-                const updatedAnswers = dataAnswers.filter(answer => parseInt(answer.question_answer_id) !== elQuestionAnswerId);
-                this.setDataAnswersConfig(elQuestionEditMain, updatedAnswers);
-              }
+              this.setDataAnswersConfig(elQuestionEditMain, updatedAnswers);
             }
           },
           error: error => {
@@ -2932,9 +3177,9 @@ class EditQuestion {
           }
         };
         const dataSend = {
-          action: 'delete_question_answer',
+          action: 'update_question_answers_config',
           question_id: questionId,
-          question_answer_id: questionAnswerId,
+          answers: updatedAnswers,
           args: {
             id_url: idUrlHandle
           }
@@ -3028,7 +3273,8 @@ class EditQuestion {
       id: uniquid,
       match_case: 0,
       comparison: 'equal',
-      fill: selectedText,
+      // selectedText is HTML, fill store text
+      fill: this.decodeHtml(selectedText),
       index: 1,
       open: false
     };
@@ -3289,6 +3535,13 @@ class EditQuestion {
         const blankId = elFibBlankOptionItem.dataset.id;
         const elFibOptionMatchCaseInput = elFibBlankOptionItem.querySelector(`${EditQuestion.selectors.elFibOptionMatchCaseInput}`);
         const elFibOptionComparisonInput = elFibBlankOptionItem.querySelector(`${EditQuestion.selectors.elFibOptionComparisonInput}:checked`);
+        dataAnswers.meta_data[blankId] = dataAnswers.meta_data[blankId] || {};
+
+        // Sync fill with text of blank in editor, text can change after inserted
+        const elBlank = editor.dom.select(`.${EditQuestion.selectors.elQuestionFibInput}[data-id="${blankId}"]`);
+        if (elBlank[0]) {
+          dataAnswers.meta_data[blankId].fill = elBlank[0].textContent;
+        }
         dataAnswers.meta_data[blankId].match_case = elFibOptionMatchCaseInput.checked ? 1 : 0;
         dataAnswers.meta_data[blankId].comparison = elFibOptionComparisonInput.value;
       });
@@ -16319,6 +16572,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   resetForm: () => (/* binding */ resetForm),
 /* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
 /* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
@@ -16348,7 +16602,7 @@ const lpFetchAPI = (url, data = {}, functions = {}) => {
   fetch(url, {
     method: 'GET',
     ...data
-  }).then(response => response.json()).then(response => {
+  }).then(response => 'function' === typeof functions.checkResponse ? functions.checkResponse(response) : response).then(response => response.json()).then(response => {
     if ('function' === typeof functions.success) {
       functions.success(response);
     }
@@ -16573,6 +16827,29 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
     ...dataForm
   };
   return dataHandle;
+};
+
+/**
+ * Reset all fields of form to empty, select to first option.
+ * Not use form.reset(), because it restores values rendered by server (e.g. from URL params).
+ *
+ * @param elForm
+ */
+const resetForm = elForm => {
+  if (!elForm) {
+    return;
+  }
+  Array.from(elForm.elements).forEach(elField => {
+    const tagName = elField.tagName;
+    const type = elField.type;
+    if (tagName === 'SELECT') {
+      elField.selectedIndex = 0;
+    } else if (type === 'checkbox' || type === 'radio') {
+      elField.checked = false;
+    } else if ((tagName === 'INPUT' || tagName === 'TEXTAREA') && !['hidden', 'button', 'submit', 'reset'].includes(type)) {
+      elField.value = '';
+    }
+  });
 };
 
 /**
@@ -47695,15 +47972,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _course_builder_builder_settings_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./course-builder/builder-settings.js */ "./assets/src/js/frontend/course-builder/builder-settings.js");
 /* harmony import */ var _course_builder_builder_form_state_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./course-builder/builder-form-state.js */ "./assets/src/js/frontend/course-builder/builder-form-state.js");
 /* harmony import */ var _admin_edit_course_edit_curriculum_edit_curriculum_ai_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../admin/edit-course/edit-curriculum/edit-curriculum-ai.js */ "./assets/src/js/admin/edit-course/edit-curriculum/edit-curriculum-ai.js");
-/* harmony import */ var lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! lpAssetsJsPath/admin/init-tom-select.js */ "./assets/src/js/admin/init-tom-select.js");
-/* harmony import */ var lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! lpAssetsJsPath/admin/utils-admin.js */ "./assets/src/js/admin/utils-admin.js");
-/* harmony import */ var lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! lpAssetsJsPath/lpToastify */ "./assets/src/js/lpToastify.js");
+/* harmony import */ var _admin_edit_course_more_features_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ../admin/edit-course/more-features.js */ "./assets/src/js/admin/edit-course/more-features.js");
+/* harmony import */ var lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! lpAssetsJsPath/admin/init-tom-select.js */ "./assets/src/js/admin/init-tom-select.js");
+/* harmony import */ var lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! lpAssetsJsPath/admin/utils-admin.js */ "./assets/src/js/admin/utils-admin.js");
+/* harmony import */ var lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! lpAssetsJsPath/lpToastify */ "./assets/src/js/lpToastify.js");
 /**
  * Course builder JS handler.
  *
  * @since 4.3.6
  * @version 1.0.0
  */
+
 
 
 
@@ -47965,7 +48244,7 @@ const initHeaderMoreActions = () => {
             status,
             data
           } = response;
-          lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_21__.show(message, status);
+          lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_22__.show(message, status);
           if (status === 'success') {
             if (data.redirect_url) {
               window.location.href = data.redirect_url;
@@ -47979,7 +48258,7 @@ const initHeaderMoreActions = () => {
           }
         },
         error: error => {
-          lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_21__.show(error, 'error');
+          lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_22__.show(error, 'error');
         },
         completed: () => {
           lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elParentActionExpand, 0);
@@ -48012,10 +48291,13 @@ document.addEventListener('submit', e => {
 // Initialize components
 initBuilderComponents();
 
+// Settings tab "More Features" (also renders when the tab is loaded later).
+(0,_admin_edit_course_more_features_js__WEBPACK_IMPORTED_MODULE_19__.bootMoreFeatures)();
+
 // Events
 document.addEventListener('click', e => {
   try {
-    (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__.initElsTomSelect)();
+    (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_20__.initElsTomSelect)();
   } catch (e) {
     console.warn('Error initializing TomSelect:', e);
   }
@@ -48023,7 +48305,7 @@ document.addEventListener('click', e => {
 document.addEventListener('DOMContentLoaded', () => {
   // Sure that the TomSelect is loaded if listener can't find elements.
   try {
-    (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__.initElsTomSelect)();
+    (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_20__.initElsTomSelect)();
   } catch (e) {
     console.warn('Error initializing TomSelect on DOMContentLoaded:', e);
   }
@@ -48037,16 +48319,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Use lpOnElementReady safely
-if (lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_20__.Utils?.lpOnElementReady) {
-  lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_20__.Utils.lpOnElementReady('select.lp-tom-select', () => {
+if (lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_21__.Utils?.lpOnElementReady) {
+  lpAssetsJsPath_admin_utils_admin_js__WEBPACK_IMPORTED_MODULE_21__.Utils.lpOnElementReady('select.lp-tom-select', () => {
     try {
-      (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__.initElsTomSelect)();
+      (0,lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_20__.initElsTomSelect)();
     } catch (e) {
       console.warn('Error initializing TomSelect:', e);
     }
   });
 }
-window.lpFindTomSelect = lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_19__.initElsTomSelect;
+window.lpFindTomSelect = lpAssetsJsPath_admin_init_tom_select_js__WEBPACK_IMPORTED_MODULE_20__.initElsTomSelect;
 
 /**
  * Initialize BuilderMaterial for Course Builder Settings tab Material

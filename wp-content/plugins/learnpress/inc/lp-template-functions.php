@@ -10,6 +10,7 @@
 use LearnPress\Helpers\Template;
 use LearnPress\Models\CourseModel;
 use LearnPress\Models\CoursePostModel;
+use LearnPress\Models\Question\QuestionPostModel;
 use LearnPress\Models\UserItems\UserCourseModel;
 use LearnPress\Models\UserModel;
 use LearnPress\TemplateHooks\Course\CourseMaterialTemplate;
@@ -1411,44 +1412,57 @@ function learn_press_setup_theme() {
 add_action( 'after_setup_theme', 'learn_press_setup_theme' );
 
 /**
- * @param LP_Question $question
+ * Get options of question for JS.
+ *
+ * $args['include_is_true']: question is checked/completed, show result of user's answer.
+ * $args['show_correct_answer']: allow show correct answer (is_true, FIB fill), default same include_is_true.
+ * When include_is_true but not show_correct_answer, options not have is_true,
+ * FIB has result of each blank without fill (arg 'show_result' of get_answer_options).
+ *
+ * @param LP_Question|QuestionPostModel $question
  * @param array $args
  *
  * @return array
  * @since 4.x.x
+ * @version 1.0.1
  */
 function learn_press_get_question_options_for_js( $question, $args = array() ) {
 	$args = wp_parse_args(
 		$args,
 		array(
-			'cryptoJsAes'     => false,
-			'include_is_true' => false,
-			'answer'          => false,
+			'cryptoJsAes'         => false,
+			'include_is_true'     => false,
+			'show_correct_answer' => null,
+			'answer'              => false,
+		)
+	);
+
+	if ( null === $args['show_correct_answer'] ) {
+		$args['show_correct_answer'] = $args['include_is_true'];
+	}
+
+	$exclude_option_key = array( 'question_id', 'order' );
+	if ( ! $args['include_is_true'] || ! $args['show_correct_answer'] ) {
+		$exclude_option_key[] = 'is_true';
+	}
+
+	// Same args for encrypt or not, avoid send correct answer when encrypt.
+	$options = array_values(
+		$question->get_answer_options(
+			array(
+				'exclude'     => $exclude_option_key,
+				'map'         => array( 'question_answer_id' => 'uid' ),
+				'answer'      => $args['answer'],
+				'show_result' => (bool) $args['include_is_true'],
+			)
 		)
 	);
 
 	if ( $args['cryptoJsAes'] ) {
-		$options = array_values( $question->get_answer_options() );
-
 		$key     = uniqid();
 		$options = array(
 			'data' => cryptoJsAesEncrypt( $key, wp_json_encode( $options ) ),
 			'key'  => $key,
-		);
-	} else {
-		$exclude_option_key = array( 'question_id', 'order' );
-		if ( ! $args['include_is_true'] ) {
-			$exclude_option_key[] = 'is_true';
-		}
-
-		$options = array_values(
-			$question->get_answer_options(
-				array(
-					'exclude' => $exclude_option_key,
-					'map'     => array( 'question_answer_id' => 'uid' ),
-					'answer'  => $args['answer'],
-				)
-			)
 		);
 	}
 

@@ -127,6 +127,12 @@ class LP_Assets extends LP_Abstract_Assets {
 					array( LP_PAGE_SINGLE_COURSE_CURRICULUM ),
 					1
 				),
+				'lp-user-quiz'       => new LP_Asset_Key(
+					self::url( 'css/frontend/user-quiz' . $is_rtl . self::$_min_assets . '.css' ),
+					array( 'learnpress' ),
+					array( LP_PAGE_QUIZ ),
+					0
+				),
 			)
 		);
 
@@ -191,7 +197,18 @@ class LP_Assets extends LP_Abstract_Assets {
 				'avatar_dimensions' => learn_press_get_avatar_thumb_size(),
 				'default_avatar'    => get_avatar_url( get_current_user_id() ),
 			),
-			'lp-quiz'     => learn_press_single_quiz_args(),
+			'lp-quiz'      => learn_press_single_quiz_args(),
+			// window.lpUserQuizSettings, strings same as UserQuizTemplate::html_questions_index().
+			'lp-user-quiz' => [
+				'i18n' => [
+					// JS puts these into HTML, so escape here.
+					'yes'                  => esc_html__( 'Yes', 'learnpress' ),
+					'cancel'               => esc_html__( 'Cancel', 'learnpress' ),
+					'error'                => esc_html__( 'Error', 'learnpress' ),
+					'prev'                 => esc_html__( 'Prev', 'learnpress' ),
+					'next'                 => esc_html__( 'Next', 'learnpress' ),
+				],
+			],
 		];
 
 		return apply_filters( 'learnpress/frontend/localize_script', $localize_script );
@@ -344,7 +361,8 @@ class LP_Assets extends LP_Abstract_Assets {
 							'lp-utils',
 						)
 					),
-					array( LP_PAGE_SINGLE_COURSE_CURRICULUM ),
+					// Quiz page: was loaded as dependency of lp-quiz (React), now lp-quiz is only registered.
+					array( LP_PAGE_SINGLE_COURSE_CURRICULUM, LP_PAGE_QUIZ ),
 					0,
 					1,
 					'',
@@ -374,8 +392,9 @@ class LP_Assets extends LP_Abstract_Assets {
 							'lp-single-curriculum',
 						)
 					),
-					array( LP_PAGE_QUIZ ),
-					0,
+					// @deprecated 4.5.0 only register, quiz page use lp-user-quiz.
+					array(),
+					1,
 					1,
 					'',
 					[ 'strategy' => 'defer' ]
@@ -443,6 +462,16 @@ class LP_Assets extends LP_Abstract_Assets {
 					'',
 					[ 'strategy' => 'async' ]
 				),
+				// Only register, enqueued by AdminInputSearchSuggest::layout().
+				'lp-input-search-suggest'   => new LP_Asset_Key(
+					self::url( 'dist/js/admin/lp-input-search-suggest' . self::$_min_assets . '.js' ),
+					[ 'lp-load-ajax' ],
+					[],
+					1,
+					1,
+					'',
+					[ 'strategy' => 'defer' ]
+				),
 				'lp-widgets'                => new LP_Asset_Key(
 					self::url( 'js/dist/frontend/widgets' . self::$_min_assets . '.js' ),
 					[ 'lp-course-filter' ],
@@ -492,6 +521,15 @@ class LP_Assets extends LP_Abstract_Assets {
 					array( LP_PAGE_SINGLE_COURSE_CURRICULUM ),
 					1,
 					1,
+				),
+				'lp-user-quiz'              => new LP_Asset_Key(
+					self::url( 'dist/js/frontend/user-quiz' . self::$_min_assets . '.js' ),
+					array( 'lp-load-ajax', 'wp-hooks', 'lp-single-curriculum' ),
+					array( LP_PAGE_QUIZ ),
+					0,
+					1,
+					'',
+					[ 'strategy' => 'defer' ]
 				),
 			)
 		);

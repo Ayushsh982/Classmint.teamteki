@@ -11,10 +11,12 @@
 namespace LearnPress\Models\UserItems;
 
 use Exception;
+use LearnPress\Filters\UserItemResultsFilter;
 use LearnPress\Filters\UserItemsFilter;
 use LearnPress\Models\CourseModel;
 use LearnPress\Models\CoursePostModel;
 use LearnPress\Models\QuizPostModel;
+use LearnPress\Models\UserItemResults\UserItemResultModel;
 use LP_Cache;
 use LearnPress\Cache\LPCourseCache;
 use LP_Course_Item;
@@ -84,7 +86,7 @@ class UserCourseModel extends UserItemModel {
 	public static function find( int $user_id, int $course_id, bool $check_cache = false ) {
 		static $staticData = [];
 
-		$filter            = new LP_User_Items_Filter();
+		$filter            = new UserItemsFilter();
 		$filter->user_id   = $user_id;
 		$filter->item_id   = $course_id;
 		$filter->item_type = LP_COURSE_CPT;
@@ -147,12 +149,18 @@ class UserCourseModel extends UserItemModel {
 						$item = new UserQuizModel( $item );
 						break;
 					default:
-						$item = apply_filters( 'learn-press/userCourseModel/get-item-attend', $item, $this, $item_id, $item_type );
+						$item = apply_filters(
+							'learn-press/userCourseModel/get-item-attend',
+							$item,
+							$this,
+							$item_id,
+							$item_type
+						);
 						break;
 				}
 			}
 		} catch ( Throwable $e ) {
-			error_log( __METHOD__ . ': ' . $e->getMessage() );
+			LP_Debug::error_log( $e );
 		}
 
 		return $item;
@@ -411,8 +419,17 @@ class UserCourseModel extends UserItemModel {
 
 			if ( $this->is_finished() ) {
 				// Get result from lp_user_item_results
-				// Todo: tungnx - set cache
-				return LP_User_Items_Result_DB::instance()->get_result( $this->get_user_item_id() );
+				//return LP_User_Items_Result_DB::instance()->get_result( $this->get_user_item_id() );
+				$userCourseResult = UserItemResultModel::find_by_user_item_id(
+					$this->get_user_item_id(),
+					true
+				);
+				if ( $userCourseResult instanceof UserItemResultModel ) {
+					return array_merge(
+						$results,
+						$userCourseResult->get_result()
+					);
+				}
 			}
 
 			if ( $this->status !== LP_COURSE_ENROLLED ) {
@@ -507,12 +524,15 @@ class UserCourseModel extends UserItemModel {
 		$flag = 0;
 
 		try {
-			$course = $this->get_course_model();
-			if ( ! $course ) {
+			$courseModel = $this->get_course_model();
+			if ( ! $courseModel ) {
 				return $flag;
 			}
 
-			$retake_option = (int) $course->get_meta_value_by_key( CoursePostModel::META_KEY_RETAKE_COUNT, 0 );
+			$retake_option = (int) $courseModel->get_meta_value_by_key(
+				CoursePostModel::META_KEY_RETAKE_COUNT,
+				0
+			);
 			if ( $retake_option > 0 ) {
 				/**
 				 * Check course is finished
@@ -1032,8 +1052,13 @@ class UserCourseModel extends UserItemModel {
 		$this->end_time   = gmdate( LP_Datetime::$format, time() );
 		$this->save();
 
-		// Save result for course
-		LP_User_Items_Result_DB::instance()->update( $this->get_user_item_id(), wp_json_encode( $course_results ) );
+		// Save the full course results snapshot to user_item_results for history.
+		$userItemResult = UserItemResultModel::find_by_user_item_id( $this->get_user_item_id() );
+		if ( $userItemResult instanceof UserItemResultModel ) {
+			$userItemResult->set_result( $course_results );
+			$userItemResult->save();
+			//LP_User_Items_Result_DB::instance()->update( $this->get_user_item_id(), wp_json_encode( $course_results ) );
+		}
 
 		do_action( 'learn-press/user-course-finished', $this->item_id, $this->user_id, $this->get_user_item_id() );
 		do_action( 'learn-press/user-course/finished', $this );
@@ -1044,7 +1069,7 @@ class UserCourseModel extends UserItemModel {
 	 *
 	 * @throws Exception
 	 * @since 4.2.7.6
-	 * @version 1.0.0
+	 * @version 1.0.1
 	 */
 	public function handle_retake() {
 		$remaining_retake = $this->can_retake();
@@ -1057,6 +1082,7 @@ class UserCourseModel extends UserItemModel {
 		$this->start_time = gmdate( LP_Datetime::$format, time() );
 		$this->end_time   = null;
 		$this->set_meta_value_for_key( self::META_KEY_RETAKEN_COUNT, $this->get_retaken_count() + 1 );
+		$this->must_create_new_data_table_result = 1;
 		$this->save();
 
 		$courseModel = $this->get_course_model();
@@ -1078,9 +1104,6 @@ class UserCourseModel extends UserItemModel {
 				}
 			}
 		}
-
-		// Create new result in table learnpress_user_item_results.
-		LP_User_Items_Result_DB::instance()->insert( $this->get_user_item_id() );
 	}
 
 	/**
@@ -1092,7 +1115,7 @@ class UserCourseModel extends UserItemModel {
 	 * @return void
 	 * @throws Exception
 	 * @since 4.4.5
-	 * @version 1.0.0
+	 * @version 1.0.1
 	 */
 	public function reset_progress() {
 		$this->status     = self::STATUS_ENROLLED;
@@ -1100,6 +1123,7 @@ class UserCourseModel extends UserItemModel {
 		$this->start_time = gmdate( LP_Datetime::$format, time() );
 		$this->end_time   = null;
 		$this->set_meta_value_for_key( self::META_KEY_RETAKEN_COUNT, 0 );
+		$this->must_create_new_data_table_result = 1;
 		$this->save();
 
 		$courseModel = $this->get_course_model();
@@ -1123,7 +1147,7 @@ class UserCourseModel extends UserItemModel {
 		}
 
 		// Delete result in table learnpress_user_item_results.
-		LP_User_Items_Result_DB::instance()->delete( $this->get_user_item_id() );
+		//LP_User_Items_Result_DB::instance()->delete( $this->get_user_item_id() );
 	}
 
 	/**

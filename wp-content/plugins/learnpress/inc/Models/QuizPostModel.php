@@ -4,24 +4,21 @@
  * Class Quiz Post Model
  *
  * @package LearnPress/Classes
- * @version 1.0.1
+ * @version 1.0.2
  * @since 4.2.7.6
  */
 
 namespace LearnPress\Models;
 
 use Exception;
+use LearnPress\Cache\LPCache;
 use LearnPress\Databases\QuizQuestionsDB;
-use LearnPress\Filters\QuestionPostFilter;
+use LearnPress\Filters\QuizPostFilter;
+use LearnPress\Filters\QuizQuestionsFilter;
 use LearnPress\Models\Question\QuestionAnswerModel;
 use LearnPress\Models\Question\QuestionPostModel;
 use LearnPress\Models\Quiz\QuizQuestionModel;
-use LP_Cache;
-use LP_Question;
-use LP_Question_DB;
-use LP_Question_Filter;
-use LP_Quiz;
-use LP_Quiz_Filter;
+use LP_Debug;
 use Throwable;
 
 
@@ -53,15 +50,15 @@ class QuizPostModel extends PostModel {
 	 * @return false|static
 	 */
 	public static function find( int $post_id, bool $check_cache = false ) {
-		$filter_post     = new LP_Quiz_Filter();
+		$filter_post     = new QuizPostFilter();
 		$filter_post->ID = $post_id;
 
 		$key_cache   = "quizPostModel/find/{$post_id}";
-		$lpQuizCache = new LP_Cache();
+		$lpQuizCache = new LPCache();
 
 		// Check cache
 		if ( $check_cache ) {
-			$quizPostModel = $lpQuizCache->get_cache( $key_cache );
+			$quizPostModel = $lpQuizCache->get_cache( $key_cache, self::class );
 			if ( $quizPostModel instanceof QuizPostModel ) {
 				return $quizPostModel;
 			}
@@ -104,35 +101,73 @@ class QuizPostModel extends PostModel {
 	}
 
 	/**
+	 * Get number of questions displayed on each page.
+	 * 0 is show all questions on one page, meta not set is 1 question per page.
+	 *
+	 * @return int
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function get_pagination(): int {
+		// get_meta_value_by_key() treats '0' as empty and returns default, so read raw value first.
+		$metadata = $this->get_metadata();
+		if ( ! isset( $metadata->{self::META_KEY_PAGINATION} ) ) {
+			$value = get_post_meta( $this->get_id(), self::META_KEY_PAGINATION, true );
+			$this->set_meta_value_by_key( self::META_KEY_PAGINATION, '' === $value ? 1 : $value );
+		}
+
+		return absint( $this->get_meta_value_by_key( self::META_KEY_PAGINATION, 1 ) );
+	}
+
+	/**
+	 * Check option review has enabled.
+	 *
+	 * @return bool
+	 * @since 4.5.0
+	 * @version 1.0.0
+	 */
+	public function has_review(): bool {
+		return $this->get_meta_value_by_key(
+			self::META_KEY_REVIEW,
+			'yes'
+		) === 'yes';
+	}
+
+	/**
 	 * Get all question's ids of the quiz.
 	 *
 	 * @param array $statuses
 	 *
 	 * @return int[]
-	 * @version 1.0.1
+	 * @version 1.0.2
 	 * @since 4.2.7.6
 	 */
 	public function get_question_ids( array $statuses = [ 'publish' ] ): array {
-		$lp_question_db = LP_Question_DB::getInstance();
+		$lp_question_db = QuizQuestionsDB::getInstance();
 		$question_ids   = [];
 
 		try {
-			$filter              = new QuestionPostFilter();
-			$filter->ID          = $this->get_id();
-			$filter->post_status = $statuses ?? [ PostModel::STATUS_PUBLISH ];
-			$question_ids        = $lp_question_db->get_list_question_ids_of_quiz( $filter );
+			$filter                      = new QuizQuestionsFilter();
+			$filter->only_fields         = [ QuizQuestionsFilter::COL_QUESTION_ID ];
+			$filter->field_count         = QuizQuestionsFilter::COL_QUESTION_ID;
+			$filter->quiz_id             = $this->get_id();
+			$filter->return_string_query = true;
+			$query_str                   = $lp_question_db->get_quiz_questions( $filter );
+			$question_ids                = $lp_question_db->wpdb->get_col( $query_str );
 
 			// Hook old
 			if ( has_filter( 'learn-press/quiz/get-question-ids' ) ) {
 				$course_ids            = CourseSectionItemModel::get_courses_from_item_id( $this->get_id(), $this->post_type );
-				$course_id_of_quiz_old = $course_ids[0] ? $course_ids[0]->section_course_id : 0;
+				if ( ! empty( $course_ids ) ) {
+					$course_id_of_quiz_old = $course_ids[0] ? $course_ids[0]->section_course_id : 0;
 
-				$question_ids = apply_filters(
-					'learn-press/quiz/get-question-ids',
-					$question_ids,
-					$this->get_id(),
-					$course_id_of_quiz_old
-				);
+					$question_ids = apply_filters(
+						'learn-press/quiz/get-question-ids',
+						$question_ids,
+						$this->get_id(),
+						$course_id_of_quiz_old
+					);
+				}
 			}
 
 			$question_ids = apply_filters(
@@ -146,7 +181,7 @@ class QuizPostModel extends PostModel {
 				$question_ids = array();
 			}
 		} catch ( Throwable $e ) {
-			error_log( $e->getMessage() );
+			LP_Debug::error_log( $e );
 		}
 
 		return $question_ids;
@@ -178,8 +213,8 @@ class QuizPostModel extends PostModel {
 		$mark      = 0;
 
 		foreach ( $questions as $question_id ) {
-			$question = LP_Question::get_question( $question_id );
-			if ( $question ) {
+			$question = QuestionPostModel::find( (int) $question_id, true );
+			if ( $question instanceof QuestionPostModel ) {
 				$mark += $question->get_mark();
 			}
 		}
@@ -267,19 +302,28 @@ class QuizPostModel extends PostModel {
 			 */
 			$questionPostTyeModel = new $questionClassName( $questionPostModelNew );
 			if ( ! empty( $question_options ) ) {
-				foreach ( $question_options as $index => $answer ) {
-					$answer = array(
-						'question_id' => $questionPostTyeModel->get_id(),
-						'title'       => $answer['title'],
-						'value'       => $questionPostTyeModel->random_value(),
-						'is_true'     => $answer['is_true'] ?? '',
-						'order'       => $index + 1,
-					);
+				// Legacy types save answers with fixed keys on old tables, new types only save JSON config.
+				if ( $questionPostTyeModel->is_legacy_answer_type() ) {
+					foreach ( $question_options as $index => $answer ) {
+						$answer = array(
+							'question_id' => $questionPostTyeModel->get_id(),
+							'title'       => $answer['title'] ?? '',
+							'value'       => $answer['value'] ?? $questionPostTyeModel->random_value(),
+							'is_true'     => $answer['is_true'] ?? 'no',
+							'order'       => $index + 1,
+						);
 
-					$questionAnswerModel = new QuestionAnswerModel( $answer );
-					$questionAnswerModel->save();
-					$answers[ $index ]['question_answer_id'] = $questionAnswerModel->question_answer_id;
+						$questionAnswerModel = new QuestionAnswerModel( $answer );
+						$questionAnswerModel->save();
+
+						// Same value, order as old table for save config.
+						$question_options[ $index ]['value'] = $answer['value'];
+						$question_options[ $index ]['order'] = $answer['order'];
+					}
 				}
+
+				// For save new table question_answer_config - @since 4.5.0
+				$questionPostTyeModel->save_answers_config( $question_options );
 			} elseif ( method_exists( $questionPostTyeModel, 'create_default_answers' ) ) {
 				$questionPostTyeModel->create_default_answers();
 			}

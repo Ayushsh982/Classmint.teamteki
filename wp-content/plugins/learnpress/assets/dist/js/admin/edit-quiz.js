@@ -266,6 +266,9 @@ class EditQuestion {
       editor.settings.force_p_newlines = false;
       editor.settings.forced_root_block = '';
       editor.settings.force_br_newlines = true;
+      // Same as WP editor, not encode chars to named entities (e.g. à → &agrave;)
+      editor.settings.entity_encoding = 'raw';
+      editor.settings.entities = '38,amp,60,lt,62,gt';
 
       // Config use absolute url
       editor.settings.relative_urls = false;
@@ -508,7 +511,17 @@ class EditQuestion {
     elQuestionAnswerTitleNewInput.value = '';
     const questionId = elQuestionEditMain.dataset.questionId;
 
-    // Call ajax to add new question answer
+    // Append new answer (without question_answer_id => PHP inserts it)
+    const dataAnswers = this.getDataAnswersConfig(elQuestionEditMain) || [];
+    dataAnswers.push({
+      question_id: questionId,
+      title: answerTitle,
+      value: '',
+      is_true: '',
+      order: dataAnswers.length + 1
+    });
+
+    // Call ajax to update answers config with the new answer
     const callBack = {
       success: response => {
         const {
@@ -517,15 +530,12 @@ class EditQuestion {
           data
         } = response;
         if (status === 'success') {
-          const {
-            question_answer
-          } = data;
-          elQuestionAnswerNew.dataset.answerId = question_answer.question_answer_id;
+          const newQuestionAnswer = data && data.new_question_answer ? data.new_question_answer : dataAnswers[dataAnswers.length - 1];
+          elQuestionAnswerNew.dataset.answerId = newQuestionAnswer.question_answer_id;
           lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elQuestionAnswerNew, 0);
 
-          // Set data lp-answers-config
-          const dataAnswers = this.getDataAnswersConfig(elQuestionEditMain);
-          dataAnswers.push(question_answer);
+          // Set data lp-answers-config with the persisted answer
+          dataAnswers[dataAnswers.length - 1] = newQuestionAnswer;
           this.setDataAnswersConfig(elQuestionEditMain, dataAnswers);
         } else {
           throw `Error: ${message}`;
@@ -539,9 +549,9 @@ class EditQuestion {
       completed: () => {}
     };
     const dataSend = {
-      action: 'add_question_answer',
+      action: 'update_question_answers_config',
       question_id: questionId,
-      answer_title: answerTitle,
+      answers: dataAnswers,
       args: {
         id_url: idUrlHandle
       }
@@ -740,6 +750,11 @@ class EditQuestion {
       reverseButtons: true
     }).then(result => {
       if (result.isConfirmed) {
+        const dataAnswers = this.getDataAnswersConfig(elQuestionEditMain);
+        if (!Array.isArray(dataAnswers)) {
+          return;
+        }
+        const updatedAnswers = dataAnswers.filter(answer => String(answer.question_answer_id) !== String(questionAnswerId));
         lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpSetLoadingEl(elQuestionAnswerItem, 1);
 
         // Call ajax to delete item from section
@@ -751,13 +766,8 @@ class EditQuestion {
             } = response;
             lpAssetsJsPath_lpToastify__WEBPACK_IMPORTED_MODULE_1__.show(message, status);
             if (status === 'success') {
-              const elQuestionAnswerId = parseInt(elQuestionAnswerItem.dataset.answerId);
               elQuestionAnswerItem.remove();
-              const dataAnswers = this.getDataAnswersConfig(elQuestionEditMain);
-              if (dataAnswers) {
-                const updatedAnswers = dataAnswers.filter(answer => parseInt(answer.question_answer_id) !== elQuestionAnswerId);
-                this.setDataAnswersConfig(elQuestionEditMain, updatedAnswers);
-              }
+              this.setDataAnswersConfig(elQuestionEditMain, updatedAnswers);
             }
           },
           error: error => {
@@ -768,9 +778,9 @@ class EditQuestion {
           }
         };
         const dataSend = {
-          action: 'delete_question_answer',
+          action: 'update_question_answers_config',
           question_id: questionId,
-          question_answer_id: questionAnswerId,
+          answers: updatedAnswers,
           args: {
             id_url: idUrlHandle
           }
@@ -864,7 +874,8 @@ class EditQuestion {
       id: uniquid,
       match_case: 0,
       comparison: 'equal',
-      fill: selectedText,
+      // selectedText is HTML, fill store text
+      fill: this.decodeHtml(selectedText),
       index: 1,
       open: false
     };
@@ -1125,6 +1136,13 @@ class EditQuestion {
         const blankId = elFibBlankOptionItem.dataset.id;
         const elFibOptionMatchCaseInput = elFibBlankOptionItem.querySelector(`${EditQuestion.selectors.elFibOptionMatchCaseInput}`);
         const elFibOptionComparisonInput = elFibBlankOptionItem.querySelector(`${EditQuestion.selectors.elFibOptionComparisonInput}:checked`);
+        dataAnswers.meta_data[blankId] = dataAnswers.meta_data[blankId] || {};
+
+        // Sync fill with text of blank in editor, text can change after inserted
+        const elBlank = editor.dom.select(`.${EditQuestion.selectors.elQuestionFibInput}[data-id="${blankId}"]`);
+        if (elBlank[0]) {
+          dataAnswers.meta_data[blankId].fill = elBlank[0].textContent;
+        }
         dataAnswers.meta_data[blankId].match_case = elFibOptionMatchCaseInput.checked ? 1 : 0;
         dataAnswers.meta_data[blankId].comparison = elFibOptionComparisonInput.value;
       });
@@ -1719,6 +1737,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   resetForm: () => (/* binding */ resetForm),
 /* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
 /* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
@@ -1748,7 +1767,7 @@ const lpFetchAPI = (url, data = {}, functions = {}) => {
   fetch(url, {
     method: 'GET',
     ...data
-  }).then(response => response.json()).then(response => {
+  }).then(response => 'function' === typeof functions.checkResponse ? functions.checkResponse(response) : response).then(response => response.json()).then(response => {
     if ('function' === typeof functions.success) {
       functions.success(response);
     }
@@ -1973,6 +1992,29 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
     ...dataForm
   };
   return dataHandle;
+};
+
+/**
+ * Reset all fields of form to empty, select to first option.
+ * Not use form.reset(), because it restores values rendered by server (e.g. from URL params).
+ *
+ * @param elForm
+ */
+const resetForm = elForm => {
+  if (!elForm) {
+    return;
+  }
+  Array.from(elForm.elements).forEach(elField => {
+    const tagName = elField.tagName;
+    const type = elField.type;
+    if (tagName === 'SELECT') {
+      elField.selectedIndex = 0;
+    } else if (type === 'checkbox' || type === 'radio') {
+      elField.checked = false;
+    } else if ((tagName === 'INPUT' || tagName === 'TEXTAREA') && !['hidden', 'button', 'submit', 'reset'].includes(type)) {
+      elField.value = '';
+    }
+  });
 };
 
 /**

@@ -42,6 +42,9 @@
   font-weight: normal;
   line-height: 1;
 }
+.learn-press-message.hidden-icon::before {
+  display: none;
+}
 .learn-press-message.error {
   background-color: #FEE5E5;
   color: #FF3B30;

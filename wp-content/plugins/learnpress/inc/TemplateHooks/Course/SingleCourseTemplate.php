@@ -9,6 +9,7 @@
 namespace LearnPress\TemplateHooks\Course;
 
 use LearnPress\Cache\LPCourseCache;
+use LearnPress\Helpers\LPDateTime;
 use LearnPress\Helpers\Singleton;
 use LearnPress\Helpers\Template;
 use LearnPress\Models\CourseModel;
@@ -42,7 +43,7 @@ class SingleCourseTemplate {
 	 */
 	public $currentItemModel = false;
 
-	public function init() {
+	public function init(): void {
 		add_filter( 'lp/rest/ajax/allow_callback', [ $this, 'allow_callback' ] );
 	}
 
@@ -507,7 +508,7 @@ class SingleCourseTemplate {
 	 *
 	 * @return string
 	 * @since 4.2.3.4
-	 * @version 1.0.2
+	 * @version 1.0.3
 	 */
 	public function html_count_student( $course ): string {
 		if ( $course instanceof LP_Course ) {
@@ -518,10 +519,9 @@ class SingleCourseTemplate {
 			return '';
 		}
 
-		$count_student  = $course->get_total_user_enrolled_or_purchased();
-		$count_student += $course->get_fake_students();
-		$content        = sprintf( '%d %s', $count_student, _n( 'Student', 'Students', $count_student, 'learnpress' ) );
-		$html_wrapper   = [
+		$count_student = $course->count_students();
+		$content       = sprintf( '%d %s', $count_student, _n( 'Student', 'Students', $count_student, 'learnpress' ) );
+		$html_wrapper  = [
 			'<div class="course-count-student">' => '</div>',
 		];
 
@@ -650,7 +650,7 @@ class SingleCourseTemplate {
 			if ( empty( $duration_number ) ) {
 				$duration_str = __( 'Lifetime', 'learnpress' );
 			} else {
-				$duration_str = LP_Datetime::get_string_plural_duration( $duration_number, $duration_type );
+				$duration_str = LPDateTime::get_string_plural_duration( $duration_number, $duration_type );
 			}
 
 			$html_wrapper = [
@@ -1423,7 +1423,14 @@ class SingleCourseTemplate {
 
 			global $withcomments, $post;
 
-			$post = get_post( $course_id );
+			$post_course = get_post( absint( $course_id ) );
+			// Security: course_id come from request, only render comments of course user can view.
+			if ( ! $post_course || LP_COURSE_CPT !== $post_course->post_type
+				|| post_password_required( $post_course ) ) {
+				return $response;
+			}
+
+			$post = $post_course;
 			if ( $post->comment_status !== 'open' ) {
 				return $response;
 			} else {

@@ -1789,6 +1789,241 @@ class EditSection {
 
 /***/ },
 
+/***/ "./assets/src/js/admin/edit-course/more-features.js"
+/*!**********************************************************!*\
+  !*** ./assets/src/js/admin/edit-course/more-features.js ***!
+  \**********************************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MoreFeatures: () => (/* binding */ MoreFeatures),
+/* harmony export */   bootMoreFeatures: () => (/* binding */ bootMoreFeatures),
+/* harmony export */   initMoreFeatures: () => (/* binding */ initMoreFeatures),
+/* harmony export */   parseDismissed: () => (/* binding */ parseDismissed),
+/* harmony export */   pickVisible: () => (/* binding */ pickVisible)
+/* harmony export */ });
+/**
+ * Course settings tab "More Features": recommended add-ons with Dismiss / Reset.
+ *
+ * Server renders every candidate add-on (`.lp-more-features__item[data-slug]`);
+ * this module keeps at most `data-max` visible, hides dismissed ones and stores
+ * them in localStorage as `{ slug: timestamp }` for `data-ttl-days` days.
+ * Shared by wp-admin (edit-course.js) and Course Builder (course-builder.js).
+ *
+ * @since 4.4.15
+ * @version 1.0.0
+ */
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const ANIMATION_MS = 250;
+const SELECTOR = {
+  root: '.lp-more-features',
+  item: '.lp-more-features__item',
+  empty: '.lp-more-features__empty',
+  reset: '.lp-more-features__reset',
+  resetLink: '.lp-more-features__reset-link',
+  dismiss: '.lp-more-features__dismiss'
+};
+
+/**
+ * Parse stored value and drop invalid or expired entries.
+ *
+ * @param {string|null} raw   Raw localStorage value.
+ * @param {number}      now   Timestamp (ms).
+ * @param {number}      ttlMs Time to live (ms).
+ * @return {Object} Map slug => timestamp still valid.
+ */
+const parseDismissed = (raw, now, ttlMs) => {
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    return {};
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return {};
+  }
+  const result = {};
+  Object.keys(data).forEach(slug => {
+    const time = data[slug];
+    if (typeof time === 'number' && Number.isFinite(time) && now - time < ttlMs) {
+      result[slug] = time;
+    }
+  });
+  return result;
+};
+
+/**
+ * Slugs to show: not dismissed, keeping order, up to max.
+ *
+ * @param {string[]} slugs     All slugs in display order.
+ * @param {Object}   dismissed Map slug => timestamp.
+ * @param {number}   max       Max items.
+ * @return {string[]}
+ */
+const pickVisible = (slugs, dismissed, max) => {
+  return slugs.filter(slug => !Object.prototype.hasOwnProperty.call(dismissed, slug)).slice(0, max);
+};
+class MoreFeatures {
+  constructor(root, options = {}) {
+    var _options$delay;
+    this.root = root;
+    this.max = parseInt(root.dataset.max, 10) || 5;
+    this.ttlMs = (parseInt(root.dataset.ttlDays, 10) || 30) * DAY_MS;
+    this.storageKey = root.dataset.storageKey || 'lp_more_features_dismissed';
+    this.delay = (_options$delay = options.delay) !== null && _options$delay !== void 0 ? _options$delay : ANIMATION_MS;
+    this.now = options.now || (() => Date.now());
+    this.memory = {}; // Fallback when localStorage is unavailable.
+    this.dismissed = {};
+  }
+  init() {
+    this.dismissed = this.load();
+    this.root.addEventListener('click', e => this.onClick(e));
+    this.render(false);
+  }
+  load() {
+    const now = this.now();
+    let raw = null;
+    try {
+      raw = window.localStorage.getItem(this.storageKey);
+    } catch (e) {
+      return parseDismissed(JSON.stringify(this.memory), now, this.ttlMs);
+    }
+    const valid = parseDismissed(raw, now, this.ttlMs);
+    // Persist the cleaned list so expired entries are removed.
+    if (raw !== null && JSON.stringify(valid) !== raw) {
+      this.save(valid);
+    }
+    return valid;
+  }
+  save(data) {
+    this.memory = data;
+    try {
+      if (Object.keys(data).length) {
+        window.localStorage.setItem(this.storageKey, JSON.stringify(data));
+      } else {
+        window.localStorage.removeItem(this.storageKey);
+      }
+    } catch (e) {
+      // Ignore: dismissal then only lasts for this page load.
+    }
+  }
+  items() {
+    return Array.from(this.root.querySelectorAll(SELECTOR.item));
+  }
+  onClick(e) {
+    const dismissBtn = e.target.closest(SELECTOR.dismiss);
+    if (dismissBtn && this.root.contains(dismissBtn)) {
+      e.preventDefault();
+      this.dismiss(dismissBtn.closest(SELECTOR.item));
+      return;
+    }
+    if (e.target.closest(SELECTOR.reset) || e.target.closest(SELECTOR.resetLink)) {
+      e.preventDefault();
+      this.reset();
+    }
+  }
+  dismiss(item) {
+    if (!item || item.classList.contains('is-removing')) {
+      return;
+    }
+    this.dismissed[item.dataset.slug] = this.now();
+    this.save(this.dismissed);
+
+    // Slide-up the dismissed item while the next one fades in.
+    item.classList.add('is-removing');
+    this.render(true);
+    setTimeout(() => {
+      item.hidden = true;
+      item.classList.remove('is-removing');
+      this.updateChrome();
+    }, this.delay);
+  }
+  reset() {
+    this.dismissed = {};
+    this.save({});
+    this.render(true);
+  }
+  render(animate) {
+    const items = this.items();
+    const visible = pickVisible(items.map(item => item.dataset.slug), this.dismissed, this.max);
+    items.forEach(item => {
+      if (item.classList.contains('is-removing')) {
+        return;
+      }
+      const show = visible.includes(item.dataset.slug);
+      if (show && item.hidden) {
+        item.hidden = false;
+        if (animate) {
+          item.classList.add('is-entering');
+          setTimeout(() => item.classList.remove('is-entering'), this.delay + 50);
+        }
+      } else if (!show && !item.hidden) {
+        item.hidden = true;
+      }
+    });
+    this.updateChrome();
+  }
+
+  /**
+   * Empty message and Reset button follow the current state.
+   */
+  updateChrome() {
+    const items = this.items();
+    const shown = items.filter(item => !item.hidden && !item.classList.contains('is-removing'));
+    const hasDismissed = items.some(item => Object.prototype.hasOwnProperty.call(this.dismissed, item.dataset.slug));
+    const empty = this.root.querySelector(SELECTOR.empty);
+    if (empty) {
+      empty.hidden = !(items.length > 0 && shown.length === 0);
+    }
+    const reset = this.root.querySelector(SELECTOR.reset);
+    if (reset) {
+      reset.hidden = !hasDismissed;
+    }
+  }
+}
+
+/**
+ * Init every not-yet-initialized block (safe to call repeatedly).
+ *
+ * @param {ParentNode} scope
+ */
+const initMoreFeatures = (scope = document) => {
+  scope.querySelectorAll(`${SELECTOR.root}:not([data-lp-init])`).forEach(root => {
+    root.dataset.lpInit = '1';
+    new MoreFeatures(root).init();
+  });
+};
+
+/**
+ * Init now and for blocks inserted later (Course Builder loads tabs via AJAX).
+ */
+const bootMoreFeatures = () => {
+  const start = () => {
+    initMoreFeatures();
+    if (typeof MutationObserver === 'undefined' || !document.body) {
+      return;
+    }
+    new MutationObserver(() => {
+      if (document.querySelector(`${SELECTOR.root}:not([data-lp-init])`)) {
+        initMoreFeatures();
+      }
+    }).observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+};
+
+/***/ },
+
 /***/ "./assets/src/js/admin/generate-with-openai.js"
 /*!*****************************************************!*\
   !*** ./assets/src/js/admin/generate-with-openai.js ***!
@@ -2872,6 +3107,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
 /* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
 /* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   resetForm: () => (/* binding */ resetForm),
 /* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
 /* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
 /* harmony export */ });
@@ -2901,7 +3137,7 @@ const lpFetchAPI = (url, data = {}, functions = {}) => {
   fetch(url, {
     method: 'GET',
     ...data
-  }).then(response => response.json()).then(response => {
+  }).then(response => 'function' === typeof functions.checkResponse ? functions.checkResponse(response) : response).then(response => response.json()).then(response => {
     if ('function' === typeof functions.success) {
       functions.success(response);
     }
@@ -3126,6 +3362,29 @@ const mergeDataWithDatForm = (elForm, dataHandle) => {
     ...dataForm
   };
   return dataHandle;
+};
+
+/**
+ * Reset all fields of form to empty, select to first option.
+ * Not use form.reset(), because it restores values rendered by server (e.g. from URL params).
+ *
+ * @param elForm
+ */
+const resetForm = elForm => {
+  if (!elForm) {
+    return;
+  }
+  Array.from(elForm.elements).forEach(elField => {
+    const tagName = elField.tagName;
+    const type = elField.type;
+    if (tagName === 'SELECT') {
+      elField.selectedIndex = 0;
+    } else if (type === 'checkbox' || type === 'radio') {
+      elField.checked = false;
+    } else if ((tagName === 'INPUT' || tagName === 'TEXTAREA') && !['hidden', 'button', 'submit', 'reset'].includes(type)) {
+      elField.value = '';
+    }
+  });
 };
 
 /**
@@ -12647,6 +12906,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _edit_course_edit_curriculum_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./edit-course/edit-curriculum.js */ "./assets/src/js/admin/edit-course/edit-curriculum.js");
 /* harmony import */ var _generate_with_openai_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./generate-with-openai.js */ "./assets/src/js/admin/generate-with-openai.js");
 /* harmony import */ var _edit_course_edit_curriculum_edit_curriculum_ai_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./edit-course/edit-curriculum/edit-curriculum-ai.js */ "./assets/src/js/admin/edit-course/edit-curriculum/edit-curriculum-ai.js");
+/* harmony import */ var _edit_course_more_features_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./edit-course/more-features.js */ "./assets/src/js/admin/edit-course/more-features.js");
 /**
  * Edit course JS handler.
  *
@@ -12656,9 +12916,11 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
 new _edit_course_edit_curriculum_js__WEBPACK_IMPORTED_MODULE_0__.EditCourseCurriculum();
 new _generate_with_openai_js__WEBPACK_IMPORTED_MODULE_1__.GenerateWithOpenai();
 new _edit_course_edit_curriculum_edit_curriculum_ai_js__WEBPACK_IMPORTED_MODULE_2__.EditCurriculumAi();
+(0,_edit_course_more_features_js__WEBPACK_IMPORTED_MODULE_3__.bootMoreFeatures)();
 })();
 
 /******/ })()

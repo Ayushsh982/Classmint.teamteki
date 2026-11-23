@@ -3,9 +3,8 @@
 namespace LearnPress\TemplateHooks\Admin;
 
 use Exception;
-use LearnPress\Databases\DataBase;
+use LearnPress\Ajax\EditQuizAjax;
 use LearnPress\Filters\PostFilter;
-use LearnPress\Helpers\Config;
 use LearnPress\Helpers\Response;
 use LearnPress\Helpers\Singleton;
 use LearnPress\Helpers\Template;
@@ -15,7 +14,6 @@ use LearnPress\Models\UserModel;
 use LearnPress\TemplateHooks\TemplateAJAX;
 use LP_Database;
 use LP_Post_DB;
-use LP_Post_Type_Filter;
 use stdClass;
 use Throwable;
 
@@ -211,8 +209,8 @@ class AdminEditQizTemplate {
 			$question_title = $questionPostModel->post_title;
 
 			$section_edit_details = [
-				'wrap'         => '<div class="question-edit-details lp-section-toggle">',
-				'header'       => sprintf(
+				'wrap' => '<div class="question-edit-details lp-section-toggle">',
+				'header' => sprintf(
 					'<div class="lp-question-data-edit-header lp-trigger-toggle">
 					<label>%s</label>
 					<div class="lp-tinymce-toggle">
@@ -222,30 +220,41 @@ class AdminEditQizTemplate {
 				</div>',
 					__( 'Option Details', 'learnpress' )
 				),
-				'collapse'     => '<div class="lp-section-collapse">',
-				'point'        => AdminEditQuestionTemplate::instance()->html_edit_mark( $questionPostModel ),
-				'hint'         => AdminEditQuestionTemplate::instance()->html_edit_hint( $questionPostModel ),
-				'explanation'  => AdminEditQuestionTemplate::instance()->html_edit_explanation( $questionPostModel ),
+				'collapse' => '<div class="lp-section-collapse">',
+				'point' => AdminEditQuestionTemplate::instance()->html_edit_mark( $questionPostModel ),
+				'hint' => AdminEditQuestionTemplate::instance()->html_edit_hint( $questionPostModel ),
+				'explanation' => AdminEditQuestionTemplate::instance()->html_edit_explanation( $questionPostModel ),
 				'collapse_end' => '</div>',
-				'wrap_end'     => '</div>',
+				'wrap_end' => '</div>',
 			];
 
 			$section_edit_main = [
-				'wrap'        => sprintf(
+				'wrap' => sprintf(
 					'<div class="lp-question-edit-main" data-question-id="%d">',
 					$question_id
 				),
-				'left'        => '<div class="lp-question-edit-left">',
+				'left' => '<div class="lp-question-edit-left">',
 				'description' => AdminEditQuestionTemplate::instance()->html_edit_question_description( $questionPostModel ),
-				'answers'     => AdminEditQuestionTemplate::instance()->html_edit_question_by_type( $questionPostModel ),
-				'left_end'    => '</div>',
-				'details'     => Template::combine_components( $section_edit_details ),
-				'wrap_end'    => '</div>',
+				'answers' => AdminEditQuestionTemplate::instance()->html_edit_question_by_type( $questionPostModel ),
+				'left_end' => '</div>',
+				'details' => Template::combine_components( $section_edit_details ),
+				'wrap_end' => '</div>',
 			];
 
 			$html_edit_main = Template::combine_components( $section_edit_main );
 		} else {
 			$is_clone = true;
+		}
+
+		$type_label = $questionPostModel instanceof QuestionPostModel
+			? $questionPostModel->get_type_label() :
+			'';
+
+		if ( empty( $type_label ) ) {
+			$type_label = sprintf(
+				'<span class="lp-question-type-not-exist">%s</span>',
+				__( 'Type does not exist', 'learnpress' )
+			);
 		}
 
 		$section = [
@@ -274,9 +283,7 @@ class AdminEditQizTemplate {
 			),
 			'type'       => sprintf(
 				'<span class="lp-question-type-label">%s</span>',
-				esc_html(
-					$questionPostModel instanceof QuestionPostModel ? $questionPostModel->get_type_label() : ''
-				)
+				wp_kses_post( $type_label )
 			),
 			'btn-edit'   => sprintf(
 				'<a class="lp-btn-edit-question-title lp-icon-edit-square" title="%s" href="%s" target="_blank"></a>',
@@ -353,6 +360,7 @@ class AdminEditQizTemplate {
 					[
 						'id_url'  => 'create-question-add-to-quiz',
 						'quiz_id' => $this->quizPostModel->get_id(),
+						/** @use EditQuizAjax::create_question_add_to_quiz */
 						'action'  => 'create_question_add_to_quiz',
 					]
 				),

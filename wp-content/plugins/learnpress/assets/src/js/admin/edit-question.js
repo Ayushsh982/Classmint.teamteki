@@ -295,6 +295,9 @@ export class EditQuestion {
 			editor.settings.force_p_newlines = false;
 			editor.settings.forced_root_block = '';
 			editor.settings.force_br_newlines = true;
+			// Same as WP editor, not encode chars to named entities (e.g. à → &agrave;)
+			editor.settings.entity_encoding = 'raw';
+			editor.settings.entities = '38,amp,60,lt,62,gt';
 
 			// Config use absolute url
 			editor.settings.relative_urls = false;
@@ -609,21 +612,33 @@ export class EditQuestion {
 		elQuestionAnswerTitleNewInput.value = '';
 		const questionId = elQuestionEditMain.dataset.questionId;
 
-		// Call ajax to add new question answer
+		// Append new answer (without question_answer_id => PHP inserts it)
+		const dataAnswers =
+			this.getDataAnswersConfig( elQuestionEditMain ) || [];
+		dataAnswers.push( {
+			question_id: questionId,
+			title: answerTitle,
+			value: '',
+			is_true: '',
+			order: dataAnswers.length + 1,
+		} );
+
+		// Call ajax to update answers config with the new answer
 		const callBack = {
 			success: ( response ) => {
 				const { message, status, data } = response;
 
 				if ( status === 'success' ) {
-					const { question_answer } = data;
+					const newQuestionAnswer =
+						data && data.new_question_answer
+							? data.new_question_answer
+							: dataAnswers[ dataAnswers.length - 1 ];
 					elQuestionAnswerNew.dataset.answerId =
-						question_answer.question_answer_id;
+						newQuestionAnswer.question_answer_id;
 					lpUtils.lpSetLoadingEl( elQuestionAnswerNew, 0 );
 
-					// Set data lp-answers-config
-					const dataAnswers =
-						this.getDataAnswersConfig( elQuestionEditMain );
-					dataAnswers.push( question_answer );
+					// Set data lp-answers-config with the persisted answer
+					dataAnswers[ dataAnswers.length - 1 ] = newQuestionAnswer;
 					this.setDataAnswersConfig(
 						elQuestionEditMain,
 						dataAnswers
@@ -642,9 +657,9 @@ export class EditQuestion {
 		};
 
 		const dataSend = {
-			action: 'add_question_answer',
+			action: 'update_question_answers_config',
 			question_id: questionId,
-			answer_title: answerTitle,
+			answers: dataAnswers,
 			args: {
 				id_url: idUrlHandle,
 			},
@@ -890,6 +905,13 @@ export class EditQuestion {
 			reverseButtons: true,
 		} ).then( ( result ) => {
 			if ( result.isConfirmed ) {
+				const dataAnswers = this.getDataAnswersConfig( elQuestionEditMain );
+				if ( ! Array.isArray( dataAnswers ) ) {
+					return;
+				}
+				const updatedAnswers = dataAnswers.filter(
+					( answer ) => String( answer.question_answer_id ) !== String( questionAnswerId )
+				);
 				lpUtils.lpSetLoadingEl( elQuestionAnswerItem, 1 );
 
 				// Call ajax to delete item from section
@@ -900,25 +922,11 @@ export class EditQuestion {
 						lpToastify.show( message, status );
 
 						if ( status === 'success' ) {
-							const elQuestionAnswerId = parseInt(
-								elQuestionAnswerItem.dataset.answerId
-							);
 							elQuestionAnswerItem.remove();
-
-							const dataAnswers =
-								this.getDataAnswersConfig( elQuestionEditMain );
-							if ( dataAnswers ) {
-								const updatedAnswers = dataAnswers.filter(
-									( answer ) =>
-										parseInt(
-											answer.question_answer_id
-										) !== elQuestionAnswerId
-								);
-								this.setDataAnswersConfig(
-									elQuestionEditMain,
-									updatedAnswers
-								);
-							}
+							this.setDataAnswersConfig(
+								elQuestionEditMain,
+								updatedAnswers
+							);
 						}
 					},
 					error: ( error ) => {
@@ -930,9 +938,9 @@ export class EditQuestion {
 				};
 
 				const dataSend = {
-					action: 'delete_question_answer',
+					action: 'update_question_answers_config',
 					question_id: questionId,
-					question_answer_id: questionAnswerId,
+					answers: updatedAnswers,
 					args: {
 						id_url: idUrlHandle,
 					},
@@ -1055,7 +1063,8 @@ export class EditQuestion {
 			id: uniquid,
 			match_case: 0,
 			comparison: 'equal',
-			fill: selectedText,
+			// selectedText is HTML, fill store text
+			fill: this.decodeHtml( selectedText ),
 			index: 1,
 			open: false,
 		};
@@ -1426,6 +1435,17 @@ export class EditQuestion {
 					elFibBlankOptionItem.querySelector(
 						`${ EditQuestion.selectors.elFibOptionComparisonInput }:checked`
 					);
+
+				dataAnswers.meta_data[ blankId ] =
+					dataAnswers.meta_data[ blankId ] || {};
+
+				// Sync fill with text of blank in editor, text can change after inserted
+				const elBlank = editor.dom.select(
+					`.${ EditQuestion.selectors.elQuestionFibInput }[data-id="${ blankId }"]`
+				);
+				if ( elBlank[ 0 ] ) {
+					dataAnswers.meta_data[ blankId ].fill = elBlank[ 0 ].textContent;
+				}
 
 				dataAnswers.meta_data[ blankId ].match_case =
 					elFibOptionMatchCaseInput.checked ? 1 : 0;
