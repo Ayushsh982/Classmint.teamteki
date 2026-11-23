@@ -1,0 +1,104 @@
+<?php
+/**
+ * Template for displaying content of setup wizard.
+ *
+ * @author  ThimPres
+ * @package LearnPress/Admin/Views
+ * @version 3.0.0
+ */
+
+defined( 'ABSPATH' ) or exit;
+$wizard = LP_Setup_Wizard::instance();
+
+if ( ! isset( $steps ) ) {
+	return;
+}
+
+$current_step    = $wizard->get_current_step();
+$is_welcome_step = 'welcome' === $current_step;
+$is_finish_step  = 'finish' === $current_step;
+$next_url        = $is_finish_step ? admin_url( 'index.php' ) : $wizard->get_next_url();
+$main_class      = $is_welcome_step ? 'lp-setup-main--welcome' : 'lp-setup-main--wizard';
+$wizard_steps    = array();
+
+foreach ( $steps as $step_key => $step_data ) {
+	if ( 'welcome' !== $step_key ) {
+		$wizard_steps[ $step_key ] = $step_data;
+	}
+}
+
+$wizard_step_keys = array_keys( $wizard_steps );
+?>
+
+<div id="main" class="<?php echo esc_attr( $main_class ); ?>">
+	<form id="learn-press-setup-form" class="lp-setup-content lp-setup-wizard-form" name="lp-setup" method="post">
+		<?php
+		$step = $wizard->get_current_step( false );
+		?>
+		<input type="hidden" name="lp-setup-step"
+			value="<?php echo esc_attr( $step['slug'] ); ?>">
+		<?php call_user_func( $step['callback'] ); ?>
+		<?php if ( ! $wizard->is_last_step() || $is_finish_step ) { ?>
+			<?php if ( $is_welcome_step ) { ?>
+				<div class="buttons">
+					<button type="button" class="lp-button button button-next button-primary" data-next-url="<?php echo esc_url( $next_url ); ?>">
+						<span class="lp-setup-button__label"><?php echo wp_kses_post( $step['next_button'] ); ?></span>
+					</button>
+					<a class="button-dismiss-setup" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>">
+						<?php esc_html_e( 'Back to Dashboard', 'learnpress' ); ?>
+					</a>
+				</div>
+			<?php } else { ?>
+				<div class="lp-setup-footer-bar">
+					<div class="lp-setup-footer-bar__back">
+						<?php if ( ! $is_finish_step && ! ( array_key_exists( 'back_button', $step ) && false === $step['back_button'] ) ) { ?>
+							<a class="lp-button button button-prev" href="<?php echo esc_url( $wizard->get_prev_url() ); ?>">
+								<?php echo ! empty( $step['back_button'] ) ? wp_kses_post( $step['back_button'] ) : esc_html__( 'Back', 'learnpress' ); ?>
+							</a>
+						<?php } ?>
+					</div>
+
+					<ol class="lp-setup-stepper" aria-label="<?php esc_attr_e( 'Setup progress', 'learnpress' ); ?>">
+						<?php
+						$current_position = array_search( $current_step, $wizard_step_keys, true );
+						foreach ( $wizard_steps as $step_key => $step_data ) {
+							$step_position = array_search( $step_key, $wizard_step_keys, true );
+							$item_class    = 'lp-setup-stepper__item';
+							if ( $step_key === $current_step ) {
+								$item_class .= ' is-active';
+							} elseif ( false !== $current_position && $step_position < $current_position ) {
+								$item_class .= ' is-complete';
+							}
+							?>
+							<li class="<?php echo esc_attr( $item_class ); ?>">
+								<span class="lp-setup-stepper__number">
+									<?php if ( false !== strpos( $item_class, 'is-complete' ) ) { ?>
+										<span class="lp-icon-check" aria-hidden="true"></span>
+									<?php } else { ?>
+										<?php echo esc_html( $step_position + 1 ); ?>
+									<?php } ?>
+								</span>
+								<span class="lp-setup-stepper__label"><?php echo esc_html( $step_data['title'] ); ?></span>
+							</li>
+						<?php } ?>
+					</ol>
+
+					<div class="lp-setup-footer-bar__controls">
+						<?php if ( $is_finish_step ) { ?>
+							<button type="button" class="lp-button button button-next button-primary" data-next-url="<?php echo esc_url( $next_url ); ?>">
+								<span class="lp-setup-button__label"><?php esc_html_e( 'Go to Dashboard', 'learnpress' ); ?></span>
+							</button>
+						<?php } else { ?>
+							<a class="lp-button button-link button-skip-next" href="<?php echo esc_url( $next_url ); ?>">
+								<?php esc_html_e( 'Skip This Step', 'learnpress' ); ?>
+							</a>
+							<button type="button" class="lp-button button button-next button-primary" data-next-url="<?php echo esc_url( $next_url ); ?>">
+								<span class="lp-setup-button__label"><?php echo ! empty( $step['next_button'] ) ? wp_kses_post( $step['next_button'] ) : esc_html__( 'Next', 'learnpress' ); ?></span>
+							</button>
+						<?php } ?>
+					</div>
+				</div>
+			<?php } ?>
+		<?php } ?>
+	</form>
+</div>

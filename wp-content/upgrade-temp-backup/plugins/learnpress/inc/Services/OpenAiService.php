@@ -1,0 +1,318 @@
+<?php
+
+namespace LearnPress\Services;
+
+use Exception;
+use LearnPress\Helpers\Singleton;
+use LP_Helper;
+use LP_Settings;
+
+/**
+ * Class OpenAiService
+ *
+ * Handles interactions with the OpenAI API for LearnPress.
+ *
+ * @package LearnPress\Services
+ * @since 4.3.0
+ * @version 1.0.1
+ */
+class OpenAiService {
+	use Singleton;
+
+	public string $baseUrl = 'https://api.openai.com/v1/';
+	public string $urlChartCompletion;
+	public string $urlResponses;
+	public string $urlImage;
+
+	public string $secret_key;
+	public string $text_model_type;
+	public string $image_model_type;
+	public float $frequency_penalty;
+	public float $presence_penalty;
+	public float $creativity_level;
+	public int $max_token;
+
+	public function init() {
+		$this->urlChartCompletion = $this->baseUrl . 'chat/completions';
+		$this->urlResponses       = $this->baseUrl . 'responses';
+		$this->urlImage           = $this->baseUrl . 'images/generations';
+		$this->get_settings();
+	}
+
+	/**
+	 * Check OpenAI integration is enabled
+	 */
+	public function is_enable(): bool {
+		return LP_Settings::get_option( 'enable_open_ai', 'no' ) === 'yes';
+	}
+
+	/**
+	 * Get secret key
+	 *
+	 * @return string
+	 * @since 4.3.6
+	 * @version 1.0.0
+	 */
+	public function get_secret_key(): string {
+		return (string) LP_Settings::get_option( 'open_ai_secret_key', '' );
+	}
+
+	public function get_settings() {
+		$this->secret_key        = LP_Settings::get_option( 'open_ai_secret_key', '' );
+		$this->text_model_type   = LP_Settings::get_option( 'open_ai_text_model_type', 'gpt-4.1' );
+		$this->image_model_type  = LP_Settings::get_option( 'open_ai_image_model_type', 'gpt-image-1' );
+		$this->frequency_penalty = LP_Settings::get_option( 'open_ai_frequency_penalty_level', 0.0 );
+		$this->presence_penalty  = LP_Settings::get_option( 'open_ai_presence_penalty_level', 0.0 );
+		$this->creativity_level  = LP_Settings::get_option( 'open_ai_creativity_level', 1.0 );
+		$this->max_token         = LP_Settings::get_option( 'open_ai_max_token', 0 );
+	}
+
+	/**
+	 * Call OpenAI API
+	 *
+	 * @throws Exception
+	 */
+	public function send_request( array $args ): array {
+		$url  = $this->urlResponses;
+		$args = $this->handle_params_for_send_responses( $args );
+
+		$response = wp_remote_post(
+			$url,
+			[
+				'headers' => [
+					'Authorization' => 'Bearer ' . $this->secret_key,
+					'Content-Type'  => 'application/json',
+				],
+				'body'    => json_encode( $args ),
+				'timeout' => 3600,
+			]
+		);
+
+		if ( is_wp_error( $response ) ) {
+			throw new Exception( $response->get_error_message(), 400 );
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = LP_Helper::json_decode( $body, true );
+		if ( isset( $data['error'] ) ) {
+			throw new Exception( $data['error']['message'] );
+		}
+
+		return $this->detected_data( $data );
+	}
+
+	/**
+	 * Send a chat completion request and return the raw message object(s).
+	 *
+	 * Unlike send_request() which pipes through detected_data() (JSON-parsing
+	 * content into lp_structure_data), this method returns the raw
+	 * choices[].message objects so callers can handle tool_calls, content,
+	 * and role directly. Used by the AI Assistant agent loop.
+	 *
+	 * @param array $params Must include 'messages' array. May include 'tools', 'tool_choice'.
+	 *
+	 * @return array The first choice's message object (keys: role, content, tool_calls, etc.)
+	 * @throws Exception On API error or empty response.
+	 * @since 4.3.0
+	 */
+	public function send_chat_request( array $params ): array {
+		$args = $this->handle_params_for_send_chat_completion( $params );
+
+		$response = wp_remote_post(
+			$this->urlChartCompletion,
+			[
+				'headers' => [
+					'Authorization' => 'Bearer ' . $this->secret_key,
+					'Content-Type'  => 'application/json',
+				],
+				'body'    => json_encode( $args ),
+				'timeout' => 3600,
+			]
+		);
+
+		if ( is_wp_error( $response ) ) {
+			throw new Exception( $response->get_error_message(), 400 );
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = LP_Helper::json_decode( $body, true );
+
+		if ( isset( $data['error'] ) ) {
+			throw new Exception( $data['error']['message'] );
+		}
+
+		if ( empty( $data['choices'][0]['message'] ) ) {
+			throw new Exception( __( 'Empty response from OpenAI API.', 'learnpress' ) );
+		}
+
+		$message = $data['choices'][0]['message'];
+		if ( isset( $data['usage'] ) && is_array( $data['usage'] ) ) {
+			$message['usage'] = $data['usage'];
+		}
+
+		return $message;
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function send_request_create_image( $args ) {
+		$args_default = [
+			'model'  => $this->image_model_type,
+			'prompt' => '',
+		];
+
+		$args = array_merge( $args_default, $args );
+
+		$model_type = LP_Settings::get_option( 'open_ai_image_model_type', 'gpt-image-1' );
+		if ( $model_type === 'gpt-image-1' ) {
+			unset( $args['n'] );
+		}
+
+		/*if ( $model_type == 'dall-e-3' ) {
+			// only n=1 is supported.
+			$args['n'] = 1;
+		}*/
+
+		$response = wp_remote_post(
+			$this->urlImage,
+			[
+				'headers' => [
+					'Authorization' => 'Bearer ' . $this->secret_key,
+					'Content-Type'  => 'application/json',
+				],
+				'body'    => json_encode( $args ),
+				'timeout' => 3600,
+			]
+		);
+
+		if ( is_wp_error( $response ) ) {
+			throw new Exception( $response->get_error_message(), 400 );
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = LP_Helper::json_decode( $body, true );
+		if ( isset( $data['error'] ) ) {
+			throw new Exception( $data['error']['message'] );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Handle params for send chat completion
+	 *
+	 * @docs https://platform.openai.com/docs/api-reference/chat/create
+	 *
+	 * @throws Exception
+	 */
+	public function handle_params_for_send_chat_completion( $params ): array {
+		$has_tools = ! empty( $params['tools'] );
+
+		// When caller supplies a pre-built messages array (e.g. multi-turn assistant),
+		// use it as-is instead of rebuilding from a single prompt string.
+		if ( ! empty( $params['messages'] ) && is_array( $params['messages'] ) ) {
+			$messages = $params['messages'];
+		} else {
+			$messages = [
+				[
+					'role'    => 'system',
+					'content' => 'You are an AI assistant specialized in education and course design.',
+				],
+				[
+					'role'    => 'user',
+					'content' => $params['prompt'] ?? '',
+				],
+			];
+		}
+
+		$result = [
+			'model'                 => $this->text_model_type,
+			'frequency_penalty'     => $this->frequency_penalty,
+			'presence_penalty'      => $this->presence_penalty,
+			'temperature'           => $this->creativity_level,
+			'max_completion_tokens' => $this->max_token,
+			'n'                     => $params['outputs'] ?? 1,
+			'messages'              => $messages,
+		];
+
+		// Only set response_format when tools are NOT present.
+		// Forced json_object mode conflicts with tool_calls responses.
+		if ( ! $has_tools ) {
+			$result['response_format'] = [ 'type' => 'json_object' ];
+		}
+
+		if ( $has_tools ) {
+			$result['tools'] = $params['tools'];
+
+			if ( ! empty( $params['tool_choice'] ) ) {
+				$result['tool_choice'] = $params['tool_choice'];
+			}
+		}
+
+		if ( $this->max_token === 0 ) {
+			unset( $result['max_completion_tokens'] );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Handle params for send chat completion
+	 *
+	 * @docs https://platform.openai.com/docs/api-reference/responses/create
+	 *
+	 * @throws Exception
+	 */
+	public function handle_params_for_send_responses( $params ): array {
+		$params = [
+			'model'             => $this->text_model_type,
+			//'temperature'       => $this->creativity_level,
+			'max_output_tokens' => $this->max_token,
+			'input'             => $params['prompt'] ?? '',
+		];
+
+		if ( $this->max_token === 0 ) {
+			unset( $params['max_output_tokens'] );
+		}
+
+		return $params;
+	}
+
+	/**
+	 * Detect data from response
+	 *
+	 * @throws Exception
+	 */
+	public function detected_data( array $data ): array {
+		$data['lp_structure_data'] = [];
+
+		if ( isset( $data['choices'] ) ) {
+			foreach ( $data['choices'] as $choice ) {
+				$text = $choice['message']['content'] ?? $choice['text'] ?? '';
+				$text = str_replace( [ "\\n", "\\r", "\n", "\r", "\t" ], '', $text );
+
+				$data['lp_structure_data'][] = LP_Helper::json_decode( $text, true );
+			}
+		} elseif ( isset( $data['output'] ) ) {
+			foreach ( $data['output'] as $output ) {
+				$content_data = $output['content'] ?? [];
+				if ( empty( $content_data ) ) {
+					continue;
+				}
+
+				foreach ( $output['content'] as $content ) {
+					try {
+						$text                        = $content['text'] ?? '';
+						$text                        = str_replace( [ "\\n", "\\r", "\n", "\r", "\t" ], '', $text );
+						$data['lp_structure_data'][] = LP_Helper::json_decode( $text, true );
+					} catch ( Exception $e ) {
+						$data['lp_structure_data'][] = $content['text'] ?? '';
+					}
+				}
+			}
+		}
+
+		return $data;
+	}
+}

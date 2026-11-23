@@ -1,0 +1,874 @@
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./assets/src/js/utils.js"
+/*!********************************!*\
+  !*** ./assets/src/js/utils.js ***!
+  \********************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   debounce: () => (/* binding */ debounce),
+/* harmony export */   eventHandlers: () => (/* binding */ eventHandlers),
+/* harmony export */   fullScreenView: () => (/* binding */ fullScreenView),
+/* harmony export */   getDataOfForm: () => (/* binding */ getDataOfForm),
+/* harmony export */   getFieldKeysOfForm: () => (/* binding */ getFieldKeysOfForm),
+/* harmony export */   listenElementCreated: () => (/* binding */ listenElementCreated),
+/* harmony export */   listenElementViewed: () => (/* binding */ listenElementViewed),
+/* harmony export */   lpAddQueryArgs: () => (/* binding */ lpAddQueryArgs),
+/* harmony export */   lpAjaxParseJsonOld: () => (/* binding */ lpAjaxParseJsonOld),
+/* harmony export */   lpClassName: () => (/* binding */ lpClassName),
+/* harmony export */   lpFetchAPI: () => (/* binding */ lpFetchAPI),
+/* harmony export */   lpGetCurrentURLNoParam: () => (/* binding */ lpGetCurrentURLNoParam),
+/* harmony export */   lpOnElementReady: () => (/* binding */ lpOnElementReady),
+/* harmony export */   lpSetLoadingEl: () => (/* binding */ lpSetLoadingEl),
+/* harmony export */   lpShowHideEl: () => (/* binding */ lpShowHideEl),
+/* harmony export */   mergeDataWithDatForm: () => (/* binding */ mergeDataWithDatForm),
+/* harmony export */   toggleCollapse: () => (/* binding */ toggleCollapse),
+/* harmony export */   toggleEnable: () => (/* binding */ toggleEnable)
+/* harmony export */ });
+/**
+ * Utils functions
+ *
+ * @param url
+ * @param data
+ * @param functions
+ * @since 4.2.5.1
+ * @version 1.0.8
+ */
+const lpClassName = {
+  hidden: 'lp-hidden',
+  loading: 'loading',
+  elCollapse: 'lp-collapse',
+  elSectionToggle: '.lp-section-toggle',
+  elTriggerToggle: '.lp-trigger-toggle',
+  elBtnFullScreen: '.lp-btn-full-screen-view',
+  elFullScreen: 'lp-full-screen-view',
+  elBtnFullScreenClose: 'lp-full-screen-view__close'
+};
+const lpFetchAPI = (url, data = {}, functions = {}) => {
+  if ('function' === typeof functions.before) {
+    functions.before();
+  }
+  fetch(url, {
+    method: 'GET',
+    ...data
+  }).then(response => response.json()).then(response => {
+    if ('function' === typeof functions.success) {
+      functions.success(response);
+    }
+  }).catch(err => {
+    if ('function' === typeof functions.error) {
+      functions.error(err);
+    }
+  }).finally(() => {
+    if ('function' === typeof functions.completed) {
+      functions.completed();
+    }
+  });
+};
+
+/**
+ * Get current URL without params.
+ *
+ * @since 4.2.5.1
+ */
+const lpGetCurrentURLNoParam = () => {
+  let currentUrl = window.location.href;
+  const hasParams = currentUrl.includes('?');
+  if (hasParams) {
+    currentUrl = currentUrl.split('?')[0];
+  }
+  return currentUrl;
+};
+const lpAddQueryArgs = (endpoint, args) => {
+  const url = new URL(endpoint);
+  Object.keys(args).forEach(arg => {
+    url.searchParams.set(arg, args[arg]);
+  });
+  return url;
+};
+
+/**
+ * Listen element viewed.
+ *
+ * @param el
+ * @param callback
+ * @since 4.2.5.8
+ */
+const listenElementViewed = (el, callback) => {
+  const observerSeeItem = new IntersectionObserver(function (entries) {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        callback(entry);
+      }
+    }
+  });
+  observerSeeItem.observe(el);
+};
+
+/**
+ * Listen element created.
+ *
+ * @param callback
+ * @since 4.2.5.8
+ */
+const listenElementCreated = callback => {
+  const observerCreateItem = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      if (mutation.addedNodes) {
+        mutation.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1) {
+            callback(node);
+          }
+        });
+      }
+    });
+  });
+  observerCreateItem.observe(document, {
+    childList: true,
+    subtree: true
+  });
+  // End.
+};
+
+/**
+ * Listen element created.
+ *
+ * @param selector
+ * @param callback
+ * @since 4.2.7.1
+ */
+const lpOnElementReady = (selector, callback) => {
+  const element = document.querySelector(selector);
+  if (element) {
+    callback(element);
+    return;
+  }
+  const observer = new MutationObserver((mutations, obs) => {
+    const element = document.querySelector(selector);
+    if (element) {
+      obs.disconnect();
+      callback(element);
+    }
+  });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+};
+
+// Parse JSON from string with content include LP_AJAX_START.
+const lpAjaxParseJsonOld = data => {
+  if (typeof data !== 'string') {
+    return data;
+  }
+  const m = String.raw({
+    raw: data
+  }).match(/<-- LP_AJAX_START -->(.*)<-- LP_AJAX_END -->/s);
+  try {
+    if (m) {
+      data = JSON.parse(m[1].replace(/(?:\r\n|\r|\n)/g, ''));
+    } else {
+      data = JSON.parse(data);
+    }
+  } catch (e) {
+    data = {};
+  }
+  return data;
+};
+
+// status 0: hide, 1: show
+const lpShowHideEl = (el, status = 0) => {
+  if (!el) {
+    return;
+  }
+  if (!status) {
+    el.classList.add(lpClassName.hidden);
+  } else {
+    el.classList.remove(lpClassName.hidden);
+  }
+};
+
+// status 0: hide, 1: show
+const lpSetLoadingEl = (el, status) => {
+  if (!el) {
+    return;
+  }
+  if (!status) {
+    el.classList.remove(lpClassName.loading);
+  } else {
+    el.classList.add(lpClassName.loading);
+  }
+};
+
+// Toggle collapse section
+const toggleCollapse = (e, target, elTriggerClassName = '', elsExclude = [], callback) => {
+  if (!elTriggerClassName) {
+    elTriggerClassName = lpClassName.elTriggerToggle;
+  }
+
+  // Exclude elements, which should not trigger the collapse toggle
+  if (elsExclude && elsExclude.length > 0) {
+    for (const elExclude of elsExclude) {
+      if (target.closest(elExclude)) {
+        return;
+      }
+    }
+  }
+  const elTrigger = target.closest(elTriggerClassName);
+  if (!elTrigger) {
+    return;
+  }
+
+  //console.log( 'elTrigger', elTrigger );
+
+  const elSectionToggle = elTrigger.closest(`${lpClassName.elSectionToggle}`);
+  if (!elSectionToggle) {
+    return;
+  }
+  elSectionToggle.classList.toggle(`${lpClassName.elCollapse}`);
+  if ('function' === typeof callback) {
+    callback(elSectionToggle);
+  }
+};
+
+// Get data of form
+const getDataOfForm = form => {
+  const dataSend = {};
+  const formData = new FormData(form);
+  for (const pair of formData.entries()) {
+    const key = pair[0];
+    const value = formData.getAll(key);
+    if (!dataSend.hasOwnProperty(key)) {
+      // Convert value array to string.
+      dataSend[key] = value.join(',');
+    }
+  }
+  return dataSend;
+};
+
+// Get field keys of form
+const getFieldKeysOfForm = form => {
+  const keys = [];
+  const elements = form.elements;
+  for (let i = 0; i < elements.length; i++) {
+    const name = elements[i].name;
+    if (name && !keys.includes(name)) {
+      keys.push(name);
+    }
+  }
+  return keys;
+};
+
+// Merge data handle with data form.
+const mergeDataWithDatForm = (elForm, dataHandle) => {
+  const dataForm = getDataOfForm(elForm);
+  const keys = getFieldKeysOfForm(elForm);
+  keys.forEach(key => {
+    if (!dataForm.hasOwnProperty(key)) {
+      delete dataHandle[key];
+    } else if (dataForm[key][0] === '') {
+      delete dataForm[key];
+      delete dataHandle[key];
+    }
+  });
+  dataHandle = {
+    ...dataHandle,
+    ...dataForm
+  };
+  return dataHandle;
+};
+
+/**
+ * Event trigger
+ * For each list of event handlers, listen event on document.
+ *
+ * eventName: 'click', 'change', ...
+ * eventHandlers = [ { selector: '.lp-button', callBack: function(){}, class: object } ]
+ *
+ * @param eventName
+ * @param eventHandlers
+ * @param capture Use capture phase (default: false/bubble). Set true when
+ * the event may be stopped by a container calling stopPropagation() before
+ * it bubbles up to document (e.g. Headless UI DialogPanel on click).
+ */
+const eventHandlers = (eventName, eventHandlers, capture = false) => {
+  document.addEventListener(eventName, e => {
+    const target = e.target;
+    let args = {
+      e,
+      target
+    };
+    eventHandlers.forEach(eventHandler => {
+      args = {
+        ...args,
+        ...eventHandler
+      };
+
+      //console.log( args );
+
+      // Check condition before call back
+      if (eventHandler.conditionBeforeCallBack) {
+        if (eventHandler.conditionBeforeCallBack(args) !== true) {
+          return;
+        }
+      }
+
+      // Special check for keydown event with checkIsEventEnter = true
+      if (eventName === 'keydown' && eventHandler.checkIsEventEnter) {
+        if (e.key !== 'Enter') {
+          return;
+        }
+      }
+      if (target.closest(eventHandler.selector)) {
+        if (eventHandler.class) {
+          // Call method of class, function callBack will understand exactly {this} is class object.
+          eventHandler.class[eventHandler.callBack](args);
+        } else {
+          // For send args is objected, {this} is eventHandler object, not class object.
+          eventHandler.callBack(args);
+        }
+      }
+    });
+  }, capture);
+};
+
+/**
+ * Debounce - delays function execution until after `wait` ms of inactivity.
+ *
+ * Each call resets the timer. Only the last call in a burst executes.
+ *
+ * USE CASES:
+ * - Search inputs, form validation, window resize
+ * - Multiple elements need independent timers
+ * - When you need to call with different arguments
+ *
+ * EXAMPLES:
+ * const debouncedSearch = debounce( (query) => fetchResults(query), 300 );
+ * searchInput.addEventListener('input', (e) => debouncedSearch(e.target.value));
+ *
+ * const debouncedResize = debounce( recalculateLayout, 250 );
+ * window.addEventListener('resize', debouncedResize);
+ *
+ * ⚠️ Create ONCE outside event handlers, not inside.
+ *
+ * @param {Function} func - Function to debounce (can be anonymous)
+ * @param {number}   wait - Milliseconds to wait (default: 500)
+ * @return {Function} Debounced wrapper function
+ * @since 4.3.7
+ * @version 1.0.0
+ */
+const debounce = (func, wait = 500) => {
+  let timer;
+  return args => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func(args), wait);
+  };
+};
+
+/**
+ * Initialize lp-toggle-enable components.
+ *
+ * Finds all `.lp-toggle-enable` elements and wires up toggle behavior.
+ * Reads initial state from `data-enabled` attribute ("true"/"false").
+ * Calls `data-on-toggle` callback (if provided via options) on state change.
+ *
+ * HTML structure:
+ * <label class="lp-toggle-enable" data-enabled="true">
+ *   <input type="checkbox" class="lp-toggle-enable__input" />
+ *   <span class="lp-toggle-enable__track"></span>
+ * </label>
+ *
+ * @param {string}   selector CSS selector for toggle elements (default: '.lp-toggle-enable')
+ * @param {Function} onToggle Optional callback( el, isEnabled ) called on state change
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpToggleEnableInit = 0;
+const toggleEnable = (onToggle = null) => {
+  if (window.lpToggleEnableInit) {
+    return;
+  }
+  window.lpToggleEnableInit = 1;
+  const selector = '.lp-toggle-enable';
+  const updateUI = (toggle, isEnabled) => {
+    toggle.classList.toggle('is-enabled', isEnabled);
+    const input = toggle.querySelector('.lp-toggle-enable__input');
+    if (input) {
+      input.checked = isEnabled;
+      input.value = isEnabled ? '1' : '0';
+    }
+  };
+
+  // Delegate click handling via eventHandlers.
+  eventHandlers('click', [{
+    selector,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const toggle = target.closest(selector);
+      if (!toggle || toggle.classList.contains('is-disabled')) {
+        return;
+      }
+      e.preventDefault();
+      const isEnabled = !toggle.classList.contains('is-enabled');
+      updateUI(toggle, isEnabled);
+      if ('function' === typeof onToggle) {
+        onToggle(toggle, isEnabled);
+      }
+    }
+  }]);
+};
+
+/**
+ * Initialize custom fullscreen view buttons.
+ *
+ * Delegates clicks on `.lp-btn-full-screen-view` buttons to
+ * `lpToggleFullscreenView`. Reads the `data-target` attribute to find the
+ * target element. Falls back to the button's parent element when
+ * `data-target` is not provided.
+ *
+ * @since 4.4.5
+ * @version 1.0.0
+ */
+window.lpFullScreenViewInit = 0;
+const fullScreenView = () => {
+  if (window.lpFullScreenViewInit) {
+    return;
+  }
+  window.lpFullScreenViewInit = 1;
+  let lastScrollY = 0;
+  const lpToggleFullscreenView = (elTarget, elBtnFullScreen = null) => {
+    const isFullscreen = elTarget.classList.contains(lpClassName.elFullScreen);
+    if (isFullscreen) {
+      elTarget.classList.remove(lpClassName.elFullScreen);
+      document.documentElement.classList.remove('lp-full-screen-active');
+      window.scrollTo(0, lastScrollY);
+    } else {
+      lastScrollY = window.scrollY;
+      elTarget.classList.add(lpClassName.elFullScreen);
+      document.documentElement.classList.add('lp-full-screen-active');
+    }
+    if (!isFullscreen) {
+      if (!elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`)) {
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = lpClassName.elBtnFullScreenClose;
+        closeButton.setAttribute('aria-label', 'Close');
+        closeButton.innerHTML = lpData.i18n.closeButtonFullScreen || 'Close &times;';
+        closeButton.addEventListener('click', e => {
+          e.preventDefault();
+          lpToggleFullscreenView(elTarget);
+        });
+        elTarget.appendChild(closeButton);
+      }
+    } else {
+      const closeButton = elTarget.querySelector(`.${lpClassName.elBtnFullScreenClose}`);
+      if (closeButton) {
+        closeButton.remove();
+      }
+    }
+  };
+  eventHandlers('click', [{
+    selector: lpClassName.elBtnFullScreen,
+    callBack: args => {
+      const {
+        e,
+        target
+      } = args;
+      const elBtnFullScreen = target.closest(lpClassName.elBtnFullScreen);
+      if (!elBtnFullScreen) {
+        console.log('No full screen button found');
+        return;
+      }
+      e.preventDefault();
+      let elTarget = null;
+      const targetSelector = elBtnFullScreen.dataset.targetFullscreen;
+      console.log(targetSelector);
+      if (targetSelector) {
+        elTarget = document.querySelector(targetSelector);
+      }
+      if (!elTarget) {
+        console.log('No target element found');
+        return;
+      }
+      lpToggleFullscreenView(elTarget, elBtnFullScreen);
+    }
+  }]);
+};
+
+/***/ }
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	const __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		const cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		const module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		if (!(moduleId in __webpack_modules__)) {
+/******/ 			delete __webpack_module_cache__[moduleId];
+/******/ 			const e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			e.code = 'MODULE_NOT_FOUND';
+/******/ 			throw e;
+/******/ 		}
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter/value functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			if(Array.isArray(definition)) {
+/******/ 				var i = 0;
+/******/ 				while(i < definition.length) {
+/******/ 					var key = definition[i++];
+/******/ 					var binding = definition[i++];
+/******/ 					if(!__webpack_require__.o(exports, key)) {
+/******/ 						if(binding === 0) {
+/******/ 							Object.defineProperty(exports, key, { enumerable: true, value: definition[i++] });
+/******/ 						} else {
+/******/ 							Object.defineProperty(exports, key, { enumerable: true, get: binding });
+/******/ 						}
+/******/ 					} else if(binding === 0) { i++; }
+/******/ 				}
+/******/ 			} else {
+/******/ 				for(var key in definition) {
+/******/ 					if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 						Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 					}
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.hasOwn(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+let __webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
+(() => {
+/*!***********************************!*\
+  !*** ./assets/src/js/loadAJAX.js ***!
+  \***********************************/
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lpAssetsJsPath/utils.js */ "./assets/src/js/utils.js");
+/**
+ * Load all you need via AJAX
+ *
+ * @since 4.2.5.7
+ * @version 1.1.1
+ */
+
+
+
+// Handle general parameter in the Frontend and Backend
+let lpSettings = {};
+if ('undefined' !== typeof lpDataAdmin) {
+  lpSettings = lpDataAdmin;
+} else if ('undefined' !== typeof lpData) {
+  lpSettings = lpData;
+}
+// End Handle general parameter in the Frontend and Backend
+
+const lpAJAX = () => {
+  const classLPTarget = '.lp-target';
+  const urlCurrent = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpGetCurrentURLNoParam();
+  return {
+    autoLoadAPIs: () => {
+      console.log('autoLoadAPIs');
+    },
+    fetchAPI: (url, params, callBack) => {
+      const option = {
+        headers: {}
+      };
+      if (0 !== parseInt(lpSettings.user_id)) {
+        option.headers['X-WP-Nonce'] = lpSettings.nonce;
+      }
+      if ('undefined' !== typeof params.args.method_request) {
+        option.method = params.args.method_request;
+      } else {
+        option.method = 'POST';
+      }
+
+      //params.args = { ...params.args, ...lpData.urlParams };
+
+      if ('POST' === option.method) {
+        option.body = JSON.stringify(params);
+        option.headers['Content-Type'] = 'application/json';
+      } else {
+        params.args = JSON.stringify(params.args);
+        params.callback = JSON.stringify(params.callback);
+        url = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpAddQueryArgs(url, params);
+      }
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpFetchAPI(url, option, callBack);
+    },
+    fetchAJAX: (params, callBack) => {
+      let urlAjax = lpSettings.lpAjaxUrl;
+
+      // Set param id_url for identify.
+      if (params.hasOwnProperty('args') && params.args.hasOwnProperty('id_url')) {
+        urlAjax = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpAddQueryArgs(urlAjax, {
+          id_url: params.args.id_url
+        });
+      } else if (params.hasOwnProperty('id_url')) {
+        urlAjax = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpAddQueryArgs(urlAjax, {
+          id_url: params.id_url
+        });
+      }
+      // Set param lang here if exits, for detect translate
+      if (lpSettings.urlParams.hasOwnProperty('lang')) {
+        urlAjax = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpAddQueryArgs(urlAjax, {
+          lang: lpSettings.urlParams.lang
+        });
+      }
+      const action = params.hasOwnProperty('action') ? params.action : 'load_content_via_ajax';
+      const isGet = params.hasOwnProperty('method_request') && 'GET' === String(params.method_request).toUpperCase();
+      let dataSend;
+      if (isGet) {
+        // Don't send method_request back to server; keep URL shorter.
+        const paramsForSend = {
+          ...params
+        };
+        delete paramsForSend.method_request;
+        urlAjax = lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpAddQueryArgs(urlAjax, {
+          nonce: lpSettings.nonce,
+          'lp-load-ajax': action,
+          data: JSON.stringify(paramsForSend)
+        });
+        dataSend = {
+          method: 'GET',
+          headers: {}
+        };
+      } else {
+        const formData = new FormData();
+        formData.append('nonce', lpSettings.nonce);
+        formData.append('lp-load-ajax', action);
+        formData.append('data', JSON.stringify(params));
+        dataSend = {
+          method: 'POST',
+          headers: {},
+          body: formData
+        };
+      }
+      if (0 !== parseInt(lpSettings.user_id)) {
+        dataSend.headers['X-WP-Nonce'] = lpSettings.nonce;
+      }
+      lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpFetchAPI(urlAjax, dataSend, callBack);
+    },
+    getElements: () => {
+      // Finds all elements with the class '.lp-load-ajax-element'
+      const elements = document.querySelectorAll('.lp-load-ajax-element:not(.loaded)');
+      //console.log( 'getElements', elements );
+      if (elements.length) {
+        elements.forEach(element => {
+          //console.log( 'Element handing', element );
+          const elTarget = element.querySelector(`${classLPTarget}`);
+          if (!elTarget) {
+            return;
+          }
+          const dataObj = JSON.parse(elTarget.dataset.send);
+          const dataSend = {
+            ...dataObj
+          };
+          const elLoadingFirst = element.querySelector('.loading-first');
+          const callBack = {
+            success: response => {
+              const {
+                status,
+                message,
+                data
+              } = response;
+              if ('success' === status) {
+                elTarget.innerHTML = data.content;
+              } else if ('error' === status) {
+                elTarget.innerHTML = message;
+              }
+            },
+            error: error => {
+              console.log(error);
+            },
+            completed: () => {
+              if (typeof wp !== 'undefined' && wp.hooks) {
+                wp.hooks.doAction('lp-ajax-completed', element, dataSend);
+              }
+              window.lpAJAXG.getElements();
+              //console.log( 'completed' );
+              if (elLoadingFirst) {
+                elLoadingFirst.remove();
+              }
+            }
+          };
+
+          // Call via AJAX
+          window.lpAJAXG.fetchAJAX(dataSend, callBack);
+          element.classList.add('loaded');
+        });
+      }
+    },
+    clickNumberPage: (e, target) => {
+      const btnNumber = target.closest('.page-numbers:not(.disabled)');
+      if (!btnNumber) {
+        return;
+      }
+
+      // Check btnNumber is tag a
+      if (btnNumber.tagName.toLowerCase() !== 'a') {
+        return;
+      }
+      const elLPTarget = btnNumber.closest(`${classLPTarget}`);
+      if (!elLPTarget) {
+        return;
+      }
+      e.preventDefault();
+      const dataObj = JSON.parse(elLPTarget.dataset.send);
+      const dataSend = {
+        ...dataObj
+      };
+      if (!dataSend.args.hasOwnProperty('paged')) {
+        dataSend.args.paged = 1;
+      }
+      if (btnNumber.classList.contains('prev')) {
+        dataSend.args.paged--;
+      } else if (btnNumber.classList.contains('next')) {
+        dataSend.args.paged++;
+      } else {
+        const pagedNumber = parseInt(btnNumber.textContent);
+        if (isNaN(pagedNumber) || pagedNumber < 1) {
+          return;
+        }
+        dataSend.args.paged = pagedNumber;
+      }
+      elLPTarget.dataset.send = JSON.stringify(dataSend);
+
+      // Set url params to reload page.
+      if (!dataSend.args.hasOwnProperty('enableUpdateParamsUrl') || dataSend.args.enableUpdateParamsUrl) {
+        lpSettings.urlParams.paged = dataSend.args.paged;
+        window.history.pushState({}, '', lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpAddQueryArgs(urlCurrent, lpSettings.urlParams));
+      }
+      // End.
+
+      // Show loading
+      window.lpAJAXG.showHideLoading(elLPTarget, 1);
+      // End
+
+      // Scroll to archive element
+      if (!dataSend.args.hasOwnProperty('enableScrollToView') || dataSend.args.enableScrollToView) {
+        const elLPTargetY = elLPTarget.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({
+          top: elLPTargetY
+        });
+      }
+      const callBack = {
+        success: response => {
+          //console.log( 'response', response );
+          const {
+            status,
+            message,
+            data
+          } = response;
+          elLPTarget.innerHTML = data.content || '';
+        },
+        error: error => {
+          console.log(error);
+        },
+        completed: () => {
+          //console.log( 'completed' );
+          window.lpAJAXG.showHideLoading(elLPTarget, 0);
+        }
+      };
+      window.lpAJAXG.fetchAJAX(dataSend, callBack);
+    },
+    getDataSetCurrent: elLPTarget => {
+      return JSON.parse(elLPTarget.dataset.send);
+    },
+    setDataSetCurrent: (elLPTarget, dataSend) => {
+      return elLPTarget.dataset.send = JSON.stringify(dataSend);
+    },
+    showHideLoading: (elLPTarget, status) => {
+      const elLoading = elLPTarget.nextElementSibling?.querySelector('.lp-loading-change');
+      if (elLoading) {
+        lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpShowHideEl(elLoading, status);
+      }
+    }
+  };
+};
+window.lpAJAXG = lpAJAX();
+window.lpAJAXG.getElements();
+
+// Events
+document.addEventListener('click', function (e) {
+  const target = e.target;
+  window.lpAJAXG.clickNumberPage(e, target);
+});
+
+// Listen element created
+lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.listenElementCreated(node => {
+  if (node.classList.contains('lp-load-ajax-element')) {
+    //console.log( 'Element created', node );
+    window.lpAJAXG.getElements();
+  }
+});
+
+// Listen element ready
+lpAssetsJsPath_utils_js__WEBPACK_IMPORTED_MODULE_0__.lpOnElementReady('.lp-load-ajax-element', element => {
+  //console.log( 'Element ready', element );
+  window.lpAJAXG.getElements();
+});
+
+// Case 2: readystatechange, find all elements with the class '.lp-load-ajax-element' not have class 'loaded'
+document.addEventListener('readystatechange', event => {
+  //console.log( 'readystatechange' );
+  window.lpAJAXG.getElements();
+});
+
+// Case 3: DOMContentLoaded, find all elements with the class '.lp-load-ajax-element' not have class 'loaded'
+document.addEventListener('DOMContentLoaded', () => {
+  //console.log( 'DOMContentLoaded' );
+  window.lpAJAXG.getElements();
+});
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (lpAJAX);
+})();
+
+/******/ })()
+;
+//# sourceMappingURL=loadAJAX.js.map

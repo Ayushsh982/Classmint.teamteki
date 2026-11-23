@@ -1,0 +1,54 @@
+<?php
+/**
+ * Template for displaying header of setup wizard.
+ *
+ * @author  ThimPres
+ * @package LearnPress/Admin/Views
+ * @version 3.0.1
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+$wizard          = LP_Setup_Wizard::instance();
+$current_step    = $wizard->get_current_step();
+$is_welcome_step = 'welcome' === $current_step;
+$body_classes    = array( 'lp-setup', 'wp-core-ui', 'js' );
+$body_classes[]  = $is_welcome_step ? 'lp-setup--welcome' : 'lp-setup--wizard';
+$body_classes[]  = 'lp-setup-step--' . sanitize_html_class( $current_step );
+?>
+<!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+	<meta name="viewport" content="width=device-width"/>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<title><?php esc_html_e( 'LearnPress &rsaquo; Setup Wizard', 'learnpress' ); ?></title>
+	<?php
+
+	$assets = LP_Admin_Assets::instance();
+	$assets->load_scripts();
+	wp_dequeue_script( 'lp-admin' );
+
+	wp_print_styles( 'buttons' );
+	wp_print_styles( 'common' );
+	wp_print_styles( 'forms' );
+	wp_print_styles( 'lp-admin' );
+	wp_print_styles( 'lp-setup-wizard' );
+
+	// Remove load Jquery
+	global $wp_scripts;
+	$wp_scripts->remove('common');
+	$wp_scripts->remove('jquery');
+	// End remove load Jquery
+
+	do_action( 'admin_print_scripts' );
+	wp_print_scripts( 'lp-setup-wizard' );
+	?>
+</head>
+<body class="<?php echo esc_attr( implode( ' ', $body_classes ) ); ?>">
+<div id="content">
+	<div class="logo">
+		<a href="javascript:void(0)">
+			<?php $logo_url = LP_PLUGIN_URL . 'assets/images/lp-logo-row.png'; ?>
+			<img src="<?php echo esc_url( $logo_url ); ?>" alt="<?php esc_attr_e( 'LearnPress', 'learnpress' ); ?>">
+		</a>
+	</div>

@@ -1,0 +1,142 @@
+/**
+ * User quiz (UserQuizTemplate + user-quiz.js).
+ * Markup keeps class names of the old React app, styles of _quiz.scss, _popup.scss still apply.
+ * Only styles of new states, and rules scoped to #learn-press-quiz-app (old wrapper) are copied here.
+ *
+ * @since 4.5.0
+ */
+:root {
+  --lp-cotainer-max-with: var(--lp-container-max-width);
+}
+
+.wp-block-group {
+  --lp-container-max-width: var(--wp--style--global--wide-size);
+}
+
+#learn-press-user-quiz {
+  margin-bottom: 40px;
+}
+#learn-press-user-quiz [hidden] {
+  display: none !important;
+}
+#learn-press-user-quiz .lp-button:disabled {
+  cursor: not-allowed;
+}
+#learn-press-user-quiz .questions-pagination .learn-press-pagination {
+  margin: 6px 0 0;
+}
+#learn-press-user-quiz .questions-pagination ul.page-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#learn-press-user-quiz .questions-pagination ul.page-numbers > li {
+  display: flex;
+  margin: 0;
+}
+#learn-press-user-quiz .questions-pagination .page-numbers:not(ul) {
+  display: flex;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--lp-border-color, #E1E1E1);
+  border-radius: var(--lp-border-radius, 5px);
+  color: var(--lp-color-base, #333);
+  background-color: transparent;
+  font-size: calc(var(--lp-font-size-base, 1em) * 0.9);
+  font-weight: 400;
+  line-height: 1;
+  text-decoration: none;
+  align-items: center;
+  justify-content: center;
+}
+#learn-press-user-quiz .questions-pagination .page-numbers.current, #learn-press-user-quiz .questions-pagination .page-numbers:not(ul):hover {
+  border-color: var(--lp-primary-color, #ffb606);
+  color: var(--lp-color-white, #fff);
+  background-color: var(--lp-primary-color, #ffb606);
+}
+#learn-press-user-quiz .questions-pagination .page-numbers.dots {
+  border: none;
+}
+#learn-press-user-quiz .questions-pagination .page-numbers.dots:hover {
+  color: inherit;
+  background-color: transparent;
+}
+#learn-press-user-quiz .questions-pagination .page-numbers.prev, #learn-press-user-quiz .questions-pagination .page-numbers.next {
+  padding: 0 16px;
+}
+#learn-press-user-quiz .questions-pagination .page-numbers i {
+  font-size: 20px;
+}
+#learn-press-user-quiz .lp-sorting-choice {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#learn-press-user-quiz .lp-sorting-choice .answer-option {
+  display: flex;
+  position: relative;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 10px;
+  padding: 12px;
+  border: 1px solid var(--lp-border-color, #E1E1E1);
+  border-radius: 4px;
+  background: var(--lp-color-white, #fff);
+}
+#learn-press-user-quiz .lp-sorting-choice .answer-option.sortable-ghost {
+  opacity: 0.4;
+}
+#learn-press-user-quiz .lp-sorting-choice .answer-option.sortable-chosen {
+  border-color: var(--lp-primary-color, #ffb606);
+}
+#learn-press-user-quiz .lp-sorting-choice .answer-option.answered-correct {
+  border-color: #4caf50;
+}
+#learn-press-user-quiz .lp-sorting-choice .answer-option.answered-wrong {
+  border-color: #ff6423;
+}
+#learn-press-user-quiz .lp-sorting-choice .answer-option .option-title {
+  flex: 1;
+  padding: 0;
+  border: none;
+}
+#learn-press-user-quiz .lp-sorting-choice .answer-option .option-title:hover {
+  background: transparent;
+}
+#learn-press-user-quiz .lp-sorting-choice .lp-sorting-choice__handle {
+  color: var(--lp-color-base, #333);
+}
+#learn-press-user-quiz .lp-sorting-choice .lp-sorting-choice__handle::before {
+  font-family: lp-icon; /* stylelint-disable-line font-family-no-missing-generic-family-keyword -- icon font */
+  content: "\e922";
+}
+#learn-press-user-quiz .lp-sorting-choice:not(.lp-sorting-choice--readonly) .answer-option {
+  cursor: move;
+}
+#learn-press-user-quiz .lp-sorting-choice.lp-sorting-choice--readonly .lp-sorting-choice__handle {
+  display: none;
+}
+#learn-press-user-quiz .lp-sorting-choice .lp-sorting-choice__position {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  color: var(--lp-color-white, #fff);
+  background: #4caf50;
+  font-size: calc(var(--lp-font-size-base, 1em) * 0.9);
+  line-height: 1;
+}
+#learn-press-user-quiz .lp-sorting-choice .answered-wrong .lp-sorting-choice__position {
+  background: #ff6423;
+}
+
+.eduma:not(.nofixcss_learn).learnpress-v4 .lp-single-course #popup-course #popup-content #learn-press-user-quiz .questions-pagination .page-numbers.current, .eduma:not(.nofixcss_learn).learnpress-v4 .lp-single-course #popup-course #popup-content #learn-press-user-quiz .questions-pagination .page-numbers:hover {
+  color: var(--lp-color-white, #fff);
+}
